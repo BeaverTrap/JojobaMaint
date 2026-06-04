@@ -65,7 +65,7 @@ export default async function EditTreeAssessmentPage({
         initialTreeDescription={a.tree_description}
         initialPlantType={a.plant_type ?? ""}
         initialConcernType={a.concern_type}
-        initialResidentNote={a.resident_note ?? ""}
+        initialHowFound={a.how_found ?? ""}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
         concerns={concerns}

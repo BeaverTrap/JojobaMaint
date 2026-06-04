@@ -43,7 +43,7 @@ export default function TreeAssessmentsIndex({
         a.site_number,
         a.tree_description,
         a.plant_type,
-        a.resident_note,
+        a.how_found,
         assessmentLocationLine(a),
       ]
         .filter(Boolean)

@@ -90,12 +90,12 @@ export default async function TreeAssessmentPage({
         <p className="mt-2 text-base font-medium text-brand-700">
           {assessmentLocationLine(a)}
         </p>
-        {a.resident_note && (
+        {a.how_found && (
           <div className="mt-4 rounded-xl border border-line bg-hover px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Resident inquiry
+              How this was found
             </p>
-            <p className="mt-1 text-sm text-ink">{a.resident_note}</p>
+            <p className="mt-1 text-base text-ink">{a.how_found}</p>
           </div>
         )}
         {a.summary && (

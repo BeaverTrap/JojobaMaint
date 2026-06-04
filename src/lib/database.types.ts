@@ -117,7 +117,7 @@ export interface TreeAssessment {
   tree_description: string;
   plant_type: string | null;
   concern_type: string;
-  resident_note: string | null;
+  how_found: string | null;
   cover_image_url: string | null;
   published: boolean;
   author_id: string;

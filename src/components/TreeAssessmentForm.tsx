@@ -36,7 +36,7 @@ type Props =
       initialTreeDescription: string;
       initialPlantType: string;
       initialConcernType: string;
-      initialResidentNote: string;
+      initialHowFound?: string;
       initialPublished: boolean;
       initialCoverUrl: string | null;
       concerns: TreeAssessmentConcern[];
@@ -73,8 +73,8 @@ export default function TreeAssessmentForm(props: Props) {
   const [concernType, setConcernType] = useState(
     isEdit ? props.initialConcernType : defaultConcern,
   );
-  const [residentNote, setResidentNote] = useState(
-    isEdit ? props.initialResidentNote : "",
+  const [howFound, setHowFound] = useState(
+    isEdit ? (props.initialHowFound ?? "") : "",
   );
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : true,
@@ -233,7 +233,7 @@ export default function TreeAssessmentForm(props: Props) {
         tree_description: treeDescription.trim(),
         plant_type: plantType.trim() || null,
         concern_type: concernType,
-        resident_note: residentNote.trim() || null,
+        how_found: howFound.trim() || null,
         cover_image_url: coverUrl,
         published,
         ...(isEdit ? {} : { slug, author_id: user.id }),
@@ -339,13 +339,14 @@ export default function TreeAssessmentForm(props: Props) {
 
       <div>
         <label className="text-sm font-medium text-ink">
-          Resident inquiry (optional)
+          How was this found? <span className="font-normal text-muted">(optional)</span>
         </label>
         <input
-          value={residentNote}
-          onChange={(e) => setResidentNote(e.target.value)}
-          placeholder="What the resident asked or reported, in their words if helpful"
+          value={howFound}
+          onChange={(e) => setHowFound(e.target.value)}
+          placeholder="e.g. Resident inquiry, landscaping staff spotted during rounds"
           className={`${inputClass} mt-1`}
+          maxLength={300}
         />
       </div>
 
