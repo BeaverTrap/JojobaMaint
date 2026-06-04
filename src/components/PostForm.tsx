@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage, deleteImageByUrl } from "@/lib/upload";
@@ -8,6 +8,7 @@ import {
   buildPostDescription,
   postTitle,
 } from "@/lib/post-display";
+import MultiPhotoPicker from "@/components/MultiPhotoPicker";
 import type { PostCategory } from "@/lib/database.types";
 
 type ExistingImage = {
@@ -59,7 +60,6 @@ export default function PostForm({
   redirectTo: string;
 }) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState(initialTitle);
   const [body, setBody] = useState(initialBody);
@@ -82,7 +82,6 @@ export default function PostForm({
       preview: URL.createObjectURL(file),
     }));
     setNewImages((prev) => [...prev, ...additions]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function removeNew(id: string) {
@@ -276,7 +275,7 @@ export default function PostForm({
         )}
       </Field>
 
-      <Field label="Photos" hint="Optional — compressed automatically">
+      <Field label="Photos" hint="Optional — pick many at once; compressed automatically">
         {(existing.length > 0 || newImages.length > 0) && (
           <div className="mb-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
             {existing.map((img) => (
@@ -296,18 +295,12 @@ export default function PostForm({
             ))}
           </div>
         )}
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink transition hover:bg-hover">
-          <CameraIcon />
-          Add photos
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => addFiles(e.target.files)}
-          />
-        </label>
+        <MultiPhotoPicker
+          onFiles={addFiles}
+          disabled={submitting}
+          label="Choose photos from gallery"
+          hint="On your phone: tap here, then select multiple photos (use Select or checkmarks), then Done."
+        />
       </Field>
 
       <Field label="Location" hint="Optional">
@@ -406,15 +399,3 @@ function Thumb({
   );
 }
 
-function CameraIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
-      <path
-        d="M3 7a2 2 0 0 1 2-2h1l1-1.5h6L15 5h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-      />
-      <circle cx="10" cy="10.5" r="3" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  );
-}
