@@ -1,3 +1,4 @@
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { prepareArticleBody } from "@/lib/article-format";
@@ -43,6 +44,24 @@ export default function ArticleBody({ body }: { body: string }) {
           blockquote: ({ children }) => (
             <blockquote className="article-quote">{children}</blockquote>
           ),
+          img: ({ src, alt }) => {
+            if (!src || typeof src !== "string") return null;
+            return (
+              <figure className="article-figure">
+                <Image
+                  src={src}
+                  alt={alt ?? "Article photo"}
+                  width={800}
+                  height={500}
+                  unoptimized
+                  className="article-img"
+                />
+                {alt && alt !== "Photo" && (
+                  <figcaption className="article-caption">{alt}</figcaption>
+                )}
+              </figure>
+            );
+          },
         }}
       >
         {markdown}

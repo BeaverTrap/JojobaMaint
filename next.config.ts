@@ -4,9 +4,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/galleries", destination: "/", permanent: true },
-      { source: "/galleries/:id", destination: "/", permanent: true },
-      { source: "/admin/galleries", destination: "/admin", permanent: true },
-      { source: "/admin/galleries/:id", destination: "/admin", permanent: true },
+      { source: "/galleries/:path*", destination: "/", permanent: true },
+      { source: "/admin/galleries", destination: "/admin", permanent: false },
+      { source: "/admin/galleries/:path*", destination: "/admin", permanent: false },
     ];
   },
   images: {

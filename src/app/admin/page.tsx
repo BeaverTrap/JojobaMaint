@@ -30,8 +30,9 @@ export default async function AdminDashboardPage() {
           Create a post
         </h1>
         <p className="text-sm text-muted">
-          Log a job with a title, details, section, optional location, photos,
-          and link to a previous job when it&apos;s a continuation.
+          Log a job with a title, details, section, optional location, and
+          photos — they show in the public feed. Link to a previous job when
+          it&apos;s a continuation.
         </p>
       </div>
 
@@ -45,8 +46,8 @@ export default async function AdminDashboardPage() {
       <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-ink">Articles</h2>
         <p className="mt-1 text-sm text-muted">
-          Long-form guides — trees, best practices, park knowledge. Paste from
-          Google Docs.
+          Long-form guides with photos placed in the text. Paste from Google
+          Docs, then insert images where you want them.
         </p>
         <Link
           href="/admin/articles"
@@ -55,7 +56,6 @@ export default async function AdminDashboardPage() {
           Manage articles →
         </Link>
       </div>
-
     </div>
   );
 }

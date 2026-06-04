@@ -124,3 +124,21 @@ body {
   color: var(--color-muted);
   font-style: italic;
 }
+
+.article-prose .article-figure {
+  margin: 1.5rem 0;
+}
+
+.article-prose .article-img {
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-line);
+}
+
+.article-prose .article-caption {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}

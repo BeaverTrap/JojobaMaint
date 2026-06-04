@@ -9,7 +9,7 @@ const BUCKET = "images";
  *
  * @param supabase  A browser Supabase client.
  * @param file      The original file selected by the user.
- * @param folder    Logical subfolder, e.g. "posts" or `gallery/<id>`.
+ * @param folder    Logical subfolder, e.g. "posts" or "articles/my-slug".
  */
 export async function uploadImage(
   supabase: SupabaseClient,

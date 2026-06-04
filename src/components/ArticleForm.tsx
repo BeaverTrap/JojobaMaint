@@ -10,6 +10,10 @@ import {
   htmlToMarkdown,
   normalizeDocsPlainText,
 } from "@/lib/article-format";
+import {
+  articleStorageFolder,
+  markdownImageSnippet,
+} from "@/lib/article-images";
 import ArticleBody from "@/components/ArticleBody";
 import type { ArticleCategory } from "@/lib/database.types";
 
@@ -36,6 +40,8 @@ type Props =
 export default function ArticleForm(props: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const inlineImageRef = useRef<HTMLInputElement>(null);
 
   const isEdit = props.mode === "edit";
 
@@ -54,11 +60,18 @@ export default function ArticleForm(props: Props) {
   );
   const [removeCover, setRemoveCover] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [insertingImage, setInsertingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function draftStorageSlug(): string {
+    if (isEdit) return props.initialSlug;
+    const fromTitle = slugify(title);
+    return fromTitle || "draft";
+  }
+
   function insertAtCursor(
-    textarea: HTMLTextAreaElement,
+    textarea: HTMLTextAreaElement | null,
     chunk: string,
     replaceAll = false,
   ) {
@@ -66,9 +79,48 @@ export default function ArticleForm(props: Props) {
       setBody(chunk);
       return;
     }
+    if (!textarea) {
+      setBody((prev) => prev + chunk);
+      return;
+    }
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    setBody(body.slice(0, start) + chunk + body.slice(end));
+    setBody((prev) => prev.slice(0, start) + chunk + prev.slice(end));
+    const caret = start + chunk.length;
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(caret, caret);
+    });
+  }
+
+  async function handleInlineImage(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (showPreview) {
+      setError("Switch to “Edit text” and click where you want the photo first.");
+      return;
+    }
+
+    setInsertingImage(true);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+      const url = await uploadImage(
+        supabase,
+        file,
+        articleStorageFolder(draftStorageSlug()),
+      );
+      const snippet = markdownImageSnippet(url);
+      insertAtCursor(bodyRef.current, snippet);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not upload that image.",
+      );
+    } finally {
+      setInsertingImage(false);
+      if (inlineImageRef.current) inlineImageRef.current.value = "";
+    }
   }
 
   function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
@@ -135,7 +187,11 @@ export default function ArticleForm(props: Props) {
       let coverUrl: string | null = isEdit ? props.initialCoverUrl : null;
       if (removeCover) coverUrl = null;
       if (coverFile) {
-        coverUrl = await uploadImage(supabase, coverFile, `articles/${slug}`);
+        coverUrl = await uploadImage(
+          supabase,
+          coverFile,
+          articleStorageFolder(slug),
+        );
       }
 
       const row = {
@@ -219,15 +275,35 @@ export default function ArticleForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Paste directly from Google Docs — headings, bold, and lists are kept
+          Paste from Google Docs, then click in the text where a photo should go
+          and use “Insert photo here”. Headings, bold, and lists are kept
           automatically.
         </p>
+        {!showPreview && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink transition hover:bg-hover">
+              {insertingImage ? "Uploading…" : "Insert photo here"}
+              <input
+                ref={inlineImageRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={insertingImage}
+                onChange={(e) => handleInlineImage(e.target.files)}
+              />
+            </label>
+            <span className="text-xs text-muted">
+              Places the image at your cursor in the article
+            </span>
+          </div>
+        )}
         {showPreview ? (
           <div className="mt-2 min-h-[280px] rounded-xl border border-line bg-canvas p-4">
             <ArticleBody body={body} />
           </div>
         ) : (
           <textarea
+            ref={bodyRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             onPaste={handleBodyPaste}
@@ -238,7 +314,13 @@ export default function ArticleForm(props: Props) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-ink">Cover image</label>
+        <label className="text-sm font-medium text-ink">
+          Cover image
+        </label>
+        <p className="mt-0.5 text-xs text-muted">
+          Optional hero at the top of the article (separate from photos in the
+          body).
+        </p>
         {coverPreview && !removeCover && (
           <div className="relative mt-2 inline-block">
             <Image
