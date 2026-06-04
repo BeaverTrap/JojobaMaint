@@ -28,6 +28,7 @@ export interface AuthorizedEmail {
 export interface Post {
   id: string;
   author_id: string;
+  poster_avatar?: string | null;
   title: string;
   body: string;
   description: string;

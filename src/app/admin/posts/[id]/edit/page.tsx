@@ -78,6 +78,7 @@ export default async function EditPostPage({
         initialParentId={p.parent_post_id}
         initialSiteNumber={p.site_number ?? ""}
         initialCommonArea={p.common_area ?? ""}
+        initialPosterAvatar={p.poster_avatar ?? undefined}
         initialImages={existingImages}
         categories={categories}
         contentTags={contentTags}

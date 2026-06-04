@@ -21,7 +21,7 @@ export function normalizePostRows(rows: PostWithAuthor[]): PostWithAuthor[] {
 
 // Shared PostgREST select for a post with its author, images, and parent link.
 export const POST_SELECT =
-  "id, author_id, title, body, description, image_url, category, parent_post_id, " +
+  "id, author_id, poster_avatar, title, body, description, image_url, category, parent_post_id, " +
   "site_number, common_area, created_at, " +
   "author:profiles(id, display_name, avatar_url), " +
   "images:post_images(id, image_url, position), " +

@@ -10,7 +10,13 @@ import {
 } from "@/lib/post-display";
 import MultiPhotoPicker from "@/components/MultiPhotoPicker";
 import TagPicker from "@/components/TagPicker";
+import PostPosterAvatarPicker from "@/components/PostPosterAvatarPicker";
 import { filterImageFiles } from "@/lib/image-accept";
+import {
+  DEFAULT_POST_POSTER_AVATAR,
+  isPostPosterAvatarSlug,
+  type PostPosterAvatarSlug,
+} from "@/lib/post-avatars";
 import {
   isTagsSchemaError,
   syncPostTags,
@@ -48,6 +54,7 @@ export default function PostForm({
   initialParentId = null,
   initialSiteNumber = "",
   initialCommonArea = "",
+  initialPosterAvatar = DEFAULT_POST_POSTER_AVATAR,
   initialImages = [],
   categories,
   contentTags,
@@ -63,6 +70,7 @@ export default function PostForm({
   initialParentId?: string | null;
   initialSiteNumber?: string;
   initialCommonArea?: string;
+  initialPosterAvatar?: string;
   initialImages?: ExistingImage[];
   initialTags?: string[];
   categories: PostCategory[];
@@ -79,6 +87,11 @@ export default function PostForm({
   const [parentId, setParentId] = useState<string>(initialParentId ?? "");
   const [siteNumber, setSiteNumber] = useState(initialSiteNumber);
   const [commonArea, setCommonArea] = useState(initialCommonArea);
+  const [posterAvatar, setPosterAvatar] = useState<PostPosterAvatarSlug>(
+    isPostPosterAvatarSlug(initialPosterAvatar)
+      ? initialPosterAvatar
+      : DEFAULT_POST_POSTER_AVATAR,
+  );
   const [existing, setExisting] = useState<ExistingImage[]>(initialImages);
   const [removed, setRemoved] = useState<ExistingImage[]>([]);
   const [newImages, setNewImages] = useState<NewImage[]>([]);
@@ -147,6 +160,7 @@ export default function PostForm({
         body: body.trim(),
         description: buildPostDescription(title, body),
         category,
+        poster_avatar: posterAvatar,
         parent_post_id: parentValue,
         site_number: siteNumber.trim() || null,
         common_area: commonArea.trim() || null,
@@ -264,6 +278,13 @@ export default function PostForm({
           placeholder="What was done, anything the next person should know…"
           rows={5}
           className={`${inputClass} resize-y`}
+        />
+      </Field>
+
+      <Field label="Posted as" required>
+        <PostPosterAvatarPicker
+          value={posterAvatar}
+          onChange={setPosterAvatar}
         />
       </Field>
 

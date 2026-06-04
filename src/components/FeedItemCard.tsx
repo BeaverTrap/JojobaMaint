@@ -15,11 +15,7 @@ export default function FeedItemCard({
 }) {
   if (item.post) {
     return (
-      <PostCard
-        post={item.post}
-        canEdit={canEdit}
-        categoryLabel={item.kindLabel}
-      />
+      <PostCard post={item.post} canEdit={canEdit} />
     );
   }
 

@@ -1,24 +1,23 @@
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import {
   postBody,
+  postCategoryLabel,
   postLocationLabel,
   postTitle,
 } from "@/lib/post-display";
 import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
 import ShareButtons from "@/components/ShareButtons";
+import PostPostHeader from "@/components/PostPostHeader";
 
 export default function PostCard({
   post,
   canEdit = false,
-  categoryLabel,
 }: {
   post: PostWithAuthor;
   canEdit?: boolean;
-  categoryLabel?: string;
 }) {
-  const authorName = post.author?.display_name ?? "Team member";
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: true,
   });
@@ -26,45 +25,17 @@ export default function PostCard({
   const headline = postTitle(post);
   const details = postBody(post);
   const location = postLocationLabel(post);
+  const categoryLabel = postCategoryLabel(post.category);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
-      <div className="flex items-center gap-3 px-4 pt-4">
-        {post.author?.avatar_url ? (
-          <Image
-            src={post.author.avatar_url}
-            alt={authorName}
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-full object-cover"
-            unoptimized
-          />
-        ) : (
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
-            {authorName.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <div className="leading-tight">
-          <p className="text-sm font-semibold text-ink">{authorName}</p>
-          <p className="text-xs text-muted">{timeAgo}</p>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {categoryLabel && (
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:border dark:border-brand-700/50 dark:bg-brand-900/70 dark:text-brand-200">
-              {categoryLabel}
-            </span>
-          )}
-          {canEdit && (
-            <Link
-              href={`/admin/posts/${post.id}/edit`}
-              className="rounded-lg px-2.5 py-1 text-xs font-medium text-muted transition hover:bg-hover hover:text-ink"
-            >
-              Edit
-            </Link>
-          )}
-        </div>
-      </div>
+      <PostPostHeader
+        posterAvatar={post.poster_avatar}
+        categoryLabel={categoryLabel}
+        timeAgo={timeAgo}
+        canEdit={canEdit}
+        editHref={`/admin/posts/${post.id}/edit`}
+      />
 
       {post.parent && (
         <Link

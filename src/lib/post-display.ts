@@ -1,4 +1,14 @@
-import type { Post } from "@/lib/database.types";
+import type { Post, PostCategory } from "@/lib/database.types";
+
+export function postCategoryLabel(
+  category: string,
+  categories?: Pick<PostCategory, "slug" | "label">[],
+): string {
+  const match = categories?.find((c) => c.slug === category);
+  if (match) return match.label;
+  if (category === "landscaping") return "Landscaping";
+  return "Maintenance";
+}
 
 /** Headline for cards, detail, and continuation links (falls back to legacy description). */
 export function postTitle(post: Pick<Post, "title" | "description">): string {
