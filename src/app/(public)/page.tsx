@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import Feed from "@/components/Feed";
-import { POST_SELECT } from "@/lib/posts";
+import { normalizePostRows, POST_SELECT } from "@/lib/posts";
 import type { PostWithAuthor, PostCategory } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export default async function FeedPage() {
       .order("position", { ascending: true }),
   ]);
 
-  const posts = (data ?? []) as unknown as PostWithAuthor[];
+  const posts = normalizePostRows((data ?? []) as unknown as PostWithAuthor[]);
   const categories = (cats ?? []) as PostCategory[];
 
   return (

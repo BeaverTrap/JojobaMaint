@@ -12,12 +12,16 @@ export default async function AdminDashboardPage() {
     fetchCategories(supabase),
     supabase
       .from("posts")
-      .select("id, description")
+      .select("id, title, description")
       .order("created_at", { ascending: false })
       .limit(50),
   ]);
 
-  const recentPosts = (recent ?? []) as { id: string; description: string }[];
+  const recentPosts = (recent ?? []) as {
+    id: string;
+    title: string;
+    description: string;
+  }[];
 
   return (
     <div className="space-y-6">
@@ -26,9 +30,8 @@ export default async function AdminDashboardPage() {
           Create a post
         </h1>
         <p className="text-sm text-muted">
-          Log a job to the public feed. Add a section, photos, and link it to a
-          previous job if it&apos;s a continuation. Images are compressed
-          automatically.
+          Log a job with a title, details, section, optional location, photos,
+          and link to a previous job when it&apos;s a continuation.
         </p>
       </div>
 

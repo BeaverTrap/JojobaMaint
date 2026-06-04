@@ -4,8 +4,13 @@ import { notFound } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchCategories, POST_SELECT } from "@/lib/posts";
+import { fetchCategories, normalizePostRow, normalizePostRows, POST_SELECT } from "@/lib/posts";
 import PostCard from "@/components/PostCard";
+import {
+  postBody,
+  postLocationLabel,
+  postTitle,
+} from "@/lib/post-display";
 import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -30,8 +35,10 @@ export default async function PostDetailPage({
   ]);
 
   if (!post) notFound();
-  const p = post as unknown as PostWithAuthor;
-  const children = (childData ?? []) as unknown as PostWithAuthor[];
+  const p = normalizePostRow(post as unknown as PostWithAuthor);
+  const children = normalizePostRows(
+    (childData ?? []) as unknown as PostWithAuthor[],
+  );
 
   const labelBySlug = new Map(categories.map((c) => [c.slug, c.label]));
   const authorName = p.author?.display_name ?? "Team member";
@@ -55,7 +62,7 @@ export default async function PostDetailPage({
           className="flex items-center gap-1.5 rounded-xl bg-hover px-4 py-3 text-sm font-medium text-muted transition hover:text-ink"
         >
           <span aria-hidden>↩</span> Continues from:{" "}
-          <span className="truncate text-ink">{p.parent.description}</span>
+          <span className="truncate text-ink">{postTitle(p.parent)}</span>
         </Link>
       )}
 
@@ -94,9 +101,21 @@ export default async function PostDetailPage({
           </div>
         </div>
 
-        <p className="px-4 py-3 text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
-          {p.description}
-        </p>
+        <div className="px-4 py-3">
+          <h1 className="text-lg font-bold leading-snug text-ink">
+            {postTitle(p)}
+          </h1>
+          {postLocationLabel(p) && (
+            <p className="mt-1 text-sm font-medium text-brand-700">
+              {postLocationLabel(p)}
+            </p>
+          )}
+          {postBody(p) && (
+            <p className="mt-3 text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
+              {postBody(p)}
+            </p>
+          )}
+        </div>
 
         {images.length > 0 && (
           <div className="space-y-0.5">

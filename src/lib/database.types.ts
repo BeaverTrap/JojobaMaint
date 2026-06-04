@@ -28,10 +28,14 @@ export interface AuthorizedEmail {
 export interface Post {
   id: string;
   author_id: string;
+  title: string;
+  body: string;
   description: string;
   image_url: string | null;
   category: string;
   parent_post_id: string | null;
+  site_number: string | null;
+  common_area: string | null;
   created_at: string;
 }
 
@@ -70,7 +74,7 @@ export type PostAuthor = Pick<Profile, "id" | "display_name" | "avatar_url">;
 export type PostWithAuthor = Post & {
   author: PostAuthor | null;
   images: Pick<PostImage, "id" | "image_url" | "position">[];
-  parent: Pick<Post, "id" | "description"> | null;
+  parent: Pick<Post, "id" | "title" | "description"> | null;
 };
 
 // All image URLs for a post, combining the legacy single image_url (older

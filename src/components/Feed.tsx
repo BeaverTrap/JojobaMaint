@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import PostCard from "@/components/PostCard";
+import { postBody, postTitle, postLocationLabel } from "@/lib/post-display";
 import type { PostWithAuthor, PostCategory } from "@/lib/database.types";
 
 export default function Feed({
@@ -28,7 +29,18 @@ export default function Feed({
     return initialPosts.filter((p) => {
       const matchesCategory =
         activeCategory === "all" || p.category === activeCategory;
-      const matchesQuery = !q || p.description.toLowerCase().includes(q);
+      const haystack = [
+        postTitle(p),
+        postBody(p),
+        p.description,
+        p.site_number,
+        p.common_area,
+        postLocationLabel(p),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesQuery = !q || haystack.includes(q);
       return matchesCategory && matchesQuery;
     });
   }, [query, activeCategory, initialPosts]);

@@ -4,10 +4,13 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage, deleteImageByUrl } from "@/lib/upload";
+import {
+  buildPostDescription,
+  postTitle,
+} from "@/lib/post-display";
 import type { PostCategory } from "@/lib/database.types";
 
 type ExistingImage = {
-  // "legacy" marks the post's original single image_url column.
   key: string;
   url: string;
   isLegacy: boolean;
@@ -15,6 +18,7 @@ type ExistingImage = {
 
 type RecentPost = {
   id: string;
+  title: string;
   description: string;
 };
 
@@ -24,12 +28,18 @@ type NewImage = {
   preview: string;
 };
 
+const inputClass =
+  "w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100";
+
 export default function PostForm({
   mode,
   postId,
-  initialDescription = "",
+  initialTitle = "",
+  initialBody = "",
   initialCategory = "maintenance",
   initialParentId = null,
+  initialSiteNumber = "",
+  initialCommonArea = "",
   initialImages = [],
   categories,
   recentPosts,
@@ -37,9 +47,12 @@ export default function PostForm({
 }: {
   mode: "create" | "edit";
   postId?: string;
-  initialDescription?: string;
+  initialTitle?: string;
+  initialBody?: string;
   initialCategory?: string;
   initialParentId?: string | null;
+  initialSiteNumber?: string;
+  initialCommonArea?: string;
   initialImages?: ExistingImage[];
   categories: PostCategory[];
   recentPosts: RecentPost[];
@@ -48,9 +61,12 @@ export default function PostForm({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [description, setDescription] = useState(initialDescription);
+  const [title, setTitle] = useState(initialTitle);
+  const [body, setBody] = useState(initialBody);
   const [category, setCategory] = useState(initialCategory);
   const [parentId, setParentId] = useState<string>(initialParentId ?? "");
+  const [siteNumber, setSiteNumber] = useState(initialSiteNumber);
+  const [commonArea, setCommonArea] = useState(initialCommonArea);
   const [existing, setExisting] = useState<ExistingImage[]>(initialImages);
   const [removed, setRemoved] = useState<ExistingImage[]>([]);
   const [newImages, setNewImages] = useState<NewImage[]>([]);
@@ -87,8 +103,8 @@ export default function PostForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!description.trim()) {
-      setError("Please add a short description.");
+    if (!title.trim()) {
+      setError("Please add a title for this job.");
       return;
     }
     setSubmitting(true);
@@ -101,22 +117,28 @@ export default function PostForm({
       } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be signed in.");
 
-      // Upload any newly added images first (compressed client-side).
       const uploadedUrls: string[] = [];
       for (const img of newImages) {
         uploadedUrls.push(await uploadImage(supabase, img.file, "posts"));
       }
 
       const parentValue = parentId || null;
+      const payload = {
+        title: title.trim(),
+        body: body.trim(),
+        description: buildPostDescription(title, body),
+        category,
+        parent_post_id: parentValue,
+        site_number: siteNumber.trim() || null,
+        common_area: commonArea.trim() || null,
+      };
 
       if (mode === "create") {
         const { data: inserted, error: insertError } = await supabase
           .from("posts")
           .insert({
             author_id: user.id,
-            description: description.trim(),
-            category,
-            parent_post_id: parentValue,
+            ...payload,
             image_url: null,
           })
           .select("id")
@@ -137,13 +159,8 @@ export default function PostForm({
       } else {
         if (!postId) throw new Error("Missing post id.");
 
-        // If the legacy single image was removed, clear posts.image_url.
         const legacyRemoved = removed.some((r) => r.isLegacy);
-        const updatePayload: Record<string, unknown> = {
-          description: description.trim(),
-          category,
-          parent_post_id: parentValue,
-        };
+        const updatePayload: Record<string, unknown> = { ...payload };
         if (legacyRemoved) updatePayload.image_url = null;
 
         const { error: updateError } = await supabase
@@ -152,7 +169,6 @@ export default function PostForm({
           .eq("id", postId);
         if (updateError) throw updateError;
 
-        // Delete removed post_images rows (non-legacy).
         const removedRowKeys = removed
           .filter((r) => !r.isLegacy)
           .map((r) => r.key);
@@ -160,12 +176,10 @@ export default function PostForm({
           await supabase.from("post_images").delete().in("id", removedRowKeys);
         }
 
-        // Best-effort storage cleanup for every removed image.
         for (const r of removed) {
           await deleteImageByUrl(supabase, r.url);
         }
 
-        // Append newly uploaded images after the existing ones.
         if (uploadedUrls.length > 0) {
           const startPos = existing.length;
           const rows = uploadedUrls.map((url, i) => ({
@@ -191,24 +205,38 @@ export default function PostForm({
 
   const linkOptions = recentPosts.filter((p) => p.id !== postId);
 
+  function continuationLabel(p: RecentPost): string {
+    const label = postTitle(p);
+    return label.length > 70 ? label.slice(0, 70) + "…" : label;
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-line bg-surface p-4 shadow-sm"
+      className="space-y-5 rounded-2xl border border-line bg-surface p-4 shadow-sm"
     >
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="What did you work on? (e.g. Replaced irrigation valve at site 142)"
-        rows={3}
-        className="w-full resize-none rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-      />
+      <Field label="Title" required>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Short summary (e.g. Pepper tree cleanup behind storage)"
+          className={inputClass}
+          maxLength={200}
+        />
+      </Field>
 
-      {/* Category selector */}
-      <div className="mt-3">
-        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
-          Section
-        </label>
+      <Field label="Details" hint="Optional — notes, steps, materials, etc.">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="What was done, anything the next person should know…"
+          rows={5}
+          className={`${inputClass} resize-y`}
+        />
+      </Field>
+
+      <Field label="Section" required>
         <div className="flex flex-wrap gap-2">
           {categories.map((c) => (
             <button
@@ -225,46 +253,49 @@ export default function PostForm({
             </button>
           ))}
         </div>
-      </div>
+      </Field>
 
-      {/* Link to a previous post (job continuation) */}
-      {linkOptions.length > 0 && (
-        <div className="mt-3">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
-            Continues a previous job (optional)
-          </label>
+      <Field label="Continues a previous job" hint="Optional">
+        {linkOptions.length > 0 ? (
           <select
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
-            className="w-full rounded-xl border border-line bg-surface p-2.5 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            className={inputClass}
           >
             <option value="">— Not a continuation —</option>
             {linkOptions.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.description.length > 70
-                  ? p.description.slice(0, 70) + "…"
-                  : p.description}
+                {continuationLabel(p)}
               </option>
             ))}
           </select>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-muted">
+            No other posts yet — this will be the first job in the thread.
+          </p>
+        )}
+      </Field>
 
-      {/* Image thumbnails (existing + new) */}
-      {(existing.length > 0 || newImages.length > 0) && (
-        <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {existing.map((img) => (
-            <Thumb key={img.key} src={img.url} onRemove={() => removeExisting(img.key)} />
-          ))}
-          {newImages.map((img) => (
-            <Thumb key={img.id} src={img.preview} onRemove={() => removeNew(img.id)} badge="new" />
-          ))}
-        </div>
-      )}
-
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-
-      <div className="mt-3 flex items-center justify-between gap-3">
+      <Field label="Photos" hint="Optional — compressed automatically">
+        {(existing.length > 0 || newImages.length > 0) && (
+          <div className="mb-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
+            {existing.map((img) => (
+              <Thumb
+                key={img.key}
+                src={img.url}
+                onRemove={() => removeExisting(img.key)}
+              />
+            ))}
+            {newImages.map((img) => (
+              <Thumb
+                key={img.id}
+                src={img.preview}
+                onRemove={() => removeNew(img.id)}
+                badge="new"
+              />
+            ))}
+          </div>
+        )}
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink transition hover:bg-hover">
           <CameraIcon />
           Add photos
@@ -277,20 +308,71 @@ export default function PostForm({
             onChange={(e) => addFiles(e.target.files)}
           />
         </label>
+      </Field>
 
+      <Field label="Location" hint="Optional">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={siteNumber}
+            onChange={(e) => setSiteNumber(e.target.value)}
+            placeholder="Site number (e.g. 142)"
+            className={inputClass}
+            maxLength={20}
+          />
+          <input
+            type="text"
+            value={commonArea}
+            onChange={(e) => setCommonArea(e.target.value)}
+            placeholder="Common area (e.g. Pool deck, Dog park)"
+            className={inputClass}
+            maxLength={120}
+          />
+        </div>
+      </Field>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      <div className="flex justify-end border-t border-line pt-4">
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-xl bg-brand-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting
             ? "Saving…"
             : mode === "create"
-              ? "Post"
+              ? "Post to feed"
               : "Save changes"}
         </button>
       </div>
     </form>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  required,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 flex items-baseline gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+          {label}
+          {required && <span className="text-red-600">*</span>}
+        </span>
+        {hint && <span className="text-xs font-normal normal-case text-muted">{hint}</span>}
+      </label>
+      {children}
+    </div>
   );
 }
 

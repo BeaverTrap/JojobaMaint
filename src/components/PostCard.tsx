@@ -1,6 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import {
+  postBody,
+  postLocationLabel,
+  postTitle,
+} from "@/lib/post-display";
 import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
 
 export default function PostCard({
@@ -17,6 +22,9 @@ export default function PostCard({
     addSuffix: true,
   });
   const images = postImageUrls(post);
+  const headline = postTitle(post);
+  const details = postBody(post);
+  const location = postLocationLabel(post);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
@@ -64,14 +72,22 @@ export default function PostCard({
         >
           <span aria-hidden>↩</span>
           Continues:{" "}
-          <span className="truncate text-ink">{post.parent.description}</span>
+          <span className="truncate text-ink">{postTitle(post.parent)}</span>
         </Link>
       )}
 
-      <Link href={`/posts/${post.id}`} className="block">
-        <p className="px-4 py-3 text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
-          {post.description}
-        </p>
+      <Link href={`/posts/${post.id}`} className="block px-4 py-3">
+        <h2 className="text-[15px] font-semibold leading-snug text-ink">
+          {headline}
+        </h2>
+        {location && (
+          <p className="mt-1 text-xs font-medium text-brand-700">{location}</p>
+        )}
+        {details && (
+          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted whitespace-pre-wrap">
+            {details}
+          </p>
+        )}
       </Link>
 
       {images.length === 1 && (
@@ -79,7 +95,7 @@ export default function PostCard({
           <div className="relative aspect-[4/3] w-full bg-canvas">
             <Image
               src={images[0]}
-              alt={post.description.slice(0, 80) || "Maintenance photo"}
+              alt={headline.slice(0, 80) || "Maintenance photo"}
               fill
               sizes="(max-width: 768px) 100vw, 640px"
               className="object-cover"
