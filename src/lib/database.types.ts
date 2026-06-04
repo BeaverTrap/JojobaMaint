@@ -98,3 +98,40 @@ export interface Article {
 export type ArticleWithAuthor = Article & {
   author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
 };
+
+export interface TreeAssessmentConcern {
+  slug: string;
+  label: string;
+  position: number;
+}
+
+export interface TreeAssessment {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  site_number: string;
+  tree_description: string;
+  plant_type: string | null;
+  concern_type: string;
+  resident_note: string | null;
+  cover_image_url: string | null;
+  published: boolean;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TreeAssessmentWithAuthor = TreeAssessment & {
+  author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
+};
+
+export const PLANT_TYPE_OPTIONS = [
+  { value: "", label: "Not specified" },
+  { value: "tree", label: "Tree" },
+  { value: "shrub", label: "Shrub" },
+  { value: "palm", label: "Palm" },
+  { value: "cactus", label: "Cactus / succulent" },
+  { value: "other", label: "Other plant" },
+] as const;
