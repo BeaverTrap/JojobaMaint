@@ -10,7 +10,6 @@ import {
 } from "@/lib/post-display";
 import MultiPhotoPicker from "@/components/MultiPhotoPicker";
 import { filterImageFiles } from "@/lib/image-accept";
-import { POST_SECTION_HINTS } from "@/lib/post-sections";
 import type { PostCategory } from "@/lib/database.types";
 
 type ExistingImage = {
@@ -245,8 +244,8 @@ export default function PostForm({
         />
       </Field>
 
-      <Field label="Section" required hint="Tags this post on the feed — All still shows every section">
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+      <Field label="Section" required>
+        <div className="flex flex-wrap gap-2">
           {categories.map((c) => (
             <button
               key={c.slug}
@@ -262,11 +261,6 @@ export default function PostForm({
             </button>
           ))}
         </div>
-        {POST_SECTION_HINTS[category] && (
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            {POST_SECTION_HINTS[category]}
-          </p>
-        )}
       </Field>
 
       <Field label="Continues a previous job" hint="Optional">

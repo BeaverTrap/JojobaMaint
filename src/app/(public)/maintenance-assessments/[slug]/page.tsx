@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
+import ContentCoverImage from "@/components/ContentCoverImage";
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -79,6 +79,16 @@ export default async function MaintenanceAssessmentPage({
         >
           ← All maintenance assessments
         </Link>
+        {a.cover_image_url && (
+          <div className="mt-4">
+            <ContentCoverImage
+              src={a.cover_image_url}
+              alt={a.title}
+              variant="hero"
+              priority
+            />
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
             {workLabel}
@@ -122,19 +132,6 @@ export default async function MaintenanceAssessmentPage({
           </Link>
         )}
       </div>
-
-      {a.cover_image_url && (
-        <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl border border-line">
-          <Image
-            src={a.cover_image_url}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 640px"
-            priority
-          />
-        </div>
-      )}
 
       <ArticleBody body={a.body} />
       <AssessmentResolutionSection assessment={a} />

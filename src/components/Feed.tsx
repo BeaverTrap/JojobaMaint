@@ -2,70 +2,43 @@
 
 import { useMemo, useState } from "react";
 import SearchBar from "@/components/SearchBar";
-import PostCard from "@/components/PostCard";
-import { postBody, postTitle, postLocationLabel } from "@/lib/post-display";
-import type { PostWithAuthor, PostCategory } from "@/lib/database.types";
+import FeedItemCard from "@/components/FeedItemCard";
+import { filterFeedItems, type FeedFilter, type FeedItem } from "@/lib/feed";
+
+const FILTERS: { id: FeedFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "maintenance", label: "Maintenance" },
+  { id: "landscaping", label: "Landscaping" },
+  { id: "article", label: "Articles" },
+  { id: "assessment", label: "Assessments" },
+];
 
 export default function Feed({
-  initialPosts,
-  categories,
+  items,
   canEdit = false,
 }: {
-  initialPosts: PostWithAuthor[];
-  categories: PostCategory[];
+  items: FeedItem[];
   canEdit?: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState<FeedFilter>("all");
 
-  const labelBySlug = useMemo(() => {
-    const m = new Map<string, string>();
-    categories.forEach((c) => m.set(c.slug, c.label));
-    return m;
-  }, [categories]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return initialPosts.filter((p) => {
-      const matchesCategory =
-        activeCategory === "all" || p.category === activeCategory;
-      const haystack = [
-        postTitle(p),
-        postBody(p),
-        p.description,
-        p.site_number,
-        p.common_area,
-        postLocationLabel(p),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      const matchesQuery = !q || haystack.includes(q);
-      return matchesCategory && matchesQuery;
-    });
-  }, [query, activeCategory, initialPosts]);
+  const filtered = useMemo(
+    () => filterFeedItems(items, activeFilter, query),
+    [items, activeFilter, query],
+  );
 
   return (
     <div className="space-y-4">
-      <SearchBar value={query} onChange={setQuery} />
-
-      <p className="text-xs text-muted">
-        <span className="font-semibold text-ink">All</span> shows every post
-        regardless of section.
-      </p>
+      <SearchBar value={query} onChange={setQuery} placeholder="Search the feed…" />
 
       <div className="flex flex-wrap gap-2">
-        <Tab
-          label="All"
-          active={activeCategory === "all"}
-          onClick={() => setActiveCategory("all")}
-        />
-        {categories.map((c) => (
+        {FILTERS.map((f) => (
           <Tab
-            key={c.slug}
-            label={c.label}
-            active={activeCategory === c.slug}
-            onClick={() => setActiveCategory(c.slug)}
+            key={f.id}
+            label={f.label}
+            active={activeFilter === f.id}
+            onClick={() => setActiveFilter(f.id)}
           />
         ))}
       </div>
@@ -74,13 +47,8 @@ export default function Feed({
         <EmptyState hasQuery={query.trim().length > 0} />
       ) : (
         <div className="space-y-4">
-          {filtered.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              canEdit={canEdit}
-              categoryLabel={labelBySlug.get(post.category)}
-            />
+          {filtered.map((item) => (
+            <FeedItemCard key={item.id} item={item} canEdit={canEdit} />
           ))}
         </div>
       )}
@@ -117,12 +85,12 @@ function EmptyState({ hasQuery }: { hasQuery: boolean }) {
     <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
       <p className="text-3xl">{hasQuery ? "🔍" : "🛠️"}</p>
       <p className="mt-3 text-sm font-medium text-ink">
-        {hasQuery ? "No matching posts" : "No posts here yet"}
+        {hasQuery ? "Nothing matched" : "Nothing on the feed yet"}
       </p>
       <p className="mt-1 text-sm text-muted">
         {hasQuery
-          ? "Try a different keyword or section."
-          : "Posts will appear here once staff start logging work."}
+          ? "Try another search or filter."
+          : "Posts, articles, and assessments will all show here."}
       </p>
     </div>
   );

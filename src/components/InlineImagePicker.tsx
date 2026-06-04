@@ -11,7 +11,7 @@ export default function InlineImagePicker({
   onFiles,
   disabled = false,
   busy = false,
-  label = "Insert photos here",
+  label = "Add photos",
 }: {
   onFiles: (files: FileList) => void;
   disabled?: boolean;

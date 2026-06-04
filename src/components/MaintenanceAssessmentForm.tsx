@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/upload";
@@ -11,8 +10,12 @@ import {
   normalizeDocsPlainText,
 } from "@/lib/article-format";
 import { maintenanceAssessmentStorageFolder } from "@/lib/maintenance-assessments";
-import { uploadInlineImageMarkdown } from "@/lib/inline-images";
+import {
+  appendPhotoBlockToBody,
+  uploadInlineImageMarkdown,
+} from "@/lib/inline-images";
 import ArticleBody from "@/components/ArticleBody";
+import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import {
   RESOLUTION_STATUS_OPTIONS,
@@ -145,7 +148,7 @@ export default function MaintenanceAssessmentForm(props: Props) {
   async function handleInlineImage(files: FileList | null) {
     if (!files?.length) return;
     if (showPreview) {
-      setError("Switch to “Edit text” and click where you want the photos first.");
+      setError("Switch to “Edit text” before adding photos.");
       return;
     }
     setInsertingImage(true);
@@ -161,7 +164,7 @@ export default function MaintenanceAssessmentForm(props: Props) {
         setError("Please choose image files only.");
         return;
       }
-      insertAtCursor(bodyRef.current, markdown);
+      setBody((prev) => appendPhotoBlockToBody(prev, markdown));
       if (skipped > 0) {
         setError(`${skipped} file(s) skipped — only images are allowed.`);
       }
@@ -432,8 +435,8 @@ export default function MaintenanceAssessmentForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Scope, contractors, rentals (lift, grinder), timeline, photos in the
-          write-up.
+          Scope, contractors, rentals, timeline — then add photos; they show as a
+          gallery on the public page. Pick several at once from the gallery.
         </p>
         {!showPreview && (
           <div className="mt-2">
@@ -509,15 +512,16 @@ export default function MaintenanceAssessmentForm(props: Props) {
 
       <div>
         <label className="text-sm font-medium text-ink">Cover photo</label>
+        <p className="mt-0.5 text-xs text-muted">
+          Banner on the list page and at the top of the public page — not
+          stretched.
+        </p>
         {coverPreview && !removeCover && (
-          <div className="relative mt-2 inline-block">
-            <Image
+          <div className="relative mt-2 inline-block w-full max-w-xs">
+            <ContentCoverImage
               src={coverPreview}
               alt="Cover preview"
-              width={160}
-              height={100}
-              unoptimized
-              className="h-24 w-40 rounded-xl object-cover"
+              variant="thumb"
             />
             <button
               type="button"
@@ -526,7 +530,7 @@ export default function MaintenanceAssessmentForm(props: Props) {
                 setRemoveCover(true);
                 if (fileRef.current) fileRef.current.value = "";
               }}
-              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs font-bold text-white"
+              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs font-bold text-white"
             >
               ×
             </button>

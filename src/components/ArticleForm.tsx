@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/upload";
@@ -11,8 +10,12 @@ import {
   normalizeDocsPlainText,
 } from "@/lib/article-format";
 import { articleStorageFolder } from "@/lib/article-images";
-import { uploadInlineImageMarkdown } from "@/lib/inline-images";
+import {
+  appendPhotoBlockToBody,
+  uploadInlineImageMarkdown,
+} from "@/lib/inline-images";
 import ArticleBody from "@/components/ArticleBody";
+import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import type { ArticleCategory } from "@/lib/database.types";
 
@@ -98,7 +101,7 @@ export default function ArticleForm(props: Props) {
   async function handleInlineImage(files: FileList | null) {
     if (!files?.length) return;
     if (showPreview) {
-      setError("Switch to “Edit text” and click where you want the photos first.");
+      setError("Switch to “Edit text” before adding photos.");
       return;
     }
 
@@ -116,7 +119,7 @@ export default function ArticleForm(props: Props) {
         setError("Please choose image files only.");
         return;
       }
-      insertAtCursor(bodyRef.current, markdown);
+      setBody((prev) => appendPhotoBlockToBody(prev, markdown));
       if (skipped > 0) {
         setError(`${skipped} file(s) skipped — only images are allowed.`);
       }
@@ -282,19 +285,18 @@ export default function ArticleForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Paste from Google Docs, then insert several photos at your cursor.
-          Headings, bold, and lists are kept automatically.
+          Paste from Google Docs, then add photos — they appear in a gallery on
+          the page. Pick several at once; headings and lists are kept
+          automatically.
         </p>
         {!showPreview && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-2">
             <InlineImagePicker
               onFiles={handleInlineImage}
               disabled={submitting}
               busy={insertingImage}
+              label="Add photos"
             />
-            <span className="text-xs text-muted">
-              Gallery inserts at your cursor
-            </span>
           </div>
         )}
         {showPreview ? (
@@ -333,18 +335,15 @@ export default function ArticleForm(props: Props) {
           Cover image
         </label>
         <p className="mt-0.5 text-xs text-muted">
-          Optional hero at the top of the article (separate from photos in the
-          body).
+          Banner on the articles list and at the top of the page (separate from
+          photos in the body). Not stretched.
         </p>
         {coverPreview && !removeCover && (
-          <div className="relative mt-2 inline-block">
-            <Image
+          <div className="relative mt-2 inline-block w-full max-w-xs">
+            <ContentCoverImage
               src={coverPreview}
               alt="Cover preview"
-              width={160}
-              height={100}
-              unoptimized
-              className="h-24 w-40 rounded-xl object-cover"
+              variant="thumb"
             />
             <button
               type="button"
@@ -353,7 +352,7 @@ export default function ArticleForm(props: Props) {
                 setRemoveCover(true);
                 if (fileRef.current) fileRef.current.value = "";
               }}
-              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs font-bold text-white"
+              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs font-bold text-white"
             >
               ×
             </button>

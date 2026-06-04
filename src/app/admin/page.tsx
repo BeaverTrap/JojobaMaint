@@ -2,16 +2,15 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { fetchCategories } from "@/lib/posts";
 import PostForm from "@/components/PostForm";
-import type { PostCategory } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ section?: string }>;
+  searchParams: Promise<{ type?: string }>;
 }) {
-  const { section } = await searchParams;
+  const { type } = await searchParams;
   const supabase = await createClient();
 
   const [categories, { data: recent }] = await Promise.all([
@@ -29,148 +28,124 @@ export default async function AdminDashboardPage({
     description: string;
   }[];
 
-  const initialCategory =
-    categories.find((c) => c.slug === section)?.slug ?? "maintenance";
+  const showPostForm = type === "maintenance" || type === "landscaping";
+  const postCategory = type === "landscaping" ? "landscaping" : "maintenance";
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-ink">
-          Staff dashboard
-        </h1>
+        <h1 className="text-xl font-bold tracking-tight text-ink">Create</h1>
         <p className="text-sm text-muted">
-          The feed is the catch-all — every post shows there. Pick a section
-          below when logging work, or open assessments and articles for longer
-          write-ups.
+          Pick what you are posting. It all appears on the feed.
         </p>
       </div>
 
-      <StaffQuickLinks categories={categories} activeSection={initialCategory} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <ComposeChoice
+          href="/admin?type=maintenance"
+          active={type === "maintenance"}
+          title="Maintenance post"
+          description="Job log for the feed"
+        />
+        <ComposeChoice
+          href="/admin?type=landscaping"
+          active={type === "landscaping"}
+          title="Landscaping post"
+          description="Grounds work for the feed"
+        />
+        <ComposeChoice
+          href="/admin/articles/new"
+          active={false}
+          title="Article"
+          description="Long guide (also on the feed)"
+        />
+      </div>
 
-      <div>
-        <h2 className="text-sm font-semibold text-ink">New feed post</h2>
-        <p className="mt-0.5 text-sm text-muted">
-          Title, details, photos, and optional site or common area.
-        </p>
-        <div className="mt-3">
-          <PostForm
-            mode="create"
-            categories={categories}
-            recentPosts={recentPosts}
-            initialCategory={initialCategory}
-            redirectTo="/"
-          />
+      {showPostForm ? (
+        <div>
+          <h2 className="text-sm font-semibold text-ink">
+            {type === "landscaping" ? "Landscaping post" : "Maintenance post"}
+          </h2>
+          <div className="mt-3">
+            <PostForm
+              mode="create"
+              categories={categories}
+              recentPosts={recentPosts}
+              initialCategory={postCategory}
+              redirectTo="/"
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <p className="text-sm text-muted">
+          Choose maintenance post, landscaping post, or article above.
+        </p>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <ResourceCard
-          title="Maintenance assessments"
-          description="Pipes, halls, big projects, cross-connection, pond work — published transparency pages."
-          href="/admin/maintenance-assessments"
-          cta="Manage →"
-        />
-        <ResourceCard
-          title="Tree assessments"
-          description="Lot-specific tree and plant evaluations — damage, inquiries, findings."
+        <LinkCard
           href="/admin/tree-assessments"
-          cta="Manage →"
+          title="Tree assessments"
+          description="Separate from feed posts — lot evaluations"
         />
-        <ResourceCard
-          title="Articles"
-          description="Long-form guides with inline photos."
-          href="/admin/articles"
-          cta="Manage →"
-        />
-        <ResourceCard
-          title="All feed posts"
-          description="Browse and edit anything already on the feed."
-          href="/admin/posts"
-          cta="View posts →"
+        <LinkCard
+          href="/admin/maintenance-assessments"
+          title="Maintenance assessments"
+          description="Pond, big projects, cross-connection, etc."
         />
       </div>
     </div>
   );
 }
 
-function StaffQuickLinks({
-  categories,
-  activeSection,
+function ComposeChoice({
+  href,
+  active,
+  title,
+  description,
 }: {
-  categories: PostCategory[];
-  activeSection: string;
+  href: string;
+  active: boolean;
+  title: string;
+  description: string;
 }) {
-  return (
-    <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-ink">Quick start</h2>
-      <p className="mt-1 text-xs text-muted">
-        Feed posts (any section) · assessments · articles
-      </p>
-
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted">
-        Feed section
-      </p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {categories.map((c) => (
-          <Link
-            key={c.slug}
-            href={`/admin?section=${c.slug}`}
-            className={
-              activeSection === c.slug
-                ? "rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white"
-                : "rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-hover"
-            }
-          >
-            + {c.label}
-          </Link>
-        ))}
-      </div>
-
-      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">
-        Longer write-ups
-      </p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <QuickLink href="/admin/maintenance-assessments/new" label="+ Maintenance assessment" />
-        <QuickLink href="/admin/tree-assessments/new" label="+ Tree assessment" />
-        <QuickLink href="/admin/articles/new" label="+ Article" />
-        <QuickLink href="/admin/posts" label="Edit feed posts" />
-      </div>
-    </div>
-  );
-}
-
-function QuickLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-hover"
+      className={
+        active
+          ? "rounded-2xl border-2 border-brand-600 bg-brand-600 p-4 text-white shadow-sm"
+          : "rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:bg-hover"
+      }
     >
-      {label}
+      <p className="font-semibold">{title}</p>
+      <p
+        className={
+          active ? "mt-1 text-sm text-brand-100" : "mt-1 text-sm text-muted"
+        }
+      >
+        {description}
+      </p>
     </Link>
   );
 }
 
-function ResourceCard({
+function LinkCard({
+  href,
   title,
   description,
-  href,
-  cta,
 }: {
+  href: string;
   title: string;
   description: string;
-  href: string;
-  cta: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-ink">{title}</h2>
+    <Link
+      href={href}
+      className="rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:bg-hover"
+    >
+      <p className="font-semibold text-ink">{title}</p>
       <p className="mt-1 text-sm text-muted">{description}</p>
-      <Link
-        href={href}
-        className="mt-3 inline-flex rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-hover"
-      >
-        {cta}
-      </Link>
-    </div>
+    </Link>
   );
 }

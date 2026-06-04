@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import SearchBar from "@/components/SearchBar";
 import ShareButtons from "@/components/ShareButtons";
+import { ContentIndexCardLink } from "@/components/ContentIndexCard";
 import { maintenanceLocationLine } from "@/lib/maintenance-assessment-display";
 import type {
   MaintenanceAssessmentWorkType,
@@ -95,70 +94,52 @@ export default function MaintenanceAssessmentsIndex({
       ) : (
         <div className="space-y-3">
           {filtered.map((a) => (
-            <article
+            <ContentIndexCardLink
               key={a.id}
-              className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
-            >
-              <Link
-                href={`/maintenance-assessments/${a.slug}`}
-                className="block transition hover:bg-hover/50"
-              >
-                <div className="flex gap-4 p-4">
-                  {a.cover_image_url && (
-                    <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-xl sm:block">
-                      <Image
-                        src={a.cover_image_url}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
-                        {labelBySlug.get(a.work_type) ?? a.work_type}
-                      </span>
-                      {!a.published && (
-                        <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                          Draft
-                        </span>
-                      )}
-                    </div>
-                    <h2 className="mt-1 text-lg font-semibold text-ink">
-                      {a.title}
-                    </h2>
-                    <p className="mt-0.5 text-base font-medium text-brand-700">
-                      {maintenanceLocationLine(a)}
-                    </p>
-                    {a.summary && (
-                      <p className="mt-1 line-clamp-2 text-base text-muted">
-                        {a.summary}
-                      </p>
-                    )}
-                    <p className="mt-2 text-sm text-muted">
-                      {formatDistanceToNow(new Date(a.updated_at), {
-                        addSuffix: true,
-                      })}
-                      <span className="ml-2 font-medium text-brand-700">
-                        Read more →
-                      </span>
-                    </p>
-                  </div>
+              href={`/maintenance-assessments/${a.slug}`}
+              coverUrl={a.cover_image_url}
+              coverAlt={a.title}
+              footer={
+                <div className="border-t border-line bg-hover/50 dark:bg-black/60">
+                  <ShareButtons
+                    variant="inline"
+                    content={{
+                      path: `/maintenance-assessments/${a.slug}`,
+                      title: a.title,
+                      description: maintenanceLocationLine(a),
+                    }}
+                  />
                 </div>
-              </Link>
-              <div className="border-t border-line bg-hover/50 dark:bg-black/60">
-                <ShareButtons
-                  variant="inline"
-                  content={{
-                    path: `/maintenance-assessments/${a.slug}`,
-                    title: a.title,
-                    description: maintenanceLocationLine(a),
-                  }}
-                />
+              }
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
+                  {labelBySlug.get(a.work_type) ?? a.work_type}
+                </span>
+                {!a.published && (
+                  <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                    Draft
+                  </span>
+                )}
               </div>
-            </article>
+              <h2 className="mt-1 text-lg font-semibold text-ink">{a.title}</h2>
+              <p className="mt-0.5 text-base font-medium text-brand-700">
+                {maintenanceLocationLine(a)}
+              </p>
+              {a.summary && (
+                <p className="mt-1 line-clamp-2 text-base text-muted">
+                  {a.summary}
+                </p>
+              )}
+              <p className="mt-2 text-sm text-muted">
+                {formatDistanceToNow(new Date(a.updated_at), {
+                  addSuffix: true,
+                })}
+                <span className="ml-2 font-medium text-brand-700">
+                  Read more →
+                </span>
+              </p>
+            </ContentIndexCardLink>
           ))}
         </div>
       )}

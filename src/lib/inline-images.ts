@@ -3,7 +3,15 @@ import { filterImageFiles } from "@/lib/image-accept";
 import { uploadImage } from "@/lib/upload";
 import { markdownImageSnippet } from "@/lib/article-images";
 
-/** Upload many images and return markdown to insert at the cursor. */
+/** Append a block of image markdown to the end of the body (no cursor placement). */
+export function appendPhotoBlockToBody(body: string, photoMarkdown: string): string {
+  const chunk = photoMarkdown.trim();
+  if (!chunk) return body;
+  const base = body.trim();
+  return base ? `${base}\n\n${chunk}` : chunk;
+}
+
+/** Upload many images and return markdown for a photo block. */
 export async function uploadInlineImageMarkdown(
   supabase: SupabaseClient,
   files: FileList | File[],
