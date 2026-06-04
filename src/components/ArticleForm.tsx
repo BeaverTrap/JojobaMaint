@@ -239,7 +239,7 @@ export default function ArticleForm(props: Props) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Mulberry tree — winter pruning guide"
-          className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
         />
       </div>
 
@@ -249,7 +249,7 @@ export default function ArticleForm(props: Props) {
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           placeholder="One line for the article list (optional)"
-          className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
         />
       </div>
 
@@ -258,7 +258,7 @@ export default function ArticleForm(props: Props) {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
         >
           {props.categories.map((c) => (
             <option key={c.slug} value={c.slug}>
@@ -313,7 +313,7 @@ export default function ArticleForm(props: Props) {
             onChange={(e) => setBody(e.target.value)}
             onPaste={handleBodyPaste}
             rows={14}
-            className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
           />
         )}
       </div>
@@ -329,7 +329,7 @@ export default function ArticleForm(props: Props) {
           onChange={(e) => setReferenceList(e.target.value)}
           rows={5}
           placeholder={"e.g.\nUC Cooperative Extension — Oak wilt guide\nCal Poly Urban Forest Ecosystems Institute — species profile"}
-          className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
         />
       </div>
 

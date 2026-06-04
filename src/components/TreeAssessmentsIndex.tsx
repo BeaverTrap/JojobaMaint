@@ -148,7 +148,7 @@ export default function TreeAssessmentsIndex({
                   </div>
                 </div>
               </Link>
-              <div className="border-t border-line bg-canvas/50">
+              <div className="border-t border-line bg-hover/50 dark:bg-black/60">
                 <ShareButtons
                   variant="inline"
                   content={{

@@ -113,7 +113,7 @@ export default async function PostDetailPage({
             <p className="text-xs text-muted">{timeAgo}</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:border dark:border-brand-700/50 dark:bg-brand-900/70 dark:text-brand-200">
               {labelBySlug.get(p.category) ?? p.category}
             </span>
             {isAuthorized && (

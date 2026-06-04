@@ -20,7 +20,7 @@ import {
 } from "@/lib/database.types";
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100";
+  "w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800";
 
 type Props =
   | {
@@ -279,7 +279,7 @@ export default function TreeAssessmentForm(props: Props) {
       onSubmit={handleSubmit}
       className="space-y-4 rounded-2xl border border-line bg-surface p-4 shadow-sm"
     >
-      <div className="rounded-xl bg-brand-50 px-3 py-2 text-xs text-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
+      <div className="rounded-xl border border-brand-700/40 bg-accent px-3 py-2 text-xs text-accent-ink">
         Published assessments are visible to everyone on the site — use them to
         document damage, resident questions, and maintenance decisions
         transparently.
@@ -424,7 +424,7 @@ export default function TreeAssessmentForm(props: Props) {
         )}
       </div>
 
-      <div className="rounded-xl border border-line bg-canvas/60 p-4">
+      <div className="rounded-xl border border-line bg-accent p-4">
         <h3 className="text-sm font-semibold text-ink">Resolution (optional)</h3>
         <p className="mt-0.5 text-xs text-muted">
           Add later if needed — whether the problem was fixed and what was done.

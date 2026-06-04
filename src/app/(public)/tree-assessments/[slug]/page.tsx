@@ -80,7 +80,7 @@ export default async function TreeAssessmentPage({
             {concernLabel}
           </span>
           {!a.published && (
-            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
               Draft
             </span>
           )}

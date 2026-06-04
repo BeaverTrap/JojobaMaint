@@ -51,7 +51,7 @@ export default function PostCard({
 
         <div className="ml-auto flex items-center gap-2">
           {categoryLabel && (
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:border dark:border-brand-700/50 dark:bg-brand-900/70 dark:text-brand-200">
               {categoryLabel}
             </span>
           )}
@@ -130,7 +130,7 @@ export default function PostCard({
         </div>
       )}
 
-      <div className="border-t border-line bg-canvas/50">
+      <div className="border-t border-line bg-hover/50 dark:bg-black/60">
         <ShareButtons
           variant="inline"
           content={{

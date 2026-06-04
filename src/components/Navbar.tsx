@@ -16,7 +16,7 @@ export default function Navbar({
   const displayName = profile?.display_name ?? "Member";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur dark:bg-black/95">
       <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
         {/* Logo in the top-left, links back to the feed (home). */}
         <Link href="/" className="shrink-0" aria-label="Go to feed">
@@ -81,8 +81,8 @@ function NavLink({
       href={href}
       className={
         highlight
-          ? "rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
-          : "rounded-lg px-3 py-2 text-sm font-semibold text-ink transition hover:bg-brand-50 hover:text-brand-700"
+          ? "rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 dark:bg-brand-900/80 dark:text-brand-200 dark:hover:bg-brand-800"
+          : "rounded-lg px-3 py-2 text-sm font-semibold text-ink transition hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-hover dark:hover:text-brand-300"
       }
     >
       {label}

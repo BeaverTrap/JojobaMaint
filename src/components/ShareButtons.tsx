@@ -77,7 +77,7 @@ export default function ShareButtons({
         {group && (
           <ActionButton
             onClick={shareInGroup}
-            className="mt-2 border-2 border-[#1877F2] bg-white text-[#1877F2] hover:bg-blue-50 dark:bg-surface"
+            className="mt-2 border-2 border-brand-600 bg-surface text-brand-300 hover:bg-hover dark:border-brand-500 dark:bg-hover"
             icon={<FacebookIcon size={20} />}
             label="Our Facebook group"
             fullWidth
@@ -90,7 +90,7 @@ export default function ShareButtons({
 
   return (
     <section
-      className={`rounded-2xl border-2 border-brand-200 bg-brand-50/80 px-5 py-5 dark:border-brand-800 dark:bg-brand-950/30 ${className}`}
+      className={`rounded-2xl border-2 border-brand-200 bg-brand-50/80 px-5 py-5 dark:border-brand-700 dark:bg-accent ${className}`}
       aria-label="Share with neighbors"
     >
       <h2 className="text-xl font-bold text-ink">Share with neighbors</h2>
@@ -110,7 +110,7 @@ export default function ShareButtons({
         {group && (
           <ActionButton
             onClick={shareInGroup}
-            className="border-2 border-[#1877F2] bg-white text-[#1877F2] hover:bg-blue-50 dark:bg-surface dark:hover:bg-hover"
+            className="border-2 border-brand-600 bg-surface text-brand-300 hover:bg-hover dark:border-brand-500 dark:bg-hover"
             icon={<FacebookIcon size={22} />}
             label="Post in our Facebook group"
             fullWidth

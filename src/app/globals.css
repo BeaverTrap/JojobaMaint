@@ -1,33 +1,34 @@
 @import "tailwindcss";
 
 /*
-  Jojoba Hills Maintenance — clean, professional theme with light + dark modes.
-  Dark mode is opt-in via a `.dark` class on <html> (toggled in the navbar and
-  set before paint by an inline script in the root layout).
+  Jojoba Hills Maintenance — light + dark themes.
+  Dark mode: true black canvas, near-black cards, dark green accents.
 */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Semantic surface colors — these flip between light and dark. */
 :root {
-  --canvas: #f6f7f5; /* page background */
-  --surface: #ffffff; /* cards, inputs, navbar */
-  --ink: #1a201c; /* primary text */
-  --muted: #6b7280; /* secondary text */
-  --line: #eceeec; /* borders / dividers */
-  --hover: #f3f4f3; /* hover backgrounds */
+  --canvas: #f6f7f5;
+  --surface: #ffffff;
+  --ink: #1a201c;
+  --muted: #6b7280;
+  --line: #eceeec;
+  --hover: #f3f4f3;
+  --accent: #f1f7f2;
+  --accent-ink: #25553a;
 }
 
 .dark {
-  --canvas: #0e1211;
-  --surface: #161b19;
-  --ink: #e9ede9;
-  --muted: #9ba49d;
-  --line: #272e2a;
-  --hover: #1f2623;
+  --canvas: #000000;
+  --surface: #0a0c0b;
+  --ink: #e8ece9;
+  --muted: #93a099;
+  --line: #1c2e24;
+  --hover: #111614;
+  --accent: #0f1a14;
+  --accent-ink: #8fc29e;
 }
 
 @theme inline {
-  /* Brand palette (constant across themes). Tweak to match the park. */
   --color-brand-50: #f1f7f2;
   --color-brand-100: #dcede0;
   --color-brand-200: #bbdcc3;
@@ -38,14 +39,16 @@
   --color-brand-700: #25553a;
   --color-brand-800: #204430;
   --color-brand-900: #1b3829;
+  --color-brand-950: #0f1f17;
 
-  /* Semantic tokens map to the switching CSS variables above. */
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-hover: var(--hover);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -62,7 +65,73 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Long-form article typography (rendered from Markdown). */
+/* ── Dark mode: remap light Tailwind washes to dark surfaces ── */
+.dark .bg-white {
+  background-color: var(--color-surface) !important;
+}
+
+.dark .bg-brand-50,
+.dark .bg-brand-50\/80 {
+  background-color: var(--color-accent) !important;
+}
+
+.dark .bg-brand-100 {
+  background-color: var(--color-brand-900) !important;
+}
+
+.dark .hover\:bg-brand-50:hover {
+  background-color: var(--color-hover) !important;
+}
+
+.dark .hover\:bg-brand-100:hover {
+  background-color: var(--color-brand-900) !important;
+}
+
+.dark .hover\:bg-blue-50:hover {
+  background-color: var(--color-hover) !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: var(--color-hover) !important;
+}
+
+.dark .bg-red-50 {
+  background-color: #1a0f0f !important;
+}
+
+.dark .bg-amber-50 {
+  background-color: #1a1608 !important;
+}
+
+.dark .text-brand-700,
+.dark .text-brand-800 {
+  color: var(--color-brand-300) !important;
+}
+
+.dark .border-brand-200 {
+  border-color: var(--color-brand-800) !important;
+}
+
+.dark .border-red-200 {
+  border-color: #5c2a2a !important;
+}
+
+.dark .text-red-600,
+.dark .text-red-700 {
+  color: #f0a8a8 !important;
+}
+
+.dark .text-amber-800 {
+  color: #e8c96a !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  --tw-ring-color: color-mix(in srgb, var(--color-brand-600) 55%, transparent);
+}
+
+/* Long-form article typography */
 .article-prose {
   max-width: 42rem;
   font-size: 1.0625rem;
@@ -114,13 +183,17 @@ body {
 }
 
 .article-prose .article-li::marker {
-  color: var(--color-brand-600);
+  color: var(--color-brand-500);
+}
+
+.dark .article-prose .article-li::marker {
+  color: var(--color-brand-400);
 }
 
 .article-prose .article-quote {
   margin: 1.25rem 0;
   padding-left: 1rem;
-  border-left: 3px solid var(--color-brand-400);
+  border-left: 3px solid var(--color-brand-500);
   color: var(--color-muted);
   font-style: italic;
 }
