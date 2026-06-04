@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Jojoba Hills Maintenance",
     short_name: "JH Maint",
     description:
-      "Logbook, team feed, and project galleries for the Jojoba Hills maintenance department.",
+      "Logbook and maintenance feed for the Jojoba Hills maintenance department.",
     start_url: "/",
     scope: "/",
     display: "standalone",

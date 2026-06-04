@@ -19,7 +19,7 @@ export default async function LoginPage({
             Jojoba Hills Maintenance
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Digital logbook, team feed &amp; project galleries
+            Digital logbook &amp; maintenance feed
           </p>
         </div>
 
@@ -29,7 +29,7 @@ export default async function LoginPage({
           </h2>
           <p className="mb-6 text-center text-sm text-muted">
             Posting is limited to authorized maintenance staff. Anyone can
-            browse the feed and galleries without signing in.
+            browse the feed without signing in.
           </p>
 
           {error && (

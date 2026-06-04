@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Refreshes the Supabase auth session (rotating cookies) on every request.
  *
- * The feed and galleries are fully public, so the only gate here is /admin,
+ * The feed is fully public, so the only gate here is /admin,
  * which requires a signed-in user. Whether that user is *authorized* (on the
  * staff whitelist) is enforced in the /admin layout, which can read the
  * profile. Returns a NextResponse that MUST be returned from the proxy so

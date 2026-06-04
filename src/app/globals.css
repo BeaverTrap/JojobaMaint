@@ -62,15 +62,6 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Masonry layout for the gallery image grid (CSS columns). */
-.masonry {
-  column-gap: 1rem;
-}
-.masonry > * {
-  break-inside: avoid;
-  margin-bottom: 1rem;
-}
-
 /* Long-form article typography (rendered from Markdown). */
 .article-prose {
   max-width: 42rem;

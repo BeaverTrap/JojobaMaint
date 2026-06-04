@@ -53,21 +53,6 @@ export interface PostCategory {
   position: number;
 }
 
-export interface Gallery {
-  id: string;
-  name: string;
-  description: string | null;
-  author_id: string;
-  created_at: string;
-}
-
-export interface GalleryImage {
-  id: string;
-  gallery_id: string;
-  image_url: string;
-  created_at: string;
-}
-
 // Convenience shapes for joined queries used in the UI.
 export type PostAuthor = Pick<Profile, "id" | "display_name" | "avatar_url">;
 
@@ -89,12 +74,6 @@ export function postImageUrls(post: {
     .map((i) => i.image_url);
   return post.image_url ? [post.image_url, ...fromTable] : fromTable;
 }
-
-export type GalleryWithMeta = Gallery & {
-  author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
-  image_count: number;
-  cover_image_url: string | null;
-};
 
 export interface ArticleCategory {
   slug: string;

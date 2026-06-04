@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Jojoba Hills Maintenance",
   description:
-    "Digital logbook, team feed, and project photo galleries for the Jojoba Hills SKP Resort maintenance department.",
+    "Digital logbook and maintenance feed for the Jojoba Hills SKP Resort maintenance department.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

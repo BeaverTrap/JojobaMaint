@@ -1,6 +1,6 @@
 # Jojoba Hills Maintenance
 
-A modern, responsive web app for the Jojoba Hills SKP Resort maintenance department. It works as a **digital logbook**, an **internal social feed**, and a **project photo gallery** — all gated behind Google sign-in.
+A modern, responsive web app for the Jojoba Hills SKP Resort maintenance department. It works as a **digital logbook** and **maintenance feed** — public to browse, staff-only to post.
 
 **Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Auth + Postgres + Storage) · Vercel.
 
@@ -8,13 +8,12 @@ A modern, responsive web app for the Jojoba Hills SKP Resort maintenance departm
 
 ## Features
 
-- **Public portfolio** — anyone can browse the feed (`/`) and galleries (`/galleries`) without logging in.
+- **Public portfolio** — anyone can browse the feed (`/`) and articles without logging in.
 - **Staff-only posting** — a protected `/admin` dashboard holds the upload forms. Access is limited to whitelisted employees; unauthorized visitors are redirected home.
 - **Google login** via Supabase Auth, with a server-controlled email whitelist (`is_authorized`).
-- **Feed** — social-media-style cards with photo, description, author, and timestamp.
-- **Real-time search** — instantly filters post descriptions so the feed doubles as a knowledge base.
-- **Quick uploader** — short description + one photo (camera roll or PC) straight to the feed.
-- **Gallery Manager** — named project albums with a **masonry grid** and **multi-image drag-and-drop** upload.
+- **Feed** — post cards with title, details, multiple photos, section, and optional location.
+- **Real-time search** — filters posts by title, details, and location.
+- **Staff uploader** — title, body, section, job continuation link, and multi-photo upload from phone or PC.
 - **Client-side image compression** — every image is squeezed to **~300 KB** (WebP) before upload to stay within the Supabase Free Tier's 1 GB.
 - **Branding placeholders** — drop `logo.png` / `mascot.png` into `public/assets/` and they appear automatically.
 
@@ -78,7 +77,7 @@ supabase db push                                  # applies everything in supaba
 2. Paste the contents of each migration file (oldest version first), running each in turn.
 
 After running, confirm in the dashboard:
-- **Table Editor:** `profiles`, `posts`, `galleries`, `gallery_images`
+- **Table Editor:** `profiles`, `posts`, `post_images`, `articles`, …
 - **Storage:** a public bucket named `images`
 
 ## 5. Enable Google authentication
@@ -111,7 +110,7 @@ How it becomes active:
 - On **each login**, the app calls a secure `sync_my_authorization()` function that flips
   the user's `profiles.is_authorized` flag based on this list. So you can whitelist
   someone before *or* after their first login — they just sign out and back in to refresh.
-- Authorized users then see **"New post"**, **"Manage galleries"**, and the **Dashboard** link,
+- Authorized users then see **"New post"** and the **Dashboard** link,
   and can reach `/admin`. Everyone else is redirected to the public feed.
 
 To revoke access, delete the email row and update the flag:
@@ -164,13 +163,11 @@ src/
     (public)/               # PUBLIC area (no auth) — shares the Navbar layout
       layout.tsx
       page.tsx              # "/"            feed (read-only for visitors)
-      galleries/page.tsx    # "/galleries"   album list
-      galleries/[id]/page.tsx  # gallery view (masonry, read-only)
+      articles/             # long-form guides
     admin/                  # PROTECTED area — guarded by layout (auth + is_authorized)
       layout.tsx            # redirects unauthorized users to "/"
       page.tsx              # post uploader
-      galleries/page.tsx    # create + manage galleries
-      galleries/[id]/page.tsx  # multi-image uploader + photos
+      articles/             # article CRUD
     auth/
       callback/route.ts     # OAuth exchange + whitelist sync
       signout/route.ts
