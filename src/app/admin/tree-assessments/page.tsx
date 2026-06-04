@@ -36,10 +36,7 @@ export default async function AdminTreeAssessmentsPage() {
           <h1 className="mt-2 text-xl font-bold tracking-tight text-ink">
             Landscaping assessments
           </h1>
-          <p className="text-sm text-muted">
-            Structured landscaping posts (lot evaluations). Published items also
-            appear on the feed.
-          </p>
+          <p className="text-sm text-muted">Lot evaluations and tree work.</p>
         </div>
         <Link
           href="/admin?area=landscaping&format=structured"

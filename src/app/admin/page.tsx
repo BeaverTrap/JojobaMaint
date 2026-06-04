@@ -63,72 +63,43 @@ export default async function AdminDashboardPage({
   }[];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-ink">Create</h1>
-        <p className="text-sm text-muted">
-          Pick landscaping or maintenance, then use the toggle for a quick post or
-          a structured one. Everything goes to the feed.
-        </p>
-      </div>
+    <div className="space-y-5">
+      <h1 className="text-xl font-bold tracking-tight text-ink">Create</h1>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <AreaChoice
           href="/admin?area=landscaping"
           active={activeArea === "landscaping"}
           title="Landscaping"
-          description="Grounds, trees, lot work"
         />
         <AreaChoice
           href="/admin?area=maintenance"
           active={activeArea === "maintenance"}
           title="Maintenance"
-          description="Daily work, ponds, projects"
         />
-      </div>
-
-      {activeArea ? (
-        <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
-          <h2 className="text-lg font-semibold text-ink">
-            {activeArea === "landscaping" ? "Landscaping" : "Maintenance"}
-          </h2>
-          <div className="mt-4">
-            <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
-              <ComposeArea
-                key={activeArea}
-                area={activeArea}
-                initialFormat={format}
-                categories={categories}
-                recentPosts={recentPosts}
-                treeConcerns={treeConcerns}
-                maintenanceWorkTypes={maintenanceWorkTypes}
-                maintenanceIssueTypes={maintenanceIssueTypes}
-              />
-            </Suspense>
-          </div>
-        </section>
-      ) : (
-        <p className="text-sm text-muted">
-          Choose landscaping or maintenance above, or write an article below.
-        </p>
-      )}
-
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-            Article
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Long-form guides — also on the feed.
-          </p>
-        </div>
         <AreaChoice
           href="/admin/articles/new"
           active={false}
           title="Article"
-          description="Step-by-step guide or reference"
         />
-      </section>
+      </div>
+
+      {activeArea && (
+        <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
+          <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+            <ComposeArea
+              key={activeArea}
+              area={activeArea}
+              initialFormat={format}
+              categories={categories}
+              recentPosts={recentPosts}
+              treeConcerns={treeConcerns}
+              maintenanceWorkTypes={maintenanceWorkTypes}
+              maintenanceIssueTypes={maintenanceIssueTypes}
+            />
+          </Suspense>
+        </section>
+      )}
     </div>
   );
 }
@@ -137,30 +108,21 @@ function AreaChoice({
   href,
   active,
   title,
-  description,
 }: {
   href: string;
   active: boolean;
   title: string;
-  description: string;
 }) {
   return (
     <Link
       href={href}
       className={
         active
-          ? "rounded-2xl border-2 border-brand-600 bg-brand-600 p-4 text-white shadow-sm"
-          : "rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:bg-hover"
+          ? "flex min-h-[3.25rem] items-center justify-center rounded-2xl border-2 border-brand-600 bg-brand-600 px-4 py-3 text-center font-semibold text-white shadow-sm"
+          : "flex min-h-[3.25rem] items-center justify-center rounded-2xl border border-line bg-surface px-4 py-3 text-center font-semibold text-ink shadow-sm transition hover:bg-hover"
       }
     >
-      <p className="font-semibold">{title}</p>
-      <p
-        className={
-          active ? "mt-1 text-sm text-brand-100" : "mt-1 text-sm text-muted"
-        }
-      >
-        {description}
-      </p>
+      {title}
     </Link>
   );
 }

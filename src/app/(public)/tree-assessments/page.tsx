@@ -39,13 +39,7 @@ export default async function TreeAssessmentsPage() {
           <h1 className="text-xl font-bold tracking-tight text-ink">
             Landscaping assessments
           </h1>
-          <p className="text-sm text-muted">
-            Structured landscaping posts (lot evaluations). Also on the{" "}
-            <Link href="/" className="font-medium text-brand-700 hover:underline">
-              feed
-            </Link>
-            .
-          </p>
+          <p className="text-sm text-muted">Lot evaluations and tree work.</p>
         </div>
         {isAuthorized && (
           <Link

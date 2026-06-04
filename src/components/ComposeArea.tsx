@@ -57,14 +57,14 @@ export default function ComposeArea({
 
   const postCategory = area === "landscaping" ? "landscaping" : "maintenance";
 
+  const areaLabel = area === "landscaping" ? "Landscaping" : "Maintenance";
+
   return (
-    <div className="space-y-4">
-      <ComposeFormatToggle value={format} onChange={onFormatChange} />
-      <p className="text-sm text-muted">
-        {format === "quick"
-          ? "Short update with photos — goes straight to the feed."
-          : "More fields (site, type, resolution, etc.) — still appears on the feed."}
-      </p>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-ink">{areaLabel}</h2>
+        <ComposeFormatToggle value={format} onChange={onFormatChange} />
+      </div>
 
       {format === "quick" ? (
         <PostForm

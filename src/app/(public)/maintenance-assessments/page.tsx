@@ -40,12 +40,7 @@ export default async function MaintenanceAssessmentsPage() {
             Maintenance assessments
           </h1>
           <p className="text-sm text-muted">
-            Structured maintenance posts (ponds, halls, big projects, etc.). Also
-            on the{" "}
-            <Link href="/" className="font-medium text-brand-700 hover:underline">
-              feed
-            </Link>
-            .
+            Ponds, halls, big projects, and site work.
           </p>
         </div>
         {isAuthorized && (

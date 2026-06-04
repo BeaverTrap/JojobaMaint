@@ -37,8 +37,7 @@ export default async function AdminMaintenanceAssessmentsPage() {
             Maintenance assessments
           </h1>
           <p className="text-sm text-muted">
-            Structured maintenance posts (ponds, halls, big projects, etc.).
-            Published items also appear on the feed.
+            Ponds, halls, big projects, and site work.
           </p>
         </div>
         <Link
