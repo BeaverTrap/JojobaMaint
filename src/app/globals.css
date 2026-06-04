@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
+/*
+  Jojoba Hills Maintenance — clean, professional theme with light + dark modes.
+  Dark mode is opt-in via a `.dark` class on <html> (toggled in the navbar and
+  set before paint by an inline script in the root layout).
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Semantic surface colors — these flip between light and dark. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #f6f7f5; /* page background */
+  --surface: #ffffff; /* cards, inputs, navbar */
+  --ink: #1a201c; /* primary text */
+  --muted: #6b7280; /* secondary text */
+  --line: #eceeec; /* borders / dividers */
+  --hover: #f3f4f3; /* hover backgrounds */
+}
+
+.dark {
+  --canvas: #0e1211;
+  --surface: #161b19;
+  --ink: #e9ede9;
+  --muted: #9ba49d;
+  --line: #272e2a;
+  --hover: #1f2623;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Brand palette (constant across themes). Tweak to match the park. */
+  --color-brand-50: #f1f7f2;
+  --color-brand-100: #dcede0;
+  --color-brand-200: #bbdcc3;
+  --color-brand-300: #8fc29e;
+  --color-brand-400: #5da176;
+  --color-brand-500: #3d8459;
+  --color-brand-600: #2d6a47;
+  --color-brand-700: #25553a;
+  --color-brand-800: #204430;
+  --color-brand-900: #1b3829;
+
+  /* Semantic tokens map to the switching CSS variables above. */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-hover: var(--hover);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Masonry layout for the gallery image grid (CSS columns). */
+.masonry {
+  column-gap: 1rem;
+}
+.masonry > * {
+  break-inside: avoid;
+  margin-bottom: 1rem;
 }
