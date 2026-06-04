@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,6 +17,23 @@ export const metadata: Metadata = {
   title: "Jojoba Hills Maintenance",
   description:
     "Digital logbook, team feed, and project photo galleries for the Jojoba Hills SKP Resort maintenance department.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "JH Maint",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/assets/logo.png",
+    apple: "/assets/mascot.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#2d6a47" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e1211" },
+  ],
 };
 
 // Runs before paint to apply the saved (or system) theme and avoid a flash.
@@ -45,7 +63,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ServiceWorkerRegister />
+        {children}
+      </body>
     </html>
   );
 }
