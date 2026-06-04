@@ -1,50 +1,52 @@
-/**
- * Renders article body text pasted from Google Docs or typed in plain text.
- * Supports simple structure: blank lines = paragraphs, ## headings, - bullets.
- */
-export default function ArticleBody({ body }: { body: string }) {
-  const blocks = body.split(/\n\n+/).filter((b) => b.trim());
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { prepareArticleBody } from "@/lib/article-format";
 
-  if (blocks.length === 0) {
+export default function ArticleBody({ body }: { body: string }) {
+  const markdown = prepareArticleBody(body);
+
+  if (!markdown) {
     return <p className="text-muted">No content.</p>;
   }
 
   return (
-    <div className="prose-article space-y-4 text-[15px] leading-relaxed text-ink">
-      {blocks.map((block, i) => (
-        <Block key={i} text={block.trim()} />
-      ))}
+    <div className="article-prose">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => (
+            <h2 className="article-h2 mt-8 first:mt-0">{children}</h2>
+          ),
+          h2: ({ children }) => (
+            <h2 className="article-h2 mt-8 first:mt-0">{children}</h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="article-h3 mt-6">{children}</h3>
+          ),
+          p: ({ children }) => <p className="article-p">{children}</p>,
+          ul: ({ children }) => <ul className="article-ul">{children}</ul>,
+          ol: ({ children }) => <ol className="article-ol">{children}</ol>,
+          li: ({ children }) => <li className="article-li">{children}</li>,
+          strong: ({ children }) => (
+            <strong className="font-semibold text-ink">{children}</strong>
+          ),
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              className="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {children}
+            </a>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="article-quote">{children}</blockquote>
+          ),
+        }}
+      >
+        {markdown}
+      </ReactMarkdown>
     </div>
   );
-}
-
-function Block({ text }: { text: string }) {
-  const lines = text.split("\n");
-
-  if (lines[0]?.startsWith("## ")) {
-    return (
-      <h2 className="text-lg font-bold tracking-tight text-ink">
-        {lines[0].slice(3)}
-      </h2>
-    );
-  }
-  if (lines[0]?.startsWith("### ")) {
-    return (
-      <h3 className="text-base font-semibold text-ink">
-        {lines[0].slice(4)}
-      </h3>
-    );
-  }
-
-  if (lines.every((l) => /^[-*]\s+/.test(l.trim()))) {
-    return (
-      <ul className="list-disc space-y-1 pl-5">
-        {lines.map((l, i) => (
-          <li key={i}>{l.replace(/^[-*]\s+/, "")}</li>
-        ))}
-      </ul>
-    );
-  }
-
-  return <p className="whitespace-pre-wrap">{text}</p>;
 }

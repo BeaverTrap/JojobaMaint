@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/upload";
 import { slugify, slugWithSuffix } from "@/lib/slug";
+import {
+  htmlToMarkdown,
+  normalizeDocsPlainText,
+} from "@/lib/article-format";
+import ArticleBody from "@/components/ArticleBody";
 import type { ArticleCategory } from "@/lib/database.types";
 
 type Props =
@@ -48,8 +53,41 @@ export default function ArticleForm(props: Props) {
     isEdit ? props.initialCoverUrl : null,
   );
   const [removeCover, setRemoveCover] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function insertAtCursor(
+    textarea: HTMLTextAreaElement,
+    chunk: string,
+    replaceAll = false,
+  ) {
+    if (replaceAll) {
+      setBody(chunk);
+      return;
+    }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    setBody(body.slice(0, start) + chunk + body.slice(end));
+  }
+
+  function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const html = e.clipboardData.getData("text/html");
+    const plain = e.clipboardData.getData("text/plain");
+
+    if (html && html.length > 30 && /<[a-z][\s\S]*>/i.test(html)) {
+      e.preventDefault();
+      const md = htmlToMarkdown(html);
+      insertAtCursor(e.currentTarget, md, body.length === 0);
+      return;
+    }
+
+    if (plain && plain.includes("\n")) {
+      e.preventDefault();
+      const md = normalizeDocsPlainText(plain);
+      insertAtCursor(e.currentTarget, md, body.length === 0);
+    }
+  }
 
   function pickCover(file: File | null) {
     if (coverPreview?.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
@@ -170,18 +208,33 @@ export default function ArticleForm(props: Props) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-ink">Article body</label>
+        <div className="flex items-center justify-between gap-2">
+          <label className="text-sm font-medium text-ink">Article body</label>
+          <button
+            type="button"
+            onClick={() => setShowPreview((v) => !v)}
+            className="text-xs font-semibold text-brand-700 hover:underline"
+          >
+            {showPreview ? "Edit text" : "Preview"}
+          </button>
+        </div>
         <p className="mt-0.5 text-xs text-muted">
-          Paste from Google Docs. Use blank lines between paragraphs. Optional:{" "}
-          <code className="text-brand-700">## Heading</code>,{" "}
-          <code className="text-brand-700">- bullet</code>
+          Paste directly from Google Docs — headings, bold, and lists are kept
+          automatically.
         </p>
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={14}
-          className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 font-mono text-sm text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-        />
+        {showPreview ? (
+          <div className="mt-2 min-h-[280px] rounded-xl border border-line bg-canvas p-4">
+            <ArticleBody body={body} />
+          </div>
+        ) : (
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onPaste={handleBodyPaste}
+            rows={14}
+            className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        )}
       </div>
 
       <div>
