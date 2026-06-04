@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -12,8 +13,33 @@ import {
   postTitle,
 } from "@/lib/post-display";
 import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
+import { buildContentMetadata } from "@/lib/content-metadata";
+import ShareButtons from "@/components/ShareButtons";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: post } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  if (!post) return { title: "Post" };
+  const p = normalizePostRow(post as unknown as PostWithAuthor);
+  const images = postImageUrls(p);
+  return buildContentMetadata({
+    title: postTitle(p),
+    description: postBody(p) || postLocationLabel(p),
+    path: `/posts/${id}`,
+    imageUrl: images[0] ?? null,
+  });
+}
 
 export default async function PostDetailPage({
   params,
@@ -133,6 +159,14 @@ export default async function PostDetailPage({
           </div>
         )}
       </article>
+
+      <ShareButtons
+        content={{
+          path: `/posts/${p.id}`,
+          title: postTitle(p),
+          description: postLocationLabel(p) ?? postBody(p),
+        }}
+      />
 
       {children.length > 0 && (
         <section className="space-y-4">

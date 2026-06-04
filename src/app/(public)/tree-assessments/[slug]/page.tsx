@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -12,8 +13,32 @@ import { assessmentLocationLine } from "@/lib/tree-assessment-display";
 import ArticleBody from "@/components/ArticleBody";
 import ReferencesSection from "@/components/ReferencesSection";
 import type { TreeAssessmentWithAuthor } from "@/lib/database.types";
+import { buildContentMetadata } from "@/lib/content-metadata";
+import ShareButtons from "@/components/ShareButtons";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: row } = await supabase
+    .from("tree_assessments")
+    .select(TREE_ASSESSMENT_SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!row) return { title: "Tree assessment" };
+  const a = row as unknown as TreeAssessmentWithAuthor;
+  return buildContentMetadata({
+    title: a.title,
+    description: a.summary ?? assessmentLocationLine(a),
+    path: `/tree-assessments/${slug}`,
+    imageUrl: a.cover_image_url,
+  });
+}
 
 export default async function TreeAssessmentPage({
   params,
@@ -105,6 +130,14 @@ export default async function TreeAssessmentPage({
 
       <ArticleBody body={a.body} />
       <ReferencesSection referenceList={a.reference_list} />
+
+      <ShareButtons
+        content={{
+          path: `/tree-assessments/${a.slug}`,
+          title: a.title,
+          description: assessmentLocationLine(a),
+        }}
+      />
     </article>
   );
 }

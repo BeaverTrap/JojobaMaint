@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -8,8 +9,32 @@ import { fetchArticleCategories, ARTICLE_SELECT } from "@/lib/articles";
 import ArticleBody from "@/components/ArticleBody";
 import ReferencesSection from "@/components/ReferencesSection";
 import type { ArticleWithAuthor } from "@/lib/database.types";
+import { buildContentMetadata } from "@/lib/content-metadata";
+import ShareButtons from "@/components/ShareButtons";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: article } = await supabase
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!article) return { title: "Article" };
+  const a = article as unknown as ArticleWithAuthor;
+  return buildContentMetadata({
+    title: a.title,
+    description: a.summary ?? a.body.slice(0, 160),
+    path: `/articles/${slug}`,
+    imageUrl: a.cover_image_url,
+  });
+}
 
 export default async function ArticlePage({
   params,
@@ -86,6 +111,14 @@ export default async function ArticlePage({
 
       <ArticleBody body={a.body} />
       <ReferencesSection referenceList={a.reference_list} />
+
+      <ShareButtons
+        content={{
+          path: `/articles/${a.slug}`,
+          title: a.title,
+          description: a.summary,
+        }}
+      />
     </article>
   );
 }
