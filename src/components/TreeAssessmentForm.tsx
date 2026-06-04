@@ -10,9 +10,10 @@ import {
   htmlToMarkdown,
   normalizeDocsPlainText,
 } from "@/lib/article-format";
-import { markdownImageSnippet } from "@/lib/article-images";
 import { treeAssessmentStorageFolder } from "@/lib/tree-assessments";
+import { uploadInlineImageMarkdown } from "@/lib/inline-images";
 import ArticleBody from "@/components/ArticleBody";
+import InlineImagePicker from "@/components/InlineImagePicker";
 import {
   RESOLUTION_STATUS_OPTIONS,
   type TreeAssessmentConcern,
@@ -53,7 +54,6 @@ export default function TreeAssessmentForm(props: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const inlineImageRef = useRef<HTMLInputElement>(null);
 
   const isEdit = props.mode === "edit";
   const defaultConcern =
@@ -131,29 +131,34 @@ export default function TreeAssessmentForm(props: Props) {
   }
 
   async function handleInlineImage(files: FileList | null) {
-    const file = files?.[0];
-    if (!file) return;
+    if (!files?.length) return;
     if (showPreview) {
-      setError("Switch to “Edit text” and click where you want the photo first.");
+      setError("Switch to “Edit text” and click where you want the photos first.");
       return;
     }
     setInsertingImage(true);
     setError(null);
     try {
       const supabase = createClient();
-      const url = await uploadImage(
+      const { markdown, uploaded, skipped } = await uploadInlineImageMarkdown(
         supabase,
-        file,
+        files,
         treeAssessmentStorageFolder(draftStorageSlug()),
       );
-      insertAtCursor(bodyRef.current, markdownImageSnippet(url));
+      if (uploaded === 0) {
+        setError("Please choose image files only.");
+        return;
+      }
+      insertAtCursor(bodyRef.current, markdown);
+      if (skipped > 0) {
+        setError(`${skipped} file(s) skipped — only images are allowed.`);
+      }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not upload that image.",
+        err instanceof Error ? err.message : "Could not upload those images.",
       );
     } finally {
       setInsertingImage(false);
-      if (inlineImageRef.current) inlineImageRef.current.value = "";
     }
   }
 
@@ -390,22 +395,16 @@ export default function TreeAssessmentForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Paste notes or use “Insert photo here” where images should appear in
-          the write-up.
+          Paste notes or insert several photos at once — they appear as a gallery
+          in the write-up. On Android: checkmark each photo, then Done.
         </p>
         {!showPreview && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink transition hover:bg-hover">
-              {insertingImage ? "Uploading…" : "Insert photo here"}
-              <input
-                ref={inlineImageRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                disabled={insertingImage}
-                onChange={(e) => handleInlineImage(e.target.files)}
-              />
-            </label>
+          <div className="mt-2">
+            <InlineImagePicker
+              onFiles={handleInlineImage}
+              disabled={submitting}
+              busy={insertingImage}
+            />
           </div>
         )}
         {showPreview ? (

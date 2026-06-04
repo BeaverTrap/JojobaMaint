@@ -49,7 +49,11 @@ export default function Feed({
     <div className="space-y-4">
       <SearchBar value={query} onChange={setQuery} />
 
-      {/* Category filter tabs */}
+      <p className="text-xs text-muted">
+        <span className="font-semibold text-ink">All</span> shows every post
+        regardless of section.
+      </p>
+
       <div className="flex flex-wrap gap-2">
         <Tab
           label="All"

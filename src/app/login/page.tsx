@@ -29,7 +29,8 @@ export default async function LoginPage({
           </h2>
           <p className="mb-6 text-center text-sm text-muted">
             Posting is limited to authorized maintenance staff. Anyone can
-            browse the feed, maintenance and tree assessments, and articles
+            browse the feed, landscaping and maintenance assessments, and
+            articles
             without signing in.
           </p>
 

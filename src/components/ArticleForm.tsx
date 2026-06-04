@@ -10,11 +10,10 @@ import {
   htmlToMarkdown,
   normalizeDocsPlainText,
 } from "@/lib/article-format";
-import {
-  articleStorageFolder,
-  markdownImageSnippet,
-} from "@/lib/article-images";
+import { articleStorageFolder } from "@/lib/article-images";
+import { uploadInlineImageMarkdown } from "@/lib/inline-images";
 import ArticleBody from "@/components/ArticleBody";
+import InlineImagePicker from "@/components/InlineImagePicker";
 import type { ArticleCategory } from "@/lib/database.types";
 
 type Props =
@@ -42,7 +41,6 @@ export default function ArticleForm(props: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const inlineImageRef = useRef<HTMLInputElement>(null);
 
   const isEdit = props.mode === "edit";
 
@@ -98,10 +96,9 @@ export default function ArticleForm(props: Props) {
   }
 
   async function handleInlineImage(files: FileList | null) {
-    const file = files?.[0];
-    if (!file) return;
+    if (!files?.length) return;
     if (showPreview) {
-      setError("Switch to “Edit text” and click where you want the photo first.");
+      setError("Switch to “Edit text” and click where you want the photos first.");
       return;
     }
 
@@ -110,20 +107,25 @@ export default function ArticleForm(props: Props) {
 
     try {
       const supabase = createClient();
-      const url = await uploadImage(
+      const { markdown, uploaded, skipped } = await uploadInlineImageMarkdown(
         supabase,
-        file,
+        files,
         articleStorageFolder(draftStorageSlug()),
       );
-      const snippet = markdownImageSnippet(url);
-      insertAtCursor(bodyRef.current, snippet);
+      if (uploaded === 0) {
+        setError("Please choose image files only.");
+        return;
+      }
+      insertAtCursor(bodyRef.current, markdown);
+      if (skipped > 0) {
+        setError(`${skipped} file(s) skipped — only images are allowed.`);
+      }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not upload that image.",
+        err instanceof Error ? err.message : "Could not upload those images.",
       );
     } finally {
       setInsertingImage(false);
-      if (inlineImageRef.current) inlineImageRef.current.value = "";
     }
   }
 
@@ -280,25 +282,18 @@ export default function ArticleForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Paste from Google Docs, then click in the text where a photo should go
-          and use “Insert photo here”. Headings, bold, and lists are kept
-          automatically.
+          Paste from Google Docs, then insert several photos at your cursor.
+          Headings, bold, and lists are kept automatically.
         </p>
         {!showPreview && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink transition hover:bg-hover">
-              {insertingImage ? "Uploading…" : "Insert photo here"}
-              <input
-                ref={inlineImageRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                disabled={insertingImage}
-                onChange={(e) => handleInlineImage(e.target.files)}
-              />
-            </label>
+            <InlineImagePicker
+              onFiles={handleInlineImage}
+              disabled={submitting}
+              busy={insertingImage}
+            />
             <span className="text-xs text-muted">
-              Places the image at your cursor in the article
+              Gallery inserts at your cursor
             </span>
           </div>
         )}

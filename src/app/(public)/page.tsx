@@ -30,11 +30,10 @@ export default async function FeedPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink">
-            Maintenance Feed
-          </h1>
+          <h1 className="text-xl font-bold tracking-tight text-ink">Feed</h1>
           <p className="text-sm text-muted">
-            Documenting the work that keeps Jojoba Hills running.
+            All logged jobs in one place — maintenance, landscaping, pond,
+            projects, and more. Use section tabs to filter.
           </p>
         </div>
         {isAuthorized && (
