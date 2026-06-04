@@ -54,15 +54,27 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-html,
-body {
+html {
   height: 100%;
+  overflow-x: clip;
 }
 
 body {
+  min-height: 100%;
+  overflow-x: clip;
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Comfortable touch targets on phones */
+@media (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* ── Dark mode: remap light Tailwind washes to dark surfaces ── */

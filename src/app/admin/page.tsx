@@ -40,7 +40,7 @@ export default async function AdminDashboardPage({
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <ComposeChoice
           href="/admin?type=maintenance"
           active={type === "maintenance"}

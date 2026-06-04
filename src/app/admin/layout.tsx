@@ -16,7 +16,7 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <Navbar profile={profile} isAuthorized={isAuthorized} isLoggedIn />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:py-6 lg:pb-6">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
           <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
           Staff dashboard

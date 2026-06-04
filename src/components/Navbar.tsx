@@ -2,7 +2,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { Logo } from "@/components/Brand";
 import ThemeToggle from "@/components/ThemeToggle";
+import MobileBottomNav from "@/components/MobileBottomNav";
+import MobileMenu from "@/components/MobileMenu";
 import type { Profile } from "@/lib/database.types";
+
+const NAV_LINKS = [
+  { href: "/", label: "Feed" },
+  { href: "/tree-assessments", label: "Landscaping" },
+  { href: "/maintenance-assessments", label: "Maintenance" },
+  { href: "/articles", label: "Articles" },
+] as const;
 
 export default function Navbar({
   profile,
@@ -14,57 +23,82 @@ export default function Navbar({
   isLoggedIn: boolean;
 }) {
   const displayName = profile?.display_name ?? "Member";
+  const menuLinks = [
+    ...NAV_LINKS,
+    ...(isAuthorized
+      ? [{ href: "/admin", label: "Create / dashboard" }]
+      : []),
+  ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur dark:bg-black/95">
-      <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        {/* Logo in the top-left, links back to the feed (home). */}
-        <Link href="/" className="shrink-0" aria-label="Go to feed">
-          <Logo size={40} />
-        </Link>
+    <>
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur dark:bg-black/95">
+        <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-3 sm:px-4">
+          <Link href="/" className="shrink-0" aria-label="Go to feed">
+            <Logo size={36} />
+          </Link>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          <NavLink href="/" label="Feed" />
-          <NavLink href="/tree-assessments" label="Landscaping" />
-          <NavLink href="/maintenance-assessments" label="Maintenance" />
-          <NavLink href="/articles" label="Articles" />
+          {/* Desktop */}
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-0.5 lg:flex">
+            {NAV_LINKS.map((item) => (
+              <NavLink key={item.href} href={item.href} label={item.label} />
+            ))}
+            {isAuthorized && (
+              <NavLink href="/admin" label="Dashboard" highlight />
+            )}
+            <div className="mx-1 h-6 w-px bg-line" />
+            <ThemeToggle />
+            {isLoggedIn ? (
+              <>
+                <div className="flex items-center gap-2 pl-1">
+                  <Avatar
+                    src={profile?.avatar_url ?? null}
+                    name={displayName}
+                  />
+                  <span className="max-w-[12ch] truncate text-sm font-medium text-ink">
+                    {displayName}
+                  </span>
+                </div>
+                <form action="/auth/signout" method="post">
+                  <button
+                    type="submit"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:bg-hover hover:text-ink"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              >
+                Staff sign in
+              </Link>
+            )}
+          </div>
 
-          {isAuthorized && (
-            <NavLink href="/admin" label="Dashboard" highlight />
-          )}
+          {/* Mobile header: optional quick new + overflow menu */}
+          <div className="flex shrink-0 items-center gap-2 lg:hidden">
+            {isAuthorized && (
+              <Link
+                href="/admin"
+                className="rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white"
+              >
+                + New
+              </Link>
+            )}
+            <MobileMenu
+              links={menuLinks}
+              isLoggedIn={isLoggedIn}
+              displayName={displayName}
+            />
+          </div>
+        </nav>
+      </header>
 
-          <div className="mx-1 hidden h-6 w-px bg-line sm:block" />
-
-          <ThemeToggle />
-
-          {isLoggedIn ? (
-            <>
-              <div className="flex items-center gap-2 pl-1">
-                <Avatar src={profile?.avatar_url ?? null} name={displayName} />
-                <span className="hidden max-w-[10ch] truncate text-sm font-medium text-ink sm:inline">
-                  {displayName}
-                </span>
-              </div>
-              <form action="/auth/signout" method="post">
-                <button
-                  type="submit"
-                  className="ml-1 rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:bg-hover hover:text-ink"
-                >
-                  Sign out
-                </button>
-              </form>
-            </>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
-            >
-              Staff sign in
-            </Link>
-          )}
-        </div>
-      </nav>
-    </header>
+      <MobileBottomNav isAuthorized={isAuthorized} />
+    </>
   );
 }
 
@@ -82,8 +116,8 @@ function NavLink({
       href={href}
       className={
         highlight
-          ? "rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 dark:bg-brand-900/80 dark:text-brand-200 dark:hover:bg-brand-800"
-          : "rounded-lg px-3 py-2 text-sm font-semibold text-ink transition hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-hover dark:hover:text-brand-300"
+          ? "shrink-0 rounded-lg bg-brand-50 px-2.5 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 dark:bg-brand-900/80 dark:text-brand-200"
+          : "shrink-0 rounded-lg px-2.5 py-2 text-sm font-semibold text-ink transition hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-hover dark:hover:text-brand-300"
       }
     >
       {label}
