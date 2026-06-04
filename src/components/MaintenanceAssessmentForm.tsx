@@ -19,6 +19,7 @@ import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
 import {
+  isTagsSchemaError,
   syncMaintenanceAssessmentTags,
   type ContentTag,
 } from "@/lib/content-tags";
@@ -309,11 +310,15 @@ export default function MaintenanceAssessmentForm(props: Props) {
         assessmentId = inserted.id;
       }
 
-      await syncMaintenanceAssessmentTags(
-        supabase,
-        assessmentId,
-        selectedTags,
-      );
+      try {
+        await syncMaintenanceAssessmentTags(
+          supabase,
+          assessmentId,
+          selectedTags,
+        );
+      } catch (tagErr) {
+        if (!isTagsSchemaError(tagErr)) throw tagErr;
+      }
 
       router.push(props.redirectTo);
       router.refresh();

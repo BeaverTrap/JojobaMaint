@@ -28,6 +28,12 @@ export default function TagPicker({
       <label className="text-sm font-medium text-ink">{label}</label>
       {hint ? <p className="mt-0.5 text-xs text-muted">{hint}</p> : null}
       <div className="mt-2 flex flex-wrap gap-2">
+        {tags.length === 0 ? (
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            Tags could not load. Refresh the page or run the database migration
+            in Supabase (see README).
+          </p>
+        ) : null}
         {tags.map((t) => {
           const on = selected.includes(t.slug);
           return (

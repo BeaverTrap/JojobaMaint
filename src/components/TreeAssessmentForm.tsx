@@ -19,6 +19,7 @@ import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
 import {
+  isTagsSchemaError,
   syncTreeAssessmentTags,
   type ContentTag,
 } from "@/lib/content-tags";
@@ -293,7 +294,11 @@ export default function TreeAssessmentForm(props: Props) {
         assessmentId = inserted.id;
       }
 
-      await syncTreeAssessmentTags(supabase, assessmentId, selectedTags);
+      try {
+        await syncTreeAssessmentTags(supabase, assessmentId, selectedTags);
+      } catch (tagErr) {
+        if (!isTagsSchemaError(tagErr)) throw tagErr;
+      }
 
       router.push(props.redirectTo);
       router.refresh();

@@ -19,6 +19,7 @@ import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
 import {
+  isTagsSchemaError,
   primaryTagSlug,
   syncArticleTags,
   type ContentTag,
@@ -238,7 +239,12 @@ export default function ArticleForm(props: Props) {
         articleId = inserted.id;
       }
 
-      await syncArticleTags(supabase, articleId, selectedTags);
+      try {
+        await syncArticleTags(supabase, articleId, selectedTags);
+      } catch (tagErr) {
+        if (!isTagsSchemaError(tagErr)) throw tagErr;
+        // Migration not applied yet — category column still holds primary tag.
+      }
 
       router.push(props.redirectTo);
       router.refresh();
@@ -277,7 +283,6 @@ export default function ArticleForm(props: Props) {
         tags={props.tags}
         selected={selectedTags}
         onChange={setSelectedTags}
-        hint="Pick all that apply — maintenance, landscaping, trees, pond, etc."
       />
 
       <div>

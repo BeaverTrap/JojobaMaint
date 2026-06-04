@@ -11,7 +11,11 @@ import {
 import MultiPhotoPicker from "@/components/MultiPhotoPicker";
 import TagPicker from "@/components/TagPicker";
 import { filterImageFiles } from "@/lib/image-accept";
-import { syncPostTags, type ContentTag } from "@/lib/content-tags";
+import {
+  isTagsSchemaError,
+  syncPostTags,
+  type ContentTag,
+} from "@/lib/content-tags";
 import type { PostCategory } from "@/lib/database.types";
 
 type ExistingImage = {
@@ -172,7 +176,11 @@ export default function PostForm({
           if (imgError) throw imgError;
         }
 
-        await syncPostTags(supabase, inserted.id, selectedTags);
+        try {
+          await syncPostTags(supabase, inserted.id, selectedTags);
+        } catch (tagErr) {
+          if (!isTagsSchemaError(tagErr)) throw tagErr;
+        }
       } else {
         if (!postId) throw new Error("Missing post id.");
 
@@ -210,7 +218,11 @@ export default function PostForm({
           if (imgError) throw imgError;
         }
 
-        await syncPostTags(supabase, postId, selectedTags);
+        try {
+          await syncPostTags(supabase, postId, selectedTags);
+        } catch (tagErr) {
+          if (!isTagsSchemaError(tagErr)) throw tagErr;
+        }
       }
 
       newImages.forEach((i) => URL.revokeObjectURL(i.preview));
