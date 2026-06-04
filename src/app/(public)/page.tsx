@@ -2,7 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import Feed from "@/components/Feed";
-import type { PostWithAuthor } from "@/lib/database.types";
+import { POST_SELECT } from "@/lib/posts";
+import type { PostWithAuthor, PostCategory } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -10,15 +11,20 @@ export default async function FeedPage() {
   const supabase = await createClient();
   const { isAuthorized } = await getCurrentUser();
 
-  const { data } = await supabase
-    .from("posts")
-    .select(
-      "id, author_id, description, image_url, created_at, author:profiles(id, display_name, avatar_url)",
-    )
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const [{ data }, { data: cats }] = await Promise.all([
+    supabase
+      .from("posts")
+      .select(POST_SELECT)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("post_categories")
+      .select("slug, label, position")
+      .order("position", { ascending: true }),
+  ]);
 
   const posts = (data ?? []) as unknown as PostWithAuthor[];
+  const categories = (cats ?? []) as PostCategory[];
 
   return (
     <div className="space-y-6">
@@ -41,7 +47,11 @@ export default async function FeedPage() {
         )}
       </div>
 
-      <Feed initialPosts={posts} />
+      <Feed
+        initialPosts={posts}
+        categories={categories}
+        canEdit={isAuthorized}
+      />
     </div>
   );
 }

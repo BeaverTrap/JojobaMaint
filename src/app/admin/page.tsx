@@ -1,7 +1,24 @@
 import Link from "next/link";
-import QuickUploader from "@/components/QuickUploader";
+import { createClient } from "@/lib/supabase/server";
+import { fetchCategories } from "@/lib/posts";
+import PostForm from "@/components/PostForm";
 
-export default function AdminDashboardPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboardPage() {
+  const supabase = await createClient();
+
+  const [categories, { data: recent }] = await Promise.all([
+    fetchCategories(supabase),
+    supabase
+      .from("posts")
+      .select("id, description")
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  const recentPosts = (recent ?? []) as { id: string; description: string }[];
+
   return (
     <div className="space-y-6">
       <div>
@@ -9,11 +26,18 @@ export default function AdminDashboardPage() {
           Create a post
         </h1>
         <p className="text-sm text-muted">
-          Log a job to the public feed. Images are compressed automatically.
+          Log a job to the public feed. Add a section, photos, and link it to a
+          previous job if it&apos;s a continuation. Images are compressed
+          automatically.
         </p>
       </div>
 
-      <QuickUploader redirectTo="/" />
+      <PostForm
+        mode="create"
+        categories={categories}
+        recentPosts={recentPosts}
+        redirectTo="/"
+      />
 
       <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-ink">Galleries</h2>

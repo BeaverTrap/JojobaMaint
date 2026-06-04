@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import MultiImageUploader from "@/components/MultiImageUploader";
+import DeleteGalleryButton from "@/components/DeleteGalleryButton";
 import type { Gallery, GalleryImage } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -75,6 +76,13 @@ export default async function AdminGalleryDetailPage({
           ))}
         </div>
       )}
+
+      <div className="border-t border-line pt-4">
+        <DeleteGalleryButton
+          galleryId={g.id}
+          imageUrls={images.map((i) => i.image_url)}
+        />
+      </div>
     </div>
   );
 }

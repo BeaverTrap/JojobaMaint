@@ -1,12 +1,22 @@
 import Image from "next/image";
+import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import type { PostWithAuthor } from "@/lib/database.types";
+import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
 
-export default function PostCard({ post }: { post: PostWithAuthor }) {
+export default function PostCard({
+  post,
+  canEdit = false,
+  categoryLabel,
+}: {
+  post: PostWithAuthor;
+  canEdit?: boolean;
+  categoryLabel?: string;
+}) {
   const authorName = post.author?.display_name ?? "Team member";
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: true,
   });
+  const images = postImageUrls(post);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
@@ -29,21 +39,77 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           <p className="text-sm font-semibold text-ink">{authorName}</p>
           <p className="text-xs text-muted">{timeAgo}</p>
         </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          {categoryLabel && (
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
+              {categoryLabel}
+            </span>
+          )}
+          {canEdit && (
+            <Link
+              href={`/admin/posts/${post.id}/edit`}
+              className="rounded-lg px-2.5 py-1 text-xs font-medium text-muted transition hover:bg-hover hover:text-ink"
+            >
+              Edit
+            </Link>
+          )}
+        </div>
       </div>
 
-      <p className="px-4 py-3 text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
-        {post.description}
-      </p>
+      {post.parent && (
+        <Link
+          href={`/posts/${post.parent.id}`}
+          className="mx-4 mt-3 flex items-center gap-1.5 rounded-lg bg-hover px-3 py-2 text-xs font-medium text-muted transition hover:text-ink"
+        >
+          <span aria-hidden>↩</span>
+          Continues:{" "}
+          <span className="truncate text-ink">{post.parent.description}</span>
+        </Link>
+      )}
 
-      {post.image_url && (
-        <div className="relative aspect-[4/3] w-full bg-canvas">
-          <Image
-            src={post.image_url}
-            alt={post.description.slice(0, 80) || "Maintenance photo"}
-            fill
-            sizes="(max-width: 768px) 100vw, 640px"
-            className="object-cover"
-          />
+      <Link href={`/posts/${post.id}`} className="block">
+        <p className="px-4 py-3 text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
+          {post.description}
+        </p>
+      </Link>
+
+      {images.length === 1 && (
+        <Link href={`/posts/${post.id}`} className="block">
+          <div className="relative aspect-[4/3] w-full bg-canvas">
+            <Image
+              src={images[0]}
+              alt={post.description.slice(0, 80) || "Maintenance photo"}
+              fill
+              sizes="(max-width: 768px) 100vw, 640px"
+              className="object-cover"
+            />
+          </div>
+        </Link>
+      )}
+
+      {images.length > 1 && (
+        <div className="grid grid-cols-2 gap-0.5">
+          {images.slice(0, 4).map((url, i) => (
+            <Link
+              key={url}
+              href={`/posts/${post.id}`}
+              className="relative aspect-square bg-canvas"
+            >
+              <Image
+                src={url}
+                alt={`Photo ${i + 1}`}
+                fill
+                sizes="(max-width: 768px) 50vw, 320px"
+                className="object-cover"
+              />
+              {i === 3 && images.length > 4 && (
+                <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-lg font-semibold text-white">
+                  +{images.length - 4}
+                </span>
+              )}
+            </Link>
+          ))}
         </div>
       )}
     </article>

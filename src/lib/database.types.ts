@@ -30,7 +30,23 @@ export interface Post {
   author_id: string;
   description: string;
   image_url: string | null;
+  category: string;
+  parent_post_id: string | null;
   created_at: string;
+}
+
+export interface PostImage {
+  id: string;
+  post_id: string;
+  image_url: string;
+  position: number;
+  created_at: string;
+}
+
+export interface PostCategory {
+  slug: string;
+  label: string;
+  position: number;
 }
 
 export interface Gallery {
@@ -49,9 +65,26 @@ export interface GalleryImage {
 }
 
 // Convenience shapes for joined queries used in the UI.
+export type PostAuthor = Pick<Profile, "id" | "display_name" | "avatar_url">;
+
 export type PostWithAuthor = Post & {
-  author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
+  author: PostAuthor | null;
+  images: Pick<PostImage, "id" | "image_url" | "position">[];
+  parent: Pick<Post, "id" | "description"> | null;
 };
+
+// All image URLs for a post, combining the legacy single image_url (older
+// posts) with the post_images rows, ordered by position.
+export function postImageUrls(post: {
+  image_url: string | null;
+  images?: Pick<PostImage, "image_url" | "position">[] | null;
+}): string[] {
+  const fromTable = (post.images ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map((i) => i.image_url);
+  return post.image_url ? [post.image_url, ...fromTable] : fromTable;
+}
 
 export type GalleryWithMeta = Gallery & {
   author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;

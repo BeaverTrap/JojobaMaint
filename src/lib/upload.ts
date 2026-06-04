@@ -35,3 +35,19 @@ export async function uploadImage(
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
+
+/**
+ * Delete an image from the `images` bucket given its public URL.
+ * Best-effort: silently ignores URLs that don't point at the bucket.
+ */
+export async function deleteImageByUrl(
+  supabase: SupabaseClient,
+  url: string,
+): Promise<void> {
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return;
+  const path = url.slice(idx + marker.length);
+  if (!path) return;
+  await supabase.storage.from(BUCKET).remove([path]);
+}
