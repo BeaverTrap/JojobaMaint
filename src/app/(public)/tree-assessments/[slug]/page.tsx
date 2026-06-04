@@ -12,6 +12,7 @@ import {
 import { assessmentLocationLine } from "@/lib/tree-assessment-display";
 import ArticleBody from "@/components/ArticleBody";
 import ReferencesSection from "@/components/ReferencesSection";
+import AssessmentResolutionSection from "@/components/AssessmentResolutionSection";
 import type { TreeAssessmentWithAuthor } from "@/lib/database.types";
 import { buildContentMetadata } from "@/lib/content-metadata";
 import ShareButtons from "@/components/ShareButtons";
@@ -137,6 +138,7 @@ export default async function TreeAssessmentPage({
       )}
 
       <ArticleBody body={a.body} />
+      <AssessmentResolutionSection assessment={a} />
       <ReferencesSection referenceList={a.reference_list} />
     </article>
   );

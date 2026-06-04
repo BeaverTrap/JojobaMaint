@@ -13,7 +13,11 @@ import {
 import { markdownImageSnippet } from "@/lib/article-images";
 import { treeAssessmentStorageFolder } from "@/lib/tree-assessments";
 import ArticleBody from "@/components/ArticleBody";
-import type { TreeAssessmentConcern } from "@/lib/database.types";
+import {
+  RESOLUTION_STATUS_OPTIONS,
+  type TreeAssessmentConcern,
+  type TreeAssessmentResolutionStatus,
+} from "@/lib/database.types";
 
 const inputClass =
   "w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100";
@@ -37,6 +41,8 @@ type Props =
       initialPlantType: string;
       initialConcernType: string;
       initialHowFound?: string;
+      initialResolutionStatus?: string;
+      initialResolutionNotes?: string;
       initialPublished: boolean;
       initialCoverUrl: string | null;
       concerns: TreeAssessmentConcern[];
@@ -75,6 +81,12 @@ export default function TreeAssessmentForm(props: Props) {
   );
   const [howFound, setHowFound] = useState(
     isEdit ? (props.initialHowFound ?? "") : "",
+  );
+  const [resolutionStatus, setResolutionStatus] = useState(
+    isEdit ? (props.initialResolutionStatus ?? "") : "",
+  );
+  const [resolutionNotes, setResolutionNotes] = useState(
+    isEdit ? (props.initialResolutionNotes ?? "") : "",
   );
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : true,
@@ -234,6 +246,10 @@ export default function TreeAssessmentForm(props: Props) {
         plant_type: plantType.trim() || null,
         concern_type: concernType,
         how_found: howFound.trim() || null,
+        resolution_status: resolutionStatus
+          ? (resolutionStatus as TreeAssessmentResolutionStatus)
+          : null,
+        resolution_notes: resolutionNotes.trim() || null,
         cover_image_url: coverUrl,
         published,
         ...(isEdit ? {} : { slug, author_id: user.id }),
@@ -406,6 +422,41 @@ export default function TreeAssessmentForm(props: Props) {
             className={`${inputClass} mt-2 resize-y`}
           />
         )}
+      </div>
+
+      <div className="rounded-xl border border-line bg-canvas/60 p-4">
+        <h3 className="text-sm font-semibold text-ink">Resolution (optional)</h3>
+        <p className="mt-0.5 text-xs text-muted">
+          Add later if needed — whether the problem was fixed and what was done.
+        </p>
+        <div className="mt-3">
+          <label className="text-sm font-medium text-ink">
+            Was it resolved?
+          </label>
+          <select
+            value={resolutionStatus}
+            onChange={(e) => setResolutionStatus(e.target.value)}
+            className={`${inputClass} mt-1`}
+          >
+            {RESOLUTION_STATUS_OPTIONS.map((o) => (
+              <option key={o.value || "none"} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mt-3">
+          <label className="text-sm font-medium text-ink">
+            How was it handled?
+          </label>
+          <textarea
+            value={resolutionNotes}
+            onChange={(e) => setResolutionNotes(e.target.value)}
+            rows={4}
+            placeholder="e.g. Removed dead limb, notified resident by phone. Monitoring for 30 days."
+            className={`${inputClass} mt-1 resize-y`}
+          />
+        </div>
       </div>
 
       <div>

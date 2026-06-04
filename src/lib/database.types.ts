@@ -118,6 +118,8 @@ export interface TreeAssessment {
   plant_type: string | null;
   concern_type: string;
   how_found: string | null;
+  resolution_status: TreeAssessmentResolutionStatus | null;
+  resolution_notes: string | null;
   cover_image_url: string | null;
   published: boolean;
   author_id: string;
@@ -128,6 +130,25 @@ export interface TreeAssessment {
 export type TreeAssessmentWithAuthor = TreeAssessment & {
   author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
 };
+
+export type TreeAssessmentResolutionStatus =
+  | "open"
+  | "resolved"
+  | "partial"
+  | "monitoring"
+  | "not-applicable";
+
+export const RESOLUTION_STATUS_OPTIONS: {
+  value: "" | TreeAssessmentResolutionStatus;
+  label: string;
+}[] = [
+  { value: "", label: "Not specified" },
+  { value: "open", label: "Still open — not resolved yet" },
+  { value: "resolved", label: "Resolved" },
+  { value: "partial", label: "Partially resolved" },
+  { value: "monitoring", label: "Monitoring (watch and wait)" },
+  { value: "not-applicable", label: "Not applicable" },
+];
 
 export const PLANT_TYPE_OPTIONS = [
   { value: "", label: "Not specified" },
