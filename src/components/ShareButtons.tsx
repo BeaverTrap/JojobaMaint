@@ -4,7 +4,7 @@ import { useState } from "react";
 import { shareUrlsFor, type ShareableContent } from "@/lib/social-share";
 
 /**
- * Large, plain-language share controls for residents (not staff workflows).
+ * Share controls for residents — readable labels, compact layout, dark-theme friendly.
  */
 export default function ShareButtons({
   content,
@@ -13,7 +13,7 @@ export default function ShareButtons({
 }: {
   content: ShareableContent;
   className?: string;
-  /** "page" = full panel on a detail page; "inline" = compact row on feed cards */
+  /** "page" = detail footer panel; "inline" = compact row on feed/index cards */
   variant?: "page" | "inline";
 }) {
   const { pageUrl, facebook, group, clipboardText } = shareUrlsFor(content);
@@ -54,35 +54,39 @@ export default function ShareButtons({
   if (variant === "inline") {
     return (
       <div
-        className={`px-4 py-4 ${className}`}
+        className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 ${className}`}
         aria-label="Share with neighbors"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <p className="text-base font-bold text-ink">Share with neighbors</p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <span className="text-xs font-medium tracking-wide text-muted">
+          Share
+        </span>
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
           <ActionButton
             onClick={shareOnFacebook}
+            size="inline"
             className="bg-[#1877F2] text-white hover:bg-[#166FE5]"
-            icon={<FacebookIcon size={20} />}
+            icon={<FacebookIcon size={14} />}
             label="Facebook"
           />
           <ActionButton
             onClick={copyLink}
-            className="border-2 border-line bg-surface text-ink hover:bg-hover"
-            icon={<CopyIcon />}
+            size="inline"
+            className="border border-line bg-surface text-ink hover:bg-hover"
+            icon={<CopyIcon size={14} />}
             label="Copy link"
           />
+          {group && (
+            <ActionButton
+              onClick={shareInGroup}
+              size="inline"
+              className="border border-brand-700/40 bg-surface text-brand-300 hover:bg-hover dark:border-brand-600/50"
+              icon={<FacebookIcon size={14} />}
+              label="Group"
+            />
+          )}
         </div>
-        {group && (
-          <ActionButton
-            onClick={shareInGroup}
-            className="mt-2 border-2 border-brand-600 bg-surface text-brand-300 hover:bg-hover dark:border-brand-500 dark:bg-hover"
-            icon={<FacebookIcon size={20} />}
-            label="Our Facebook group"
-            fullWidth
-          />
-        )}
         {status && <StatusBanner message={status} compact />}
       </div>
     );
@@ -90,61 +94,70 @@ export default function ShareButtons({
 
   return (
     <section
-      className={`rounded-2xl border-2 border-brand-200 bg-brand-50/80 px-5 py-5 dark:border-brand-700 dark:bg-accent ${className}`}
+      className={`rounded-xl border border-line bg-surface px-4 py-4 ${className}`}
       aria-label="Share with neighbors"
     >
-      <h2 className="text-xl font-bold text-ink">Share with neighbors</h2>
-      <p className="mt-2 text-base leading-relaxed text-ink/85">
-        Post this on Facebook or copy the link to paste in a message or the
-        community group.
-      </p>
+      <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+        <h2 className="text-sm font-semibold text-ink">Share with neighbors</h2>
+        <p className="text-xs leading-relaxed text-muted sm:max-w-[55%] sm:text-right">
+          Post on Facebook or copy the link for messages or the community group.
+        </p>
+      </div>
 
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <ActionButton
           onClick={shareOnFacebook}
-          className="bg-[#1877F2] text-white shadow-md hover:bg-[#166FE5]"
-          icon={<FacebookIcon size={22} />}
+          size="page"
+          className="bg-[#1877F2] text-white hover:bg-[#166FE5] sm:flex-1 sm:min-w-[10rem]"
+          icon={<FacebookIcon size={16} />}
           label="Share on Facebook"
-          fullWidth
+        />
+        <ActionButton
+          onClick={copyLink}
+          size="page"
+          className="border border-line bg-hover/50 text-ink hover:bg-hover sm:flex-1 sm:min-w-[10rem]"
+          icon={<CopyIcon size={16} />}
+          label="Copy link"
         />
         {group && (
           <ActionButton
             onClick={shareInGroup}
-            className="border-2 border-brand-600 bg-surface text-brand-300 hover:bg-hover dark:border-brand-500 dark:bg-hover"
-            icon={<FacebookIcon size={22} />}
+            size="page"
+            className="border border-brand-700/35 bg-hover/30 text-brand-300 hover:bg-hover dark:border-brand-600/45 sm:w-full"
+            icon={<FacebookIcon size={16} />}
             label="Post in our Facebook group"
-            fullWidth
           />
         )}
-        <ActionButton
-          onClick={copyLink}
-          className="border-2 border-line bg-surface text-ink hover:bg-hover"
-          icon={<CopyIcon />}
-          label="Copy link to paste"
-          fullWidth
-        />
       </div>
 
       {status && <StatusBanner message={status} />}
 
       {group ? (
-        <div className="mt-4 rounded-xl border border-line bg-surface px-4 py-4 text-base leading-relaxed text-ink">
-          <p className="font-bold">Posting in the group — 3 steps</p>
-          <ol className="mt-3 list-decimal space-y-2 pl-5">
+        <details className="group mt-3 rounded-lg border border-line/80 bg-hover/30 px-3 py-2">
+          <summary className="cursor-pointer list-none text-xs font-medium text-muted marker:content-none [&::-webkit-details-marker]:hidden">
+            <span className="text-ink/90 group-open:hidden">
+              How to post in the group
+            </span>
+            <span className="hidden text-ink/90 group-open:inline">
+              Hide steps
+            </span>
+          </summary>
+          <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-xs leading-relaxed text-muted">
             <li>
-              Tap <strong>Post in our Facebook group</strong> (we copy the link
-              for you).
+              Tap <strong className="font-medium text-ink/90">Post in our Facebook group</strong>{" "}
+              (we copy the link for you).
             </li>
             <li>
-              In Facebook, tap <strong>Write something…</strong>
+              In Facebook, tap <strong className="font-medium text-ink/90">Write something…</strong>
             </li>
             <li>
-              Press and hold in the box, then tap <strong>Paste</strong>
+              Press and hold in the box, then tap{" "}
+              <strong className="font-medium text-ink/90">Paste</strong>
             </li>
           </ol>
-        </div>
+        </details>
       ) : (
-        <p className="mt-4 text-base text-muted">
+        <p className="mt-3 text-xs text-muted">
           After you copy the link, open Facebook and paste it into any post or
           text message.
         </p>
@@ -158,24 +171,27 @@ function ActionButton({
   className,
   icon,
   label,
-  fullWidth,
+  size,
 }: {
   onClick: () => void;
   className: string;
   icon: React.ReactNode;
   label: string;
-  fullWidth?: boolean;
+  size: "page" | "inline";
 }) {
+  const sizeClasses =
+    size === "inline"
+      ? "min-h-8 gap-1.5 rounded-lg px-2.5 text-xs font-medium"
+      : "min-h-9 w-full gap-2 rounded-lg px-3 text-sm font-medium sm:w-auto";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-4 text-base font-bold transition active:scale-[0.98] ${
-        fullWidth ? "w-full" : ""
-      } ${className}`}
+      className={`inline-flex items-center justify-center transition active:scale-[0.99] ${sizeClasses} ${className}`}
     >
       {icon}
-      {label}
+      <span>{label}</span>
     </button>
   );
 }
@@ -189,8 +205,10 @@ function StatusBanner({
 }) {
   return (
     <p
-      className={`rounded-xl bg-brand-600 text-center font-semibold text-white ${
-        compact ? "mt-2 px-3 py-2 text-sm" : "mt-4 px-4 py-3 text-base"
+      className={`rounded-lg border border-brand-600/30 bg-brand-900/40 text-brand-200 ${
+        compact
+          ? "mt-1.5 w-full basis-full px-2.5 py-1.5 text-xs"
+          : "mt-3 px-3 py-2 text-sm"
       }`}
       role="status"
       aria-live="polite"
@@ -200,7 +218,7 @@ function StatusBanner({
   );
 }
 
-function FacebookIcon({ size = 20 }: { size?: number }) {
+function FacebookIcon({ size = 16 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -208,22 +226,24 @@ function FacebookIcon({ size = 20 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden
+      className="shrink-0"
     >
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
     </svg>
   );
 }
 
-function CopyIcon() {
+function CopyIcon({ size = 16 }: { size?: number }) {
   return (
     <svg
-      width={22}
-      height={22}
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
       aria-hidden
+      className="shrink-0"
     >
       <rect x="9" y="9" width="13" height="13" rx="2" />
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />

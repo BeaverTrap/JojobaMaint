@@ -116,14 +116,6 @@ export default async function TreeAssessmentPage({
         )}
       </div>
 
-      <ShareButtons
-        content={{
-          path: `/tree-assessments/${a.slug}`,
-          title: a.title,
-          description: assessmentLocationLine(a),
-        }}
-      />
-
       {a.cover_image_url && (
         <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl border border-line">
           <Image
@@ -140,6 +132,14 @@ export default async function TreeAssessmentPage({
       <ArticleBody body={a.body} />
       <AssessmentResolutionSection assessment={a} />
       <ReferencesSection referenceList={a.reference_list} />
+
+      <ShareButtons
+        content={{
+          path: `/tree-assessments/${a.slug}`,
+          title: a.title,
+          description: assessmentLocationLine(a),
+        }}
+      />
     </article>
   );
 }

@@ -158,3 +158,43 @@ export const PLANT_TYPE_OPTIONS = [
   { value: "cactus", label: "Cactus / succulent" },
   { value: "other", label: "Other plant" },
 ] as const;
+
+export interface MaintenanceAssessmentWorkType {
+  slug: string;
+  label: string;
+  position: number;
+}
+
+export interface MaintenanceAssessmentIssueType {
+  slug: string;
+  label: string;
+  position: number;
+}
+
+export type MaintenanceAssessmentResolutionStatus = TreeAssessmentResolutionStatus;
+
+export interface MaintenanceAssessment {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  reference_list: string | null;
+  site_number: string | null;
+  common_area: string | null;
+  work_description: string;
+  work_type: string;
+  issue_type: string;
+  how_found: string | null;
+  resolution_status: MaintenanceAssessmentResolutionStatus | null;
+  resolution_notes: string | null;
+  cover_image_url: string | null;
+  published: boolean;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type MaintenanceAssessmentWithAuthor = MaintenanceAssessment & {
+  author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
+};

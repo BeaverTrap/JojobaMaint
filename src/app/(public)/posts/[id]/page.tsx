@@ -143,16 +143,6 @@ export default async function PostDetailPage({
           )}
         </div>
 
-        <div className="px-4 pb-2">
-          <ShareButtons
-            content={{
-              path: `/posts/${p.id}`,
-              title: postTitle(p),
-              description: postLocationLabel(p) ?? postBody(p),
-            }}
-          />
-        </div>
-
         {images.length > 0 && (
           <div className="space-y-0.5">
             {images.map((url, i) => (
@@ -168,6 +158,16 @@ export default async function PostDetailPage({
             ))}
           </div>
         )}
+
+        <div className="border-t border-line px-4 py-4">
+          <ShareButtons
+            content={{
+              path: `/posts/${p.id}`,
+              title: postTitle(p),
+              description: postLocationLabel(p) ?? postBody(p),
+            }}
+          />
+        </div>
       </article>
 
       {children.length > 0 && (

@@ -9,6 +9,7 @@ import {
   postTitle,
 } from "@/lib/post-display";
 import MultiPhotoPicker from "@/components/MultiPhotoPicker";
+import { filterImageFiles } from "@/lib/image-accept";
 import type { PostCategory } from "@/lib/database.types";
 
 type ExistingImage = {
@@ -75,8 +76,16 @@ export default function PostForm({
 
   function addFiles(files: FileList | null) {
     if (!files) return;
+    const images = filterImageFiles(files);
+    if (images.length === 0) {
+      setError("Please choose image files only.");
+      return;
+    }
     setError(null);
-    const additions = Array.from(files).map((file) => ({
+    if (images.length < files.length) {
+      setError("Some files were skipped — only images are allowed.");
+    }
+    const additions = images.map((file) => ({
       id: crypto.randomUUID(),
       file,
       preview: URL.createObjectURL(file),
@@ -298,8 +307,7 @@ export default function PostForm({
         <MultiPhotoPicker
           onFiles={addFiles}
           disabled={submitting}
-          label="Choose photos from gallery"
-          hint="On your phone: tap here, then select multiple photos (use Select or checkmarks), then Done."
+          selectedCount={newImages.length}
         />
       </Field>
 

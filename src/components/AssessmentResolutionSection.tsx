@@ -2,12 +2,15 @@ import {
   hasResolutionInfo,
   resolutionStatusLabel,
 } from "@/lib/tree-assessment-display";
-import type { TreeAssessment } from "@/lib/database.types";
+import type { TreeAssessmentResolutionStatus } from "@/lib/database.types";
 
 export default function AssessmentResolutionSection({
   assessment,
 }: {
-  assessment: Pick<TreeAssessment, "resolution_status" | "resolution_notes">;
+  assessment: {
+    resolution_status: TreeAssessmentResolutionStatus | null;
+    resolution_notes: string | null;
+  };
 }) {
   if (!hasResolutionInfo(assessment)) return null;
 

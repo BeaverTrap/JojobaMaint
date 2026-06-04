@@ -25,7 +25,8 @@ export default function Navbar({
 
         <div className="flex items-center gap-1 sm:gap-2">
           <NavLink href="/" label="Feed" />
-          <NavLink href="/tree-assessments" label="Tree assessments" />
+          <NavLink href="/tree-assessments" label="Trees" />
+          <NavLink href="/maintenance-assessments" label="Maintenance" />
           <NavLink href="/articles" label="Articles" />
 
           {isAuthorized && (
