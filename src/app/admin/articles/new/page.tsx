@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewArticlePage() {
   const supabase = await createClient();
-  const categories = await fetchArticleCategories(supabase);
+  const tags = await fetchArticleCategories(supabase);
 
   return (
     <div className="space-y-6">
@@ -27,11 +27,7 @@ export default async function NewArticlePage() {
         </p>
       </div>
 
-      <ArticleForm
-        mode="create"
-        categories={categories}
-        redirectTo="/admin/articles"
-      />
+      <ArticleForm mode="create" tags={tags} redirectTo="/admin/articles" />
     </div>
   );
 }

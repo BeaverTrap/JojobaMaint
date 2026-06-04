@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { shareUrlsFor, type ShareableContent } from "@/lib/social-share";
+import {
+  getFacebookGroupUrl,
+  type ShareableContent,
+} from "@/lib/social-share";
 
 /**
  * Share controls for residents — readable labels, compact layout, dark-theme friendly.
@@ -16,17 +19,22 @@ export default function ShareButtons({
   /** "page" = detail footer panel; "inline" = compact row on feed/index cards */
   variant?: "page" | "inline";
 }) {
-  const { pageUrl, facebook, group, clipboardText } = shareUrlsFor(content);
   const [status, setStatus] = useState<string | null>(null);
+  const group = getFacebookGroupUrl();
 
   function flash(message: string) {
     setStatus(message);
     window.setTimeout(() => setStatus(null), 4000);
   }
 
+  function livePageUrl() {
+    const p = content.path.startsWith("/") ? content.path : `/${content.path}`;
+    return `${window.location.origin}${p}`;
+  }
+
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(pageUrl);
+      await navigator.clipboard.writeText(livePageUrl());
       flash("Copied! Open Facebook, start a post, and tap Paste.");
     } catch {
       flash("Tap and hold the address bar, then choose Copy.");
@@ -34,12 +42,19 @@ export default function ShareButtons({
   }
 
   function shareOnFacebook() {
-    window.open(facebook, "_blank", "noopener,noreferrer");
+    const url = livePageUrl();
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   async function shareInGroup() {
+    const url = livePageUrl();
+    const text = `${content.title.trim()}\n\n${url}`;
     try {
-      await navigator.clipboard.writeText(clipboardText);
+      await navigator.clipboard.writeText(text);
       flash("Copied! In the group, tap Write something… then Paste.");
     } catch {
       flash("Copy the link first, then paste in the group.");

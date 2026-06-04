@@ -6,6 +6,7 @@ import {
   fetchMaintenanceAssessmentIssueTypes,
   fetchMaintenanceAssessmentWorkTypes,
 } from "@/lib/maintenance-assessments";
+import { fetchContentTags } from "@/lib/content-tags";
 import { fetchTreeAssessmentConcerns } from "@/lib/tree-assessments";
 import ComposeArea from "@/components/ComposeArea";
 import type { ComposeFormat } from "@/components/ComposeFormatToggle";
@@ -44,6 +45,7 @@ export default async function AdminDashboardPage({
     treeConcerns,
     maintenanceWorkTypes,
     maintenanceIssueTypes,
+    contentTags,
   ] = await Promise.all([
     fetchCategories(supabase),
     supabase
@@ -54,6 +56,7 @@ export default async function AdminDashboardPage({
     fetchTreeAssessmentConcerns(supabase),
     fetchMaintenanceAssessmentWorkTypes(supabase),
     fetchMaintenanceAssessmentIssueTypes(supabase),
+    fetchContentTags(supabase),
   ]);
 
   const recentPosts = (recent ?? []) as {
@@ -91,9 +94,10 @@ export default async function AdminDashboardPage({
               key={activeArea}
               area={activeArea}
               initialFormat={format}
-              categories={categories}
-              recentPosts={recentPosts}
-              treeConcerns={treeConcerns}
+                categories={categories}
+                contentTags={contentTags}
+                recentPosts={recentPosts}
+                treeConcerns={treeConcerns}
               maintenanceWorkTypes={maintenanceWorkTypes}
               maintenanceIssueTypes={maintenanceIssueTypes}
             />

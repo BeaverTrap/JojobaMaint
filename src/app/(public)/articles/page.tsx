@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchArticleCategories, ARTICLE_SELECT } from "@/lib/articles";
+import {
+  ARTICLE_SELECT,
+  ARTICLE_TAG_EMBED,
+  enrichArticle,
+  fetchArticleCategories,
+} from "@/lib/articles";
 import ArticlesIndex from "@/components/ArticlesIndex";
-import type { ArticleWithAuthor } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -11,23 +15,27 @@ export default async function ArticlesPage() {
   const supabase = await createClient();
   const { isAuthorized } = await getCurrentUser();
 
-  const [categories, { data }] = await Promise.all([
+  const select = ARTICLE_SELECT + ARTICLE_TAG_EMBED;
+  const [tags, { data }] = await Promise.all([
     fetchArticleCategories(supabase),
     supabase
       .from("articles")
-      .select(ARTICLE_SELECT)
+      .select(select)
       .eq("published", true)
       .order("updated_at", { ascending: false }),
   ]);
 
-  // Staff preview: include drafts when authorized (RLS allows).
-  let articles = (data ?? []) as unknown as ArticleWithAuthor[];
+  let articles = ((data ?? []) as unknown[]).map((row) =>
+    enrichArticle(row as Parameters<typeof enrichArticle>[0]),
+  );
   if (isAuthorized) {
     const { data: all } = await supabase
       .from("articles")
-      .select(ARTICLE_SELECT)
+      .select(select)
       .order("updated_at", { ascending: false });
-    articles = (all ?? []) as unknown as ArticleWithAuthor[];
+    articles = ((all ?? []) as unknown[]).map((row) =>
+      enrichArticle(row as Parameters<typeof enrichArticle>[0]),
+    );
   }
 
   return (
@@ -52,11 +60,7 @@ export default async function ArticlesPage() {
         )}
       </div>
 
-      <ArticlesIndex
-        articles={articles}
-        categories={categories}
-        canEdit={isAuthorized}
-      />
+      <ArticlesIndex articles={articles} tags={tags} canEdit={isAuthorized} />
     </div>
   );
 }

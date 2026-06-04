@@ -5,6 +5,10 @@ import {
   fetchTreeAssessmentConcerns,
   TREE_ASSESSMENT_SELECT,
 } from "@/lib/tree-assessments";
+import {
+  fetchContentTags,
+  fetchTreeAssessmentTagSlugs,
+} from "@/lib/content-tags";
 import TreeAssessmentForm from "@/components/TreeAssessmentForm";
 import DeleteTreeAssessmentButton from "@/components/DeleteTreeAssessmentButton";
 import type { TreeAssessmentWithAuthor } from "@/lib/database.types";
@@ -19,13 +23,15 @@ export default async function EditTreeAssessmentPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: row }, concerns] = await Promise.all([
+  const [{ data: row }, concerns, contentTags, initialTags] = await Promise.all([
     supabase
       .from("tree_assessments")
       .select(TREE_ASSESSMENT_SELECT)
       .eq("id", id)
       .maybeSingle(),
     fetchTreeAssessmentConcerns(supabase),
+    fetchContentTags(supabase),
+    fetchTreeAssessmentTagSlugs(supabase, id),
   ]);
 
   if (!row) notFound();
@@ -70,7 +76,9 @@ export default async function EditTreeAssessmentPage({
         initialResolutionNotes={a.resolution_notes ?? ""}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
+        initialTags={initialTags}
         concerns={concerns}
+        contentTags={contentTags}
         redirectTo="/admin/tree-assessments"
       />
 

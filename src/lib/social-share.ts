@@ -1,4 +1,4 @@
-import { absoluteUrl } from "@/lib/site-url";
+import { shareAbsoluteUrl } from "@/lib/site-url";
 
 export function getFacebookGroupUrl(): string | null {
   const url = process.env.NEXT_PUBLIC_FACEBOOK_GROUP_URL?.trim();
@@ -22,7 +22,7 @@ export type ShareableContent = {
 };
 
 export function shareUrlsFor(content: ShareableContent) {
-  const pageUrl = absoluteUrl(content.path);
+  const pageUrl = shareAbsoluteUrl(content.path);
   return {
     pageUrl,
     facebook: facebookShareUrl(pageUrl),

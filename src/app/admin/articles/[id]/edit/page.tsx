@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchArticleCategories, ARTICLE_SELECT } from "@/lib/articles";
+import { fetchArticleTagSlugs } from "@/lib/content-tags";
 import ArticleForm from "@/components/ArticleForm";
 import DeleteArticleButton from "@/components/DeleteArticleButton";
 import type { ArticleWithAuthor } from "@/lib/database.types";
@@ -16,9 +17,10 @@ export default async function EditArticlePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: article }, categories] = await Promise.all([
+  const [{ data: article }, tags, initialTags] = await Promise.all([
     supabase.from("articles").select(ARTICLE_SELECT).eq("id", id).maybeSingle(),
     fetchArticleCategories(supabase),
+    fetchArticleTagSlugs(supabase, id),
   ]);
 
   if (!article) notFound();
@@ -54,10 +56,10 @@ export default async function EditArticlePage({
         initialSummary={a.summary ?? ""}
         initialBody={a.body}
         initialReferenceList={a.reference_list ?? ""}
-        initialCategory={a.category}
+        initialTags={initialTags.length > 0 ? initialTags : [a.category]}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
-        categories={categories}
+        tags={tags}
         redirectTo="/admin/articles"
       />
 

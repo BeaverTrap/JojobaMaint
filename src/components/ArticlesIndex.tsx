@@ -4,38 +4,35 @@ import { useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import SearchBar from "@/components/SearchBar";
 import ShareButtons from "@/components/ShareButtons";
+import ContentTagList from "@/components/ContentTagList";
 import { ContentIndexCardLink } from "@/components/ContentIndexCard";
-import type { ArticleWithAuthor, ArticleCategory } from "@/lib/database.types";
+import type { ArticleWithTags } from "@/lib/articles";
+import type { ContentTag } from "@/lib/content-tags";
 
 export default function ArticlesIndex({
   articles,
-  categories,
+  tags,
   canEdit = false,
 }: {
-  articles: ArticleWithAuthor[];
-  categories: ArticleCategory[];
+  articles: ArticleWithTags[];
+  tags: ContentTag[];
   canEdit?: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
-
-  const labelBySlug = useMemo(() => {
-    const m = new Map<string, string>();
-    categories.forEach((c) => m.set(c.slug, c.label));
-    return m;
-  }, [categories]);
+  const [activeTag, setActiveTag] = useState("all");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return articles.filter((a) => {
-      const matchesCategory =
-        activeCategory === "all" || a.category === activeCategory;
+      const matchesTag =
+        activeTag === "all" || a.tags.some((t) => t.slug === activeTag);
+      const tagText = a.tags.map((t) => t.label).join(" ");
       const haystack =
-        `${a.title} ${a.summary ?? ""} ${a.body} ${a.reference_list ?? ""}`.toLowerCase();
+        `${a.title} ${a.summary ?? ""} ${a.body} ${a.reference_list ?? ""} ${tagText}`.toLowerCase();
       const matchesQuery = !q || haystack.includes(q);
-      return matchesCategory && matchesQuery;
+      return matchesTag && matchesQuery;
     });
-  }, [query, activeCategory, articles]);
+  }, [query, activeTag, articles]);
 
   return (
     <div className="space-y-4">
@@ -48,15 +45,15 @@ export default function ArticlesIndex({
       <div className="flex flex-wrap gap-2">
         <Tab
           label="All"
-          active={activeCategory === "all"}
-          onClick={() => setActiveCategory("all")}
+          active={activeTag === "all"}
+          onClick={() => setActiveTag("all")}
         />
-        {categories.map((c) => (
+        {tags.map((t) => (
           <Tab
-            key={c.slug}
-            label={c.label}
-            active={activeCategory === c.slug}
-            onClick={() => setActiveCategory(c.slug)}
+            key={t.slug}
+            label={t.label}
+            active={activeTag === t.slug}
+            onClick={() => setActiveTag(t.slug)}
           />
         ))}
       </div>
@@ -92,16 +89,12 @@ export default function ArticlesIndex({
                 </div>
               }
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
-                  {labelBySlug.get(a.category) ?? a.category}
+              <ContentTagList tags={a.tags} />
+              {!a.published && (
+                <span className="mt-2 inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                  Draft
                 </span>
-                {!a.published && (
-                  <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                    Draft
-                  </span>
-                )}
-              </div>
+              )}
               <h2 className="mt-1 text-lg font-semibold text-ink">{a.title}</h2>
               {a.summary && (
                 <p className="mt-1 line-clamp-2 text-base text-muted">

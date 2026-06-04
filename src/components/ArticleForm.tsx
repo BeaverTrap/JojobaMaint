@@ -17,12 +17,17 @@ import {
 import ArticleBody from "@/components/ArticleBody";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
-import type { ArticleCategory } from "@/lib/database.types";
+import TagPicker from "@/components/TagPicker";
+import {
+  primaryTagSlug,
+  syncArticleTags,
+  type ContentTag,
+} from "@/lib/content-tags";
 
 type Props =
   | {
       mode: "create";
-      categories: ArticleCategory[];
+      tags: ContentTag[];
       redirectTo: string;
     }
   | {
@@ -33,10 +38,10 @@ type Props =
       initialSummary: string;
       initialBody: string;
       initialReferenceList?: string;
-      initialCategory: string;
+      initialTags: string[];
       initialPublished: boolean;
       initialCoverUrl: string | null;
-      categories: ArticleCategory[];
+      tags: ContentTag[];
       redirectTo: string;
     };
 
@@ -53,8 +58,8 @@ export default function ArticleForm(props: Props) {
   const [referenceList, setReferenceList] = useState(
     isEdit ? (props.initialReferenceList ?? "") : "",
   );
-  const [category, setCategory] = useState(
-    isEdit ? props.initialCategory : (props.categories[0]?.slug ?? "trees"),
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    isEdit ? props.initialTags : [],
   );
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : false,
@@ -208,11 +213,13 @@ export default function ArticleForm(props: Props) {
         summary: summary.trim() || null,
         body: body.trim(),
         reference_list: referenceList.trim() || null,
-        category,
+        category: primaryTagSlug(selectedTags),
         cover_image_url: coverUrl,
         published,
         ...(isEdit ? {} : { slug, author_id: user.id }),
       };
+
+      let articleId = isEdit ? props.articleId : "";
 
       if (isEdit) {
         const { error: upd } = await supabase
@@ -220,10 +227,18 @@ export default function ArticleForm(props: Props) {
           .update(row)
           .eq("id", props.articleId);
         if (upd) throw upd;
+        articleId = props.articleId;
       } else {
-        const { error: ins } = await supabase.from("articles").insert(row);
+        const { data: inserted, error: ins } = await supabase
+          .from("articles")
+          .insert(row)
+          .select("id")
+          .single();
         if (ins) throw ins;
+        articleId = inserted.id;
       }
+
+      await syncArticleTags(supabase, articleId, selectedTags);
 
       router.push(props.redirectTo);
       router.refresh();
@@ -258,20 +273,12 @@ export default function ArticleForm(props: Props) {
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-ink">Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
-        >
-          {props.categories.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <TagPicker
+        tags={props.tags}
+        selected={selectedTags}
+        onChange={setSelectedTags}
+        hint="Pick all that apply — maintenance, landscaping, trees, pond, etc."
+      />
 
       <div>
         <div className="flex items-center justify-between gap-2">

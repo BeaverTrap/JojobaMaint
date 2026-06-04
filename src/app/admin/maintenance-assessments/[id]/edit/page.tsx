@@ -6,6 +6,10 @@ import {
   fetchMaintenanceAssessmentWorkTypes,
   MAINTENANCE_ASSESSMENT_SELECT,
 } from "@/lib/maintenance-assessments";
+import {
+  fetchContentTags,
+  fetchMaintenanceAssessmentTagSlugs,
+} from "@/lib/content-tags";
 import MaintenanceAssessmentForm from "@/components/MaintenanceAssessmentForm";
 import DeleteMaintenanceAssessmentButton from "@/components/DeleteMaintenanceAssessmentButton";
 import type { MaintenanceAssessmentWithAuthor } from "@/lib/database.types";
@@ -20,15 +24,18 @@ export default async function EditMaintenanceAssessmentPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: row }, workTypes, issueTypes] = await Promise.all([
-    supabase
-      .from("maintenance_assessments")
-      .select(MAINTENANCE_ASSESSMENT_SELECT)
-      .eq("id", id)
-      .maybeSingle(),
-    fetchMaintenanceAssessmentWorkTypes(supabase),
-    fetchMaintenanceAssessmentIssueTypes(supabase),
-  ]);
+  const [{ data: row }, workTypes, issueTypes, contentTags, initialTags] =
+    await Promise.all([
+      supabase
+        .from("maintenance_assessments")
+        .select(MAINTENANCE_ASSESSMENT_SELECT)
+        .eq("id", id)
+        .maybeSingle(),
+      fetchMaintenanceAssessmentWorkTypes(supabase),
+      fetchMaintenanceAssessmentIssueTypes(supabase),
+      fetchContentTags(supabase),
+      fetchMaintenanceAssessmentTagSlugs(supabase, id),
+    ]);
 
   if (!row) notFound();
   const a = row as unknown as MaintenanceAssessmentWithAuthor;
@@ -73,8 +80,10 @@ export default async function EditMaintenanceAssessmentPage({
         initialResolutionNotes={a.resolution_notes ?? ""}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
+        initialTags={initialTags}
         workTypes={workTypes}
         issueTypes={issueTypes}
+        contentTags={contentTags}
         redirectTo="/admin/maintenance-assessments"
       />
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { fetchContentTags, fetchPostTagSlugs } from "@/lib/content-tags";
 import { fetchCategories, normalizePostRow, POST_SELECT } from "@/lib/posts";
 import PostForm from "@/components/PostForm";
 import DeletePostButton from "@/components/DeletePostButton";
@@ -16,9 +17,12 @@ export default async function EditPostPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: post }, categories, { data: recent }] = await Promise.all([
+  const [{ data: post }, categories, contentTags, initialTags, { data: recent }] =
+    await Promise.all([
     supabase.from("posts").select(POST_SELECT).eq("id", id).maybeSingle(),
     fetchCategories(supabase),
+    fetchContentTags(supabase),
+    fetchPostTagSlugs(supabase, id),
     supabase
       .from("posts")
       .select("id, title, description")
@@ -76,6 +80,8 @@ export default async function EditPostPage({
         initialCommonArea={p.common_area ?? ""}
         initialImages={existingImages}
         categories={categories}
+        contentTags={contentTags}
+        initialTags={initialTags}
         recentPosts={recentPosts}
         redirectTo={`/posts/${p.id}`}
       />

@@ -1,16 +1,35 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ArticleCategory } from "@/lib/database.types";
+import {
+  fetchContentTags,
+  normalizeTagLinks,
+  type ContentTag,
+  type ContentTagLink,
+} from "@/lib/content-tags";
+import type { ArticleWithAuthor } from "@/lib/database.types";
 
 export const ARTICLE_SELECT =
   "id, slug, title, summary, body, reference_list, category, cover_image_url, published, author_id, created_at, updated_at, " +
   "author:profiles(id, display_name, avatar_url)";
 
+export const ARTICLE_TAG_EMBED =
+  ", tag_links:article_tag_links(tag_slug, content_tags(slug, label))";
+
+export type ArticleWithTags = ArticleWithAuthor & { tags: ContentTagLink[] };
+
 export async function fetchArticleCategories(
   supabase: SupabaseClient,
-): Promise<ArticleCategory[]> {
-  const { data } = await supabase
-    .from("article_categories")
-    .select("slug, label, position")
-    .order("position", { ascending: true });
-  return (data ?? []) as ArticleCategory[];
+): Promise<ContentTag[]> {
+  return fetchContentTags(supabase);
+}
+
+export function enrichArticle(
+  row: ArticleWithAuthor & {
+    tag_links?: Parameters<typeof normalizeTagLinks>[0];
+  },
+): ArticleWithTags {
+  const { tag_links, ...rest } = row;
+  return {
+    ...(rest as ArticleWithAuthor),
+    tags: normalizeTagLinks(tag_links),
+  };
 }

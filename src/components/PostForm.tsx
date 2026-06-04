@@ -9,7 +9,9 @@ import {
   postTitle,
 } from "@/lib/post-display";
 import MultiPhotoPicker from "@/components/MultiPhotoPicker";
+import TagPicker from "@/components/TagPicker";
 import { filterImageFiles } from "@/lib/image-accept";
+import { syncPostTags, type ContentTag } from "@/lib/content-tags";
 import type { PostCategory } from "@/lib/database.types";
 
 type ExistingImage = {
@@ -44,6 +46,8 @@ export default function PostForm({
   initialCommonArea = "",
   initialImages = [],
   categories,
+  contentTags,
+  initialTags = [],
   recentPosts,
   redirectTo,
 }: {
@@ -56,7 +60,9 @@ export default function PostForm({
   initialSiteNumber?: string;
   initialCommonArea?: string;
   initialImages?: ExistingImage[];
+  initialTags?: string[];
   categories: PostCategory[];
+  contentTags: ContentTag[];
   recentPosts: RecentPost[];
   redirectTo: string;
 }) {
@@ -65,6 +71,7 @@ export default function PostForm({
   const [title, setTitle] = useState(initialTitle);
   const [body, setBody] = useState(initialBody);
   const [category, setCategory] = useState(initialCategory);
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
   const [parentId, setParentId] = useState<string>(initialParentId ?? "");
   const [siteNumber, setSiteNumber] = useState(initialSiteNumber);
   const [commonArea, setCommonArea] = useState(initialCommonArea);
@@ -164,6 +171,8 @@ export default function PostForm({
             .insert(rows);
           if (imgError) throw imgError;
         }
+
+        await syncPostTags(supabase, inserted.id, selectedTags);
       } else {
         if (!postId) throw new Error("Missing post id.");
 
@@ -200,6 +209,8 @@ export default function PostForm({
             .insert(rows);
           if (imgError) throw imgError;
         }
+
+        await syncPostTags(supabase, postId, selectedTags);
       }
 
       newImages.forEach((i) => URL.revokeObjectURL(i.preview));
@@ -262,6 +273,12 @@ export default function PostForm({
           ))}
         </div>
       </Field>
+
+      <TagPicker
+        tags={contentTags}
+        selected={selectedTags}
+        onChange={setSelectedTags}
+      />
 
       <Field label="Continues a previous job" hint="Optional">
         {linkOptions.length > 0 ? (

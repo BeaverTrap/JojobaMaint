@@ -8,6 +8,7 @@ import ComposeFormatToggle, {
 import PostForm from "@/components/PostForm";
 import TreeAssessmentForm from "@/components/TreeAssessmentForm";
 import MaintenanceAssessmentForm from "@/components/MaintenanceAssessmentForm";
+import type { ContentTag } from "@/lib/content-tags";
 import type {
   MaintenanceAssessmentIssueType,
   MaintenanceAssessmentWorkType,
@@ -21,6 +22,7 @@ type Props = {
   area: "landscaping" | "maintenance";
   initialFormat: ComposeFormat;
   categories: PostCategory[];
+  contentTags: ContentTag[];
   recentPosts: RecentPost[];
   treeConcerns: TreeAssessmentConcern[];
   maintenanceWorkTypes: MaintenanceAssessmentWorkType[];
@@ -31,6 +33,7 @@ export default function ComposeArea({
   area,
   initialFormat,
   categories,
+  contentTags,
   recentPosts,
   treeConcerns,
   maintenanceWorkTypes,
@@ -70,6 +73,7 @@ export default function ComposeArea({
         <PostForm
           mode="create"
           categories={categories}
+          contentTags={contentTags}
           recentPosts={recentPosts}
           initialCategory={postCategory}
           redirectTo="/"
@@ -78,6 +82,7 @@ export default function ComposeArea({
         <TreeAssessmentForm
           mode="create"
           concerns={treeConcerns}
+          contentTags={contentTags}
           redirectTo="/"
         />
       ) : (
@@ -85,6 +90,7 @@ export default function ComposeArea({
           mode="create"
           workTypes={maintenanceWorkTypes}
           issueTypes={maintenanceIssueTypes}
+          contentTags={contentTags}
           redirectTo="/"
         />
       )}

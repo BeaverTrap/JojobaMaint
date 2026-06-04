@@ -17,6 +17,11 @@ import {
 import ArticleBody from "@/components/ArticleBody";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
+import TagPicker from "@/components/TagPicker";
+import {
+  syncTreeAssessmentTags,
+  type ContentTag,
+} from "@/lib/content-tags";
 import {
   RESOLUTION_STATUS_OPTIONS,
   type TreeAssessmentConcern,
@@ -30,6 +35,7 @@ type Props =
   | {
       mode: "create";
       concerns: TreeAssessmentConcern[];
+      contentTags: ContentTag[];
       redirectTo: string;
     }
   | {
@@ -49,7 +55,9 @@ type Props =
       initialResolutionNotes?: string;
       initialPublished: boolean;
       initialCoverUrl: string | null;
+      initialTags: string[];
       concerns: TreeAssessmentConcern[];
+      contentTags: ContentTag[];
       redirectTo: string;
     };
 
@@ -93,6 +101,9 @@ export default function TreeAssessmentForm(props: Props) {
   );
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : true,
+  );
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    isEdit ? props.initialTags : [],
   );
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(
@@ -263,16 +274,26 @@ export default function TreeAssessmentForm(props: Props) {
         ...(isEdit ? {} : { slug, author_id: user.id }),
       };
 
+      let assessmentId = isEdit ? props.assessmentId : "";
+
       if (isEdit) {
         const { error: upd } = await supabase
           .from("tree_assessments")
           .update(row)
           .eq("id", props.assessmentId);
         if (upd) throw upd;
+        assessmentId = props.assessmentId;
       } else {
-        const { error: ins } = await supabase.from("tree_assessments").insert(row);
+        const { data: inserted, error: ins } = await supabase
+          .from("tree_assessments")
+          .insert(row)
+          .select("id")
+          .single();
         if (ins) throw ins;
+        assessmentId = inserted.id;
       }
+
+      await syncTreeAssessmentTags(supabase, assessmentId, selectedTags);
 
       router.push(props.redirectTo);
       router.refresh();
@@ -287,11 +308,11 @@ export default function TreeAssessmentForm(props: Props) {
       onSubmit={handleSubmit}
       className="space-y-4 rounded-2xl border border-line bg-surface p-4 shadow-sm"
     >
-      <div className="rounded-xl border border-brand-700/40 bg-accent px-3 py-2 text-xs text-accent-ink">
-        Published assessments are visible to everyone on the site — use them to
-        document damage, resident questions, and maintenance decisions
-        transparently.
-      </div>
+      <TagPicker
+        tags={props.contentTags}
+        selected={selectedTags}
+        onChange={setSelectedTags}
+      />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>

@@ -5,7 +5,12 @@ import ContentCoverImage from "@/components/ContentCoverImage";
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchArticleCategories, ARTICLE_SELECT } from "@/lib/articles";
+import {
+  ARTICLE_SELECT,
+  ARTICLE_TAG_EMBED,
+  enrichArticle,
+} from "@/lib/articles";
+import ContentTagList from "@/components/ContentTagList";
 import ArticleBody from "@/components/ArticleBody";
 import ReferencesSection from "@/components/ReferencesSection";
 import type { ArticleWithAuthor } from "@/lib/database.types";
@@ -45,17 +50,17 @@ export default async function ArticlePage({
   const supabase = await createClient();
   const { isAuthorized } = await getCurrentUser();
 
-  const [{ data: article }, categories] = await Promise.all([
-    supabase.from("articles").select(ARTICLE_SELECT).eq("slug", slug).maybeSingle(),
-    fetchArticleCategories(supabase),
-  ]);
+  const { data: article } = await supabase
+    .from("articles")
+    .select(ARTICLE_SELECT + ARTICLE_TAG_EMBED)
+    .eq("slug", slug)
+    .maybeSingle();
 
   if (!article) notFound();
-  const a = article as unknown as ArticleWithAuthor;
+  const a = enrichArticle(
+    article as unknown as Parameters<typeof enrichArticle>[0],
+  );
   if (!a.published && !isAuthorized) notFound();
-
-  const categoryLabel =
-    categories.find((c) => c.slug === a.category)?.label ?? a.category;
 
   return (
     <article className="space-y-6">
@@ -77,9 +82,7 @@ export default async function ArticlePage({
           </div>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
-            {categoryLabel}
-          </span>
+          <ContentTagList tags={a.tags} />
           {!a.published && (
             <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
               Draft
