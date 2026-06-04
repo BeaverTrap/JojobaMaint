@@ -7,6 +7,7 @@ import {
   postTitle,
 } from "@/lib/post-display";
 import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
+import ShareButtons from "@/components/ShareButtons";
 
 export default function PostCard({
   post,
@@ -128,6 +129,17 @@ export default function PostCard({
           ))}
         </div>
       )}
+
+      <div className="border-t border-line bg-canvas/50">
+        <ShareButtons
+          variant="inline"
+          content={{
+            path: `/posts/${post.id}`,
+            title: headline,
+            description: location ?? details,
+          }}
+        />
+      </div>
     </article>
   );
 }

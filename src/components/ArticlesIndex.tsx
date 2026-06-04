@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import SearchBar from "@/components/SearchBar";
+import ShareButtons from "@/components/ShareButtons";
 import type { ArticleWithAuthor, ArticleCategory } from "@/lib/database.types";
 
 export default function ArticlesIndex({
@@ -74,48 +75,67 @@ export default function ArticlesIndex({
       ) : (
         <div className="space-y-3">
           {filtered.map((a) => (
-            <Link
+            <article
               key={a.id}
-              href={`/articles/${a.slug}`}
-              className="block overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition hover:shadow-md"
+              className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
             >
-              <div className="flex gap-4 p-4">
-                {a.cover_image_url && (
-                  <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-xl sm:block">
-                    <Image
-                      src={a.cover_image_url}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="80px"
-                    />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
-                      {labelBySlug.get(a.category) ?? a.category}
-                    </span>
-                    {!a.published && (
-                      <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                        Draft
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="mt-1 font-semibold text-ink">{a.title}</h2>
-                  {a.summary && (
-                    <p className="mt-1 line-clamp-2 text-sm text-muted">
-                      {a.summary}
-                    </p>
+              <Link
+                href={`/articles/${a.slug}`}
+                className="block transition hover:bg-hover/50"
+              >
+                <div className="flex gap-4 p-4">
+                  {a.cover_image_url && (
+                    <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-xl sm:block">
+                      <Image
+                        src={a.cover_image_url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    </div>
                   )}
-                  <p className="mt-2 text-xs text-muted">
-                    {formatDistanceToNow(new Date(a.updated_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/40">
+                        {labelBySlug.get(a.category) ?? a.category}
+                      </span>
+                      {!a.published && (
+                        <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                          Draft
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="mt-1 text-lg font-semibold text-ink">
+                      {a.title}
+                    </h2>
+                    {a.summary && (
+                      <p className="mt-1 line-clamp-2 text-base text-muted">
+                        {a.summary}
+                      </p>
+                    )}
+                    <p className="mt-2 text-sm text-muted">
+                      {formatDistanceToNow(new Date(a.updated_at), {
+                        addSuffix: true,
+                      })}
+                      <span className="ml-2 font-medium text-brand-700">
+                        Read more →
+                      </span>
+                    </p>
+                  </div>
                 </div>
+              </Link>
+              <div className="border-t border-line bg-canvas/50">
+                <ShareButtons
+                  variant="inline"
+                  content={{
+                    path: `/articles/${a.slug}`,
+                    title: a.title,
+                    description: a.summary,
+                  }}
+                />
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       )}

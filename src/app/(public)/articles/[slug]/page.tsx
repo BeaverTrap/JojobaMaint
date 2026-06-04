@@ -96,6 +96,14 @@ export default async function ArticlePage({
         )}
       </div>
 
+      <ShareButtons
+        content={{
+          path: `/articles/${a.slug}`,
+          title: a.title,
+          description: a.summary,
+        }}
+      />
+
       {a.cover_image_url && (
         <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl border border-line">
           <Image
@@ -111,14 +119,6 @@ export default async function ArticlePage({
 
       <ArticleBody body={a.body} />
       <ReferencesSection referenceList={a.reference_list} />
-
-      <ShareButtons
-        content={{
-          path: `/articles/${a.slug}`,
-          title: a.title,
-          description: a.summary,
-        }}
-      />
     </article>
   );
 }
