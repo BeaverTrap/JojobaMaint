@@ -25,6 +25,7 @@ export default function Navbar({
 
         <div className="flex items-center gap-1 sm:gap-2">
           <NavLink href="/" label="Feed" />
+          <NavLink href="/articles" label="Articles" />
           <NavLink href="/galleries" label="Galleries" />
 
           {isAuthorized && (

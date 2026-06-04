@@ -91,3 +91,27 @@ export type GalleryWithMeta = Gallery & {
   image_count: number;
   cover_image_url: string | null;
 };
+
+export interface ArticleCategory {
+  slug: string;
+  label: string;
+  position: number;
+}
+
+export interface Article {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  category: string;
+  cover_image_url: string | null;
+  published: boolean;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ArticleWithAuthor = Article & {
+  author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
+};

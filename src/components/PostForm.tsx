@@ -272,7 +272,6 @@ export default function PostForm({
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             multiple
             className="hidden"
             onChange={(e) => addFiles(e.target.files)}
