@@ -20,8 +20,8 @@ export default async function FeedPage() {
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink">Feed</h1>
           <p className="text-sm text-muted">
-            Maintenance, landscaping, articles, and assessments — everything in
-            one place.
+            Maintenance and landscaping updates (quick posts and structured
+            assessments), plus articles — all in one place.
           </p>
         </div>
         {isAuthorized && (

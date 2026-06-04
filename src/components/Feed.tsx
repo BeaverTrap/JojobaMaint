@@ -10,7 +10,6 @@ const FILTERS: { id: FeedFilter; label: string }[] = [
   { id: "maintenance", label: "Maintenance" },
   { id: "landscaping", label: "Landscaping" },
   { id: "article", label: "Articles" },
-  { id: "assessment", label: "Assessments" },
 ];
 
 export default function Feed({

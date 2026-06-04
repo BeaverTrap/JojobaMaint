@@ -1,25 +1,59 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { fetchCategories } from "@/lib/posts";
-import PostForm from "@/components/PostForm";
+import {
+  fetchMaintenanceAssessmentIssueTypes,
+  fetchMaintenanceAssessmentWorkTypes,
+} from "@/lib/maintenance-assessments";
+import { fetchTreeAssessmentConcerns } from "@/lib/tree-assessments";
+import ComposeArea from "@/components/ComposeArea";
+import type { ComposeFormat } from "@/components/ComposeFormatToggle";
 
 export const dynamic = "force-dynamic";
+
+type ComposeAreaKey = "landscaping" | "maintenance";
+
+function resolveArea(
+  area?: string,
+  legacyType?: string,
+): ComposeAreaKey | undefined {
+  if (area === "landscaping" || area === "maintenance") return area;
+  if (legacyType === "landscaping" || legacyType === "maintenance") {
+    return legacyType;
+  }
+  return undefined;
+}
 
 export default async function AdminDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ area?: string; type?: string; format?: string }>;
 }) {
-  const { type } = await searchParams;
+  const { area: areaParam, type: legacyType, format: formatParam } =
+    await searchParams;
+  const activeArea = resolveArea(areaParam, legacyType);
+  const format: ComposeFormat =
+    formatParam === "structured" ? "structured" : "quick";
+
   const supabase = await createClient();
 
-  const [categories, { data: recent }] = await Promise.all([
+  const [
+    categories,
+    { data: recent },
+    treeConcerns,
+    maintenanceWorkTypes,
+    maintenanceIssueTypes,
+  ] = await Promise.all([
     fetchCategories(supabase),
     supabase
       .from("posts")
       .select("id, title, description")
       .order("created_at", { ascending: false })
       .limit(50),
+    fetchTreeAssessmentConcerns(supabase),
+    fetchMaintenanceAssessmentWorkTypes(supabase),
+    fetchMaintenanceAssessmentIssueTypes(supabase),
   ]);
 
   const recentPosts = (recent ?? []) as {
@@ -28,77 +62,78 @@ export default async function AdminDashboardPage({
     description: string;
   }[];
 
-  const showPostForm = type === "maintenance" || type === "landscaping";
-  const postCategory = type === "landscaping" ? "landscaping" : "maintenance";
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-ink">Create</h1>
         <p className="text-sm text-muted">
-          Pick what you are posting. It all appears on the feed.
+          Pick landscaping or maintenance, then use the toggle for a quick post or
+          a structured one. Everything goes to the feed.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <ComposeChoice
-          href="/admin?type=maintenance"
-          active={type === "maintenance"}
-          title="Maintenance post"
-          description="Job log for the feed"
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <AreaChoice
+          href="/admin?area=landscaping"
+          active={activeArea === "landscaping"}
+          title="Landscaping"
+          description="Grounds, trees, lot work"
         />
-        <ComposeChoice
-          href="/admin?type=landscaping"
-          active={type === "landscaping"}
-          title="Landscaping post"
-          description="Grounds work for the feed"
-        />
-        <ComposeChoice
-          href="/admin/articles/new"
-          active={false}
-          title="Article"
-          description="Long guide (also on the feed)"
+        <AreaChoice
+          href="/admin?area=maintenance"
+          active={activeArea === "maintenance"}
+          title="Maintenance"
+          description="Daily work, ponds, projects"
         />
       </div>
 
-      {showPostForm ? (
-        <div>
-          <h2 className="text-sm font-semibold text-ink">
-            {type === "landscaping" ? "Landscaping post" : "Maintenance post"}
+      {activeArea ? (
+        <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold text-ink">
+            {activeArea === "landscaping" ? "Landscaping" : "Maintenance"}
           </h2>
-          <div className="mt-3">
-            <PostForm
-              mode="create"
-              categories={categories}
-              recentPosts={recentPosts}
-              initialCategory={postCategory}
-              redirectTo="/"
-            />
+          <div className="mt-4">
+            <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+              <ComposeArea
+                key={activeArea}
+                area={activeArea}
+                initialFormat={format}
+                categories={categories}
+                recentPosts={recentPosts}
+                treeConcerns={treeConcerns}
+                maintenanceWorkTypes={maintenanceWorkTypes}
+                maintenanceIssueTypes={maintenanceIssueTypes}
+              />
+            </Suspense>
           </div>
-        </div>
+        </section>
       ) : (
         <p className="text-sm text-muted">
-          Choose maintenance post, landscaping post, or article above.
+          Choose landscaping or maintenance above, or write an article below.
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <LinkCard
-          href="/admin/tree-assessments"
-          title="Tree assessments"
-          description="Separate from feed posts — lot evaluations"
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+            Article
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Long-form guides — also on the feed.
+          </p>
+        </div>
+        <AreaChoice
+          href="/admin/articles/new"
+          active={false}
+          title="Article"
+          description="Step-by-step guide or reference"
         />
-        <LinkCard
-          href="/admin/maintenance-assessments"
-          title="Maintenance assessments"
-          description="Pond, big projects, cross-connection, etc."
-        />
-      </div>
+      </section>
     </div>
   );
 }
 
-function ComposeChoice({
+function AreaChoice({
   href,
   active,
   title,
@@ -126,26 +161,6 @@ function ComposeChoice({
       >
         {description}
       </p>
-    </Link>
-  );
-}
-
-function LinkCard({
-  href,
-  title,
-  description,
-}: {
-  href: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:bg-hover"
-    >
-      <p className="font-semibold text-ink">{title}</p>
-      <p className="mt-1 text-sm text-muted">{description}</p>
     </Link>
   );
 }

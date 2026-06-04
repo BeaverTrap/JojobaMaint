@@ -37,12 +37,12 @@ export default async function AdminMaintenanceAssessmentsPage() {
             Maintenance assessments
           </h1>
           <p className="text-sm text-muted">
-            Document pipes, halls, big projects, landscaping, cross-connection,
-            pond work, and more for public transparency.
+            Structured maintenance posts (ponds, halls, big projects, etc.).
+            Published items also appear on the feed.
           </p>
         </div>
         <Link
-          href="/admin/maintenance-assessments/new"
+          href="/admin?area=maintenance&format=structured"
           className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
         >
           + New assessment

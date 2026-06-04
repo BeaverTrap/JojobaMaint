@@ -40,13 +40,17 @@ export default async function MaintenanceAssessmentsPage() {
             Maintenance assessments
           </h1>
           <p className="text-sm text-muted">
-            Pipes, halls, big projects, landscaping (lift week, rentals),
-            cross-connection, pond work, and more — published for transparency.
+            Structured maintenance posts (ponds, halls, big projects, etc.). Also
+            on the{" "}
+            <Link href="/" className="font-medium text-brand-700 hover:underline">
+              feed
+            </Link>
+            .
           </p>
         </div>
         {isAuthorized && (
           <Link
-            href="/admin/maintenance-assessments"
+            href="/admin?area=maintenance"
             className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
           >
             Manage

@@ -34,15 +34,15 @@ export default async function AdminTreeAssessmentsPage() {
             ← Dashboard
           </Link>
           <h1 className="mt-2 text-xl font-bold tracking-tight text-ink">
-            Tree assessments
+            Landscaping assessments
           </h1>
           <p className="text-sm text-muted">
-            Document lot-specific tree and plant evaluations for public
-            transparency.
+            Structured landscaping posts (lot evaluations). Published items also
+            appear on the feed.
           </p>
         </div>
         <Link
-          href="/admin/tree-assessments/new"
+          href="/admin?area=landscaping&format=structured"
           className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
         >
           + New assessment

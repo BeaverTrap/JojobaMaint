@@ -137,7 +137,7 @@ export async function fetchFeedItems(
     items.push({
       id: `tree-${row.id}`,
       kind: "tree-assessment",
-      kindLabel: "Tree assessment",
+      kindLabel: "Landscaping assessment",
       title: row.title,
       summary: row.summary,
       href: `/tree-assessments/${row.slug}`,
@@ -187,8 +187,11 @@ export function filterFeedItems(
   return items.filter((item) => {
     const matchesFilter =
       filter === "all" ||
-      (filter === "maintenance" && item.kind === "maintenance") ||
-      (filter === "landscaping" && item.kind === "landscaping") ||
+      (filter === "maintenance" &&
+        (item.kind === "maintenance" ||
+          item.kind === "maintenance-assessment")) ||
+      (filter === "landscaping" &&
+        (item.kind === "landscaping" || item.kind === "tree-assessment")) ||
       (filter === "article" && item.kind === "article") ||
       (filter === "assessment" &&
         (item.kind === "tree-assessment" ||
