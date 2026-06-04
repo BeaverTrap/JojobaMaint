@@ -87,6 +87,7 @@ export interface Article {
   title: string;
   summary: string | null;
   body: string;
+  reference_list: string | null;
   category: string;
   cover_image_url: string | null;
   published: boolean;
@@ -111,6 +112,7 @@ export interface TreeAssessment {
   title: string;
   summary: string | null;
   body: string;
+  reference_list: string | null;
   site_number: string;
   tree_description: string;
   plant_type: string | null;

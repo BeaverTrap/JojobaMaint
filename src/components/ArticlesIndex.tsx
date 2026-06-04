@@ -30,7 +30,8 @@ export default function ArticlesIndex({
     return articles.filter((a) => {
       const matchesCategory =
         activeCategory === "all" || a.category === activeCategory;
-      const haystack = `${a.title} ${a.summary ?? ""} ${a.body}`.toLowerCase();
+      const haystack =
+        `${a.title} ${a.summary ?? ""} ${a.body} ${a.reference_list ?? ""}`.toLowerCase();
       const matchesQuery = !q || haystack.includes(q);
       return matchesCategory && matchesQuery;
     });

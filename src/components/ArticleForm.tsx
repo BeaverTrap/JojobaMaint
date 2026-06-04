@@ -30,6 +30,7 @@ type Props =
       initialTitle: string;
       initialSummary: string;
       initialBody: string;
+      initialReferenceList?: string;
       initialCategory: string;
       initialPublished: boolean;
       initialCoverUrl: string | null;
@@ -48,6 +49,9 @@ export default function ArticleForm(props: Props) {
   const [title, setTitle] = useState(isEdit ? props.initialTitle : "");
   const [summary, setSummary] = useState(isEdit ? props.initialSummary : "");
   const [body, setBody] = useState(isEdit ? props.initialBody : "");
+  const [referenceList, setReferenceList] = useState(
+    isEdit ? (props.initialReferenceList ?? "") : "",
+  );
   const [category, setCategory] = useState(
     isEdit ? props.initialCategory : (props.categories[0]?.slug ?? "trees"),
   );
@@ -198,6 +202,7 @@ export default function ArticleForm(props: Props) {
         title: title.trim(),
         summary: summary.trim() || null,
         body: body.trim(),
+        reference_list: referenceList.trim() || null,
         category,
         cover_image_url: coverUrl,
         published,
@@ -311,6 +316,21 @@ export default function ArticleForm(props: Props) {
             className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
           />
         )}
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-ink">References</label>
+        <p className="mt-0.5 text-xs text-muted">
+          Sources cited for this article — shown at the end on the public page.
+          One per line or paste a list from Docs.
+        </p>
+        <textarea
+          value={referenceList}
+          onChange={(e) => setReferenceList(e.target.value)}
+          rows={5}
+          placeholder={"e.g.\nUC Cooperative Extension — Oak wilt guide\nCal Poly Urban Forest Ecosystems Institute — species profile"}
+          className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+        />
       </div>
 
       <div>

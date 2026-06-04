@@ -53,6 +53,7 @@ export default async function EditArticlePage({
         initialTitle={a.title}
         initialSummary={a.summary ?? ""}
         initialBody={a.body}
+        initialReferenceList={a.reference_list ?? ""}
         initialCategory={a.category}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}

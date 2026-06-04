@@ -60,6 +60,7 @@ export default async function EditTreeAssessmentPage({
         initialTitle={a.title}
         initialSummary={a.summary ?? ""}
         initialBody={a.body}
+        initialReferenceList={a.reference_list ?? ""}
         initialSiteNumber={a.site_number}
         initialTreeDescription={a.tree_description}
         initialPlantType={a.plant_type ?? ""}

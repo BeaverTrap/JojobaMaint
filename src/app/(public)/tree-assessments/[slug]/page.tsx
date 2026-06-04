@@ -10,6 +10,7 @@ import {
 } from "@/lib/tree-assessments";
 import { assessmentLocationLine } from "@/lib/tree-assessment-display";
 import ArticleBody from "@/components/ArticleBody";
+import ReferencesSection from "@/components/ReferencesSection";
 import type { TreeAssessmentWithAuthor } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -103,6 +104,7 @@ export default async function TreeAssessmentPage({
       )}
 
       <ArticleBody body={a.body} />
+      <ReferencesSection referenceList={a.reference_list} />
     </article>
   );
 }

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TreeAssessmentConcern } from "@/lib/database.types";
 
 export const TREE_ASSESSMENT_SELECT =
-  "id, slug, title, summary, body, site_number, tree_description, plant_type, " +
+  "id, slug, title, summary, body, reference_list, site_number, tree_description, plant_type, " +
   "concern_type, resident_note, cover_image_url, published, author_id, created_at, updated_at, " +
   "author:profiles(id, display_name, avatar_url)";
 

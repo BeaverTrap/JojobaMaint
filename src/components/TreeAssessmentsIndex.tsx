@@ -38,6 +38,7 @@ export default function TreeAssessmentsIndex({
         a.title,
         a.summary,
         a.body,
+        a.reference_list,
         a.site_number,
         a.tree_description,
         a.plant_type,

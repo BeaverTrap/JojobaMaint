@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ArticleCategory } from "@/lib/database.types";
 
 export const ARTICLE_SELECT =
-  "id, slug, title, summary, body, category, cover_image_url, published, author_id, created_at, updated_at, " +
+  "id, slug, title, summary, body, reference_list, category, cover_image_url, published, author_id, created_at, updated_at, " +
   "author:profiles(id, display_name, avatar_url)";
 
 export async function fetchArticleCategories(

@@ -31,6 +31,7 @@ type Props =
       initialTitle: string;
       initialSummary: string;
       initialBody: string;
+      initialReferenceList?: string;
       initialSiteNumber: string;
       initialTreeDescription: string;
       initialPlantType: string;
@@ -57,6 +58,9 @@ export default function TreeAssessmentForm(props: Props) {
   const [title, setTitle] = useState(isEdit ? props.initialTitle : "");
   const [summary, setSummary] = useState(isEdit ? props.initialSummary : "");
   const [body, setBody] = useState(isEdit ? props.initialBody : "");
+  const [referenceList, setReferenceList] = useState(
+    isEdit ? (props.initialReferenceList ?? "") : "",
+  );
   const [siteNumber, setSiteNumber] = useState(
     isEdit ? props.initialSiteNumber : "",
   );
@@ -224,6 +228,7 @@ export default function TreeAssessmentForm(props: Props) {
         title: title.trim(),
         summary: summary.trim() || null,
         body: body.trim(),
+        reference_list: referenceList.trim() || null,
         site_number: siteNumber.trim(),
         tree_description: treeDescription.trim(),
         plant_type: plantType.trim() || null,
@@ -400,6 +405,20 @@ export default function TreeAssessmentForm(props: Props) {
             className={`${inputClass} mt-2 resize-y`}
           />
         )}
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-ink">References</label>
+        <p className="mt-0.5 text-xs text-muted">
+          Sources for this assessment — shown at the end on the public page.
+        </p>
+        <textarea
+          value={referenceList}
+          onChange={(e) => setReferenceList(e.target.value)}
+          rows={5}
+          placeholder={"e.g.\nISA Tree Risk Assessment guidelines\nArborist field guide — species ID"}
+          className={`${inputClass} mt-2 resize-y`}
+        />
       </div>
 
       <div>

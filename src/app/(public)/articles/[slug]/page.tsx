@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchArticleCategories, ARTICLE_SELECT } from "@/lib/articles";
 import ArticleBody from "@/components/ArticleBody";
+import ReferencesSection from "@/components/ReferencesSection";
 import type { ArticleWithAuthor } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -84,6 +85,7 @@ export default async function ArticlePage({
       )}
 
       <ArticleBody body={a.body} />
+      <ReferencesSection referenceList={a.reference_list} />
     </article>
   );
 }
