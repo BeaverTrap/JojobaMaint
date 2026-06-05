@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+import { formatPostedEditedLines } from "@/lib/content-dates";
 import { createClient } from "@/lib/supabase/server";
 import {
   fetchTreeAssessmentConcerns,
@@ -66,9 +66,9 @@ export default async function AdminTreeAssessmentsPage() {
                   <p className="text-xs text-muted">
                     {labelBySlug.get(a.concern_type)} ·{" "}
                     {a.published ? "Published" : "Draft"} ·{" "}
-                    {formatDistanceToNow(new Date(a.updated_at), {
-                      addSuffix: true,
-                    })}
+                    {formatPostedEditedLines(a.created_at, a.updated_at).join(
+                      " · ",
+                    )}
                   </p>
                 </div>
                 <span className="shrink-0 text-sm text-brand-700">Edit →</span>

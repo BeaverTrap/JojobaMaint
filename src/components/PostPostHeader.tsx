@@ -1,10 +1,12 @@
 import Link from "next/link";
 import PostPosterAvatar from "@/components/PostPosterAvatar";
+import { formatPostedEditedLines } from "@/lib/content-dates";
 
 export default function PostPostHeader({
   posterAvatar,
   categoryLabel,
-  timeAgo,
+  createdAt,
+  updatedAt,
   avatarSize = 36,
   canEdit = false,
   editHref,
@@ -12,12 +14,15 @@ export default function PostPostHeader({
 }: {
   posterAvatar: string | null | undefined;
   categoryLabel: string;
-  timeAgo: string;
+  createdAt: string;
+  updatedAt?: string | null;
   avatarSize?: number;
   canEdit?: boolean;
   editHref?: string;
   isDraft?: boolean;
 }) {
+  const dateLines = formatPostedEditedLines(createdAt, updatedAt);
+
   return (
     <div className="flex items-center gap-3 px-4 pt-4">
       <PostPosterAvatar
@@ -27,7 +32,11 @@ export default function PostPostHeader({
       />
       <div className="min-w-0 leading-tight">
         <p className="text-sm font-semibold text-ink">{categoryLabel}</p>
-        <p className="text-xs text-muted">{timeAgo}</p>
+        {dateLines.map((line) => (
+          <p key={line} className="text-xs text-muted">
+            {line}
+          </p>
+        ))}
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         {isDraft && (

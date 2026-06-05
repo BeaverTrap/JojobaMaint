@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchCategories, normalizePostRow, normalizePostRows, POST_SELECT } from "@/lib/posts";
@@ -69,9 +68,6 @@ export default async function PostDetailPage({
   );
 
   const categoryLabel = postCategoryLabel(p.category, categories);
-  const timeAgo = formatDistanceToNow(new Date(p.created_at), {
-    addSuffix: true,
-  });
   const images = postImageUrls(p);
 
   return (
@@ -97,7 +93,8 @@ export default async function PostDetailPage({
         <PostPostHeader
           posterAvatar={p.poster_avatar}
           categoryLabel={categoryLabel}
-          timeAgo={timeAgo}
+          createdAt={p.created_at}
+          updatedAt={p.updated_at}
           avatarSize={40}
           canEdit={isAuthorized}
           editHref={`/admin/posts/${p.id}/edit`}

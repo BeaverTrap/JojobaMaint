@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { formatDistanceToNow } from "date-fns";
 import {
   postBody,
   postCategoryLabel,
@@ -18,9 +17,6 @@ export default function PostCard({
   post: PostWithAuthor;
   canEdit?: boolean;
 }) {
-  const timeAgo = formatDistanceToNow(new Date(post.created_at), {
-    addSuffix: true,
-  });
   const images = postImageUrls(post);
   const headline = postTitle(post);
   const details = postBody(post);
@@ -32,7 +28,8 @@ export default function PostCard({
       <PostPostHeader
         posterAvatar={post.poster_avatar}
         categoryLabel={categoryLabel}
-        timeAgo={timeAgo}
+        createdAt={post.created_at}
+        updatedAt={post.updated_at}
         canEdit={canEdit}
         editHref={`/admin/posts/${post.id}/edit`}
       />

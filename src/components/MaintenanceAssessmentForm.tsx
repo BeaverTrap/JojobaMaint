@@ -18,6 +18,12 @@ import ArticleBody from "@/components/ArticleBody";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
+import PostPosterAvatarPicker from "@/components/PostPosterAvatarPicker";
+import {
+  defaultPosterAvatarForTeam,
+  normalizePosterAvatarSlug,
+  type PostPosterAvatarSlug,
+} from "@/lib/post-avatars";
 import {
   isTagsSchemaError,
   syncMaintenanceAssessmentTags,
@@ -59,6 +65,7 @@ type Props =
       initialResolutionNotes?: string;
       initialPublished: boolean;
       initialCoverUrl: string | null;
+      initialPosterAvatar?: string;
       initialTags: string[];
       workTypes: MaintenanceAssessmentWorkType[];
       issueTypes: MaintenanceAssessmentIssueType[];
@@ -117,6 +124,12 @@ export default function MaintenanceAssessmentForm(props: Props) {
   const [selectedTags, setSelectedTags] = useState<string[]>(
     isEdit ? props.initialTags : [],
   );
+  const [posterAvatar, setPosterAvatar] = useState<PostPosterAvatarSlug>(() => {
+    const normalized = normalizePosterAvatarSlug(
+      isEdit && props.mode === "edit" ? props.initialPosterAvatar : null,
+    );
+    return normalized ?? defaultPosterAvatarForTeam("maintenance");
+  });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(
     isEdit ? props.initialCoverUrl : null,
@@ -287,6 +300,7 @@ export default function MaintenanceAssessmentForm(props: Props) {
           : null,
         resolution_notes: resolutionNotes.trim() || null,
         cover_image_url: coverUrl,
+        poster_avatar: posterAvatar,
         published,
         ...(isEdit ? {} : { slug, author_id: user.id }),
       };
@@ -333,6 +347,17 @@ export default function MaintenanceAssessmentForm(props: Props) {
       onSubmit={handleSubmit}
       className="space-y-4 rounded-2xl border border-line bg-surface p-4 shadow-sm"
     >
+      <div>
+        <label className="text-sm font-medium text-ink">Posted as</label>
+        <div className="mt-2">
+          <PostPosterAvatarPicker
+            value={posterAvatar}
+            onChange={setPosterAvatar}
+            team="maintenance"
+          />
+        </div>
+      </div>
+
       <TagPicker
         tags={props.contentTags}
         selected={selectedTags}

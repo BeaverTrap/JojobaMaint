@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
 import PostCard from "@/components/PostCard";
 import PostPostHeader from "@/components/PostPostHeader";
 import ShareButtons from "@/components/ShareButtons";
 import type { FeedItem } from "@/lib/feed";
+import { formatPostedEditedLines } from "@/lib/content-dates";
 
 /** One row on the home feed — posts use PostCard; everything else uses this layout. */
 export default function FeedItemCard({
@@ -18,9 +18,7 @@ export default function FeedItemCard({
     return <PostCard post={item.post} canEdit={canEdit} />;
   }
 
-  const timeAgo = formatDistanceToNow(new Date(item.sortAt), {
-    addSuffix: true,
-  });
+  const dateLines = formatPostedEditedLines(item.createdAt, item.updatedAt);
   const images = item.imageUrls;
   const useCrewIcon = item.posterAvatar != null;
 
@@ -30,7 +28,8 @@ export default function FeedItemCard({
         <PostPostHeader
           posterAvatar={item.posterAvatar}
           categoryLabel={item.kindLabel}
-          timeAgo={timeAgo}
+          createdAt={item.createdAt}
+          updatedAt={item.updatedAt}
           canEdit={canEdit}
           editHref={item.editHref ?? undefined}
           isDraft={item.isDraft}
@@ -53,7 +52,11 @@ export default function FeedItemCard({
           )}
           <div className="leading-tight">
             <p className="text-sm font-semibold text-ink">{item.authorName}</p>
-            <p className="text-xs text-muted">{timeAgo}</p>
+            {dateLines.map((line) => (
+              <p key={line} className="text-xs text-muted">
+                {line}
+              </p>
+            ))}
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/70 dark:text-brand-200">

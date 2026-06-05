@@ -38,6 +38,7 @@ export interface Post {
   site_number: string | null;
   common_area: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface PostImage {
@@ -123,6 +124,7 @@ export interface TreeAssessment {
   resolution_status: TreeAssessmentResolutionStatus | null;
   resolution_notes: string | null;
   cover_image_url: string | null;
+  poster_avatar?: string | null;
   published: boolean;
   author_id: string;
   created_at: string;
@@ -191,6 +193,7 @@ export interface MaintenanceAssessment {
   resolution_status: MaintenanceAssessmentResolutionStatus | null;
   resolution_notes: string | null;
   cover_image_url: string | null;
+  poster_avatar?: string | null;
   published: boolean;
   author_id: string;
   created_at: string;

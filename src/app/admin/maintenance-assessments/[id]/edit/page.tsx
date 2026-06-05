@@ -80,6 +80,7 @@ export default async function EditMaintenanceAssessmentPage({
         initialResolutionNotes={a.resolution_notes ?? ""}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
+        initialPosterAvatar={a.poster_avatar ?? undefined}
         initialTags={initialTags}
         workTypes={workTypes}
         issueTypes={issueTypes}

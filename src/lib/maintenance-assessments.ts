@@ -6,7 +6,7 @@ import type {
 
 export const MAINTENANCE_ASSESSMENT_SELECT =
   "id, slug, title, summary, body, reference_list, site_number, common_area, work_description, " +
-  "work_type, issue_type, how_found, resolution_status, resolution_notes, cover_image_url, published, author_id, created_at, updated_at, " +
+  "work_type, issue_type, how_found, resolution_status, resolution_notes, cover_image_url, poster_avatar, published, author_id, created_at, updated_at, " +
   "author:profiles(id, display_name, avatar_url)";
 
 export async function fetchMaintenanceAssessmentWorkTypes(

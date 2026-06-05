@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatPostedEditedLines } from "@/lib/content-dates";
 import SearchBar from "@/components/SearchBar";
 import ShareButtons from "@/components/ShareButtons";
 import ContentTagList from "@/components/ContentTagList";
@@ -101,14 +101,18 @@ export default function ArticlesIndex({
                   {a.summary}
                 </p>
               )}
-              <p className="mt-2 text-sm text-muted">
-                {formatDistanceToNow(new Date(a.updated_at), {
-                  addSuffix: true,
-                })}
-                <span className="ml-2 font-medium text-brand-700">
-                  Read more →
-                </span>
-              </p>
+              <div className="mt-2 text-sm text-muted">
+                {formatPostedEditedLines(a.created_at, a.updated_at).map(
+                  (line) => (
+                    <p key={line}>{line}</p>
+                  ),
+                )}
+                <p>
+                  <span className="font-medium text-brand-700">
+                    Read more →
+                  </span>
+                </p>
+              </div>
             </ContentIndexCardLink>
           ))}
         </div>

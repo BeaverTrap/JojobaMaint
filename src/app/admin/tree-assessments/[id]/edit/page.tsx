@@ -76,6 +76,7 @@ export default async function EditTreeAssessmentPage({
         initialResolutionNotes={a.resolution_notes ?? ""}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
+        initialPosterAvatar={a.poster_avatar ?? undefined}
         initialTags={initialTags}
         concerns={concerns}
         contentTags={contentTags}

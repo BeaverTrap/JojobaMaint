@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ContentCoverImage from "@/components/ContentCoverImage";
-import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -17,6 +16,7 @@ import type { ArticleWithAuthor } from "@/lib/database.types";
 import { buildContentMetadata } from "@/lib/content-metadata";
 import ShareButtons from "@/components/ShareButtons";
 import PostPosterAvatar from "@/components/PostPosterAvatar";
+import { formatPostedEditedLines } from "@/lib/content-dates";
 
 export const dynamic = "force-dynamic";
 
@@ -98,10 +98,12 @@ export default async function ArticlePage({
         )}
         <div className="mt-3 flex items-center gap-2">
           <PostPosterAvatar slug={a.poster_avatar} size={32} className="h-8 w-8" />
-          <p className="text-xs text-muted">
-            Article · Updated{" "}
-            {format(new Date(a.updated_at), "MMMM d, yyyy")}
-          </p>
+          <div className="text-xs text-muted">
+            <p className="font-medium text-ink">Article</p>
+            {formatPostedEditedLines(a.created_at, a.updated_at).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
         </div>
         {isAuthorized && (
           <Link

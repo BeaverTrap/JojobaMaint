@@ -37,6 +37,8 @@ export type FeedItem = {
   authorAvatar: string | null;
   posterAvatar: string | null;
   sortAt: string;
+  createdAt: string;
+  updatedAt: string;
   locationLine: string | null;
   isDraft: boolean;
   /** Original post row when kind is maintenance or landscaping */
@@ -110,6 +112,8 @@ export async function fetchFeedItems(
       authorAvatar: row.author?.avatar_url ?? null,
       posterAvatar: row.poster_avatar ?? null,
       sortAt: row.created_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
       locationLine: postLocationLabel(row),
       isDraft: false,
       post: row,
@@ -131,6 +135,8 @@ export async function fetchFeedItems(
       authorAvatar: row.author?.avatar_url ?? null,
       posterAvatar: row.poster_avatar ?? null,
       sortAt: row.updated_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
       locationLine: null,
       isDraft: !row.published,
     });
@@ -140,7 +146,7 @@ export async function fetchFeedItems(
     items.push({
       id: `tree-${row.id}`,
       kind: "tree-assessment",
-      kindLabel: "Landscaping assessment",
+      kindLabel: "Landscaping",
       title: row.title,
       summary: row.summary,
       href: `/tree-assessments/${row.slug}`,
@@ -149,8 +155,10 @@ export async function fetchFeedItems(
       imageUrls: row.cover_image_url ? [row.cover_image_url] : [],
       authorName: row.author?.display_name ?? "Team member",
       authorAvatar: row.author?.avatar_url ?? null,
-      posterAvatar: null,
+      posterAvatar: row.poster_avatar ?? null,
       sortAt: row.updated_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
       locationLine: assessmentLocationLine(row),
       isDraft: !row.published,
     });
@@ -160,7 +168,7 @@ export async function fetchFeedItems(
     items.push({
       id: `maint-${row.id}`,
       kind: "maintenance-assessment",
-      kindLabel: "Maintenance assessment",
+      kindLabel: "Maintenance",
       title: row.title,
       summary: row.summary,
       href: `/maintenance-assessments/${row.slug}`,
@@ -169,8 +177,10 @@ export async function fetchFeedItems(
       imageUrls: row.cover_image_url ? [row.cover_image_url] : [],
       authorName: row.author?.display_name ?? "Team member",
       authorAvatar: row.author?.avatar_url ?? null,
-      posterAvatar: null,
+      posterAvatar: row.poster_avatar ?? null,
       sortAt: row.updated_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
       locationLine: maintenanceLocationLine(row),
       isDraft: !row.published,
     });
