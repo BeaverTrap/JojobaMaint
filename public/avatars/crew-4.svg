@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Crew 4">
-  <circle cx="32" cy="32" r="32" fill="#7f5539"/>
-  <circle cx="32" cy="28" r="12" fill="#f5d0c5"/>
-  <path fill="#4a2c2a" d="M18 26c0-8 6-14 14-14s14 6 14 14v4H18v-4z"/>
-  <ellipse cx="32" cy="52" rx="18" ry="10" fill="#a68a64"/>
-</svg>

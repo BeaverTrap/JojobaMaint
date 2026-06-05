@@ -1,13 +1,18 @@
-# Post crew icons
+# Post crew icons (quail)
 
-Feed posts show one of these icons (not the staff Google profile). Staff pick an icon when creating or editing a post.
+Staff pick one of these when posting to the feed. The feed shows the icon plus **Landscaping** or **Maintenance**, not the Google profile.
 
-Replace any `crew-N.svg` with a PNG of the same name if you prefer photos — update `src/lib/post-avatars.ts` to use `.png` paths.
-
-| File | Picker label |
+| File | Notes |
 | --- | --- |
-| `crew-1.svg` | Crew 1 |
-| `crew-2.svg` | Crew 2 |
-| `crew-3.svg` | Crew 3 |
-| `crew-4.svg` | Crew 4 |
-| `crew-5.svg` | Crew 5 |
+| `crew-1.png` | Hard hat · light blue |
+| `crew-2.png` | Sun hat · light blue |
+| `crew-3.png` | Hard hat · red |
+| `crew-4.png` | Sun hat · red |
+| `crew-5.png` | Hard hat · navy |
+| `crew-6.png` | Sun hat · navy |
+| `crew-7.png` | Hard hat · green |
+| `crew-8.png` | Sun hat · green |
+| `crew-9.png` | Hard hat · olive |
+| `crew-10.png` | Sun hat · olive |
+
+To add or change icons, drop PNGs here and update `src/lib/post-avatars.ts`.
