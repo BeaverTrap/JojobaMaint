@@ -16,6 +16,7 @@ import ReferencesSection from "@/components/ReferencesSection";
 import type { ArticleWithAuthor } from "@/lib/database.types";
 import { buildContentMetadata } from "@/lib/content-metadata";
 import ShareButtons from "@/components/ShareButtons";
+import PostPosterAvatar from "@/components/PostPosterAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -95,10 +96,13 @@ export default async function ArticlePage({
         {a.summary && (
           <p className="mt-2 text-base text-muted">{a.summary}</p>
         )}
-        <p className="mt-2 text-xs text-muted">
-          Updated {format(new Date(a.updated_at), "MMMM d, yyyy")}
-          {a.author?.display_name && ` · ${a.author.display_name}`}
-        </p>
+        <div className="mt-3 flex items-center gap-2">
+          <PostPosterAvatar slug={a.poster_avatar} size={32} className="h-8 w-8" />
+          <p className="text-xs text-muted">
+            Article · Updated{" "}
+            {format(new Date(a.updated_at), "MMMM d, yyyy")}
+          </p>
+        </div>
         {isAuthorized && (
           <Link
             href={`/admin/articles/${a.id}/edit`}

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import PostCard from "@/components/PostCard";
+import PostPostHeader from "@/components/PostPostHeader";
 import ShareButtons from "@/components/ShareButtons";
 import type { FeedItem } from "@/lib/feed";
 
@@ -14,56 +15,66 @@ export default function FeedItemCard({
   canEdit?: boolean;
 }) {
   if (item.post) {
-    return (
-      <PostCard post={item.post} canEdit={canEdit} />
-    );
+    return <PostCard post={item.post} canEdit={canEdit} />;
   }
 
   const timeAgo = formatDistanceToNow(new Date(item.sortAt), {
     addSuffix: true,
   });
   const images = item.imageUrls;
+  const useCrewIcon = item.posterAvatar != null;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
-      <div className="flex items-center gap-3 px-4 pt-4">
-        {item.authorAvatar ? (
-          <Image
-            src={item.authorAvatar}
-            alt={item.authorName}
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-full object-cover"
-            unoptimized
-          />
-        ) : (
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
-            {item.authorName.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <div className="leading-tight">
-          <p className="text-sm font-semibold text-ink">{item.authorName}</p>
-          <p className="text-xs text-muted">{timeAgo}</p>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/70 dark:text-brand-200">
-            {item.kindLabel}
-          </span>
-          {item.isDraft && (
-            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-              Draft
+      {useCrewIcon ? (
+        <PostPostHeader
+          posterAvatar={item.posterAvatar}
+          categoryLabel={item.kindLabel}
+          timeAgo={timeAgo}
+          canEdit={canEdit}
+          editHref={item.editHref ?? undefined}
+          isDraft={item.isDraft}
+        />
+      ) : (
+        <div className="flex items-center gap-3 px-4 pt-4">
+          {item.authorAvatar ? (
+            <Image
+              src={item.authorAvatar}
+              alt={item.authorName}
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-full object-cover"
+              unoptimized
+            />
+          ) : (
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
+              {item.authorName.charAt(0).toUpperCase()}
             </span>
           )}
-          {canEdit && item.editHref && (
-            <Link
-              href={item.editHref}
-              className="rounded-lg px-2.5 py-1 text-xs font-medium text-muted transition hover:bg-hover hover:text-ink"
-            >
-              Edit
-            </Link>
-          )}
+          <div className="leading-tight">
+            <p className="text-sm font-semibold text-ink">{item.authorName}</p>
+            <p className="text-xs text-muted">{timeAgo}</p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/70 dark:text-brand-200">
+              {item.kindLabel}
+            </span>
+            {item.isDraft && (
+              <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                Draft
+              </span>
+            )}
+            {canEdit && item.editHref && (
+              <Link
+                href={item.editHref}
+                className="rounded-lg px-2.5 py-1 text-xs font-medium text-muted transition hover:bg-hover hover:text-ink"
+              >
+                Edit
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <Link href={item.href} className="block px-4 py-3">
         <h2 className="text-[15px] font-semibold leading-snug text-ink">

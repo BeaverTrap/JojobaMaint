@@ -35,6 +35,7 @@ export type FeedItem = {
   imageUrls: string[];
   authorName: string;
   authorAvatar: string | null;
+  posterAvatar: string | null;
   sortAt: string;
   locationLine: string | null;
   isDraft: boolean;
@@ -107,6 +108,7 @@ export async function fetchFeedItems(
       imageUrls: postImageUrls(row),
       authorName: row.author?.display_name ?? "Team member",
       authorAvatar: row.author?.avatar_url ?? null,
+      posterAvatar: row.poster_avatar ?? null,
       sortAt: row.created_at,
       locationLine: postLocationLabel(row),
       isDraft: false,
@@ -127,6 +129,7 @@ export async function fetchFeedItems(
       imageUrls: row.cover_image_url ? [row.cover_image_url] : [],
       authorName: row.author?.display_name ?? "Team member",
       authorAvatar: row.author?.avatar_url ?? null,
+      posterAvatar: row.poster_avatar ?? null,
       sortAt: row.updated_at,
       locationLine: null,
       isDraft: !row.published,
@@ -146,6 +149,7 @@ export async function fetchFeedItems(
       imageUrls: row.cover_image_url ? [row.cover_image_url] : [],
       authorName: row.author?.display_name ?? "Team member",
       authorAvatar: row.author?.avatar_url ?? null,
+      posterAvatar: null,
       sortAt: row.updated_at,
       locationLine: assessmentLocationLine(row),
       isDraft: !row.published,
@@ -165,6 +169,7 @@ export async function fetchFeedItems(
       imageUrls: row.cover_image_url ? [row.cover_image_url] : [],
       authorName: row.author?.display_name ?? "Team member",
       authorAvatar: row.author?.avatar_url ?? null,
+      posterAvatar: null,
       sortAt: row.updated_at,
       locationLine: maintenanceLocationLine(row),
       isDraft: !row.published,

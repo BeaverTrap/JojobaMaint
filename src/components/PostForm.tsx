@@ -13,8 +13,10 @@ import TagPicker from "@/components/TagPicker";
 import PostPosterAvatarPicker from "@/components/PostPosterAvatarPicker";
 import { filterImageFiles } from "@/lib/image-accept";
 import {
-  DEFAULT_POST_POSTER_AVATAR,
-  isPostPosterAvatarSlug,
+  defaultPosterAvatarForTeam,
+  normalizePosterAvatarSlug,
+  posterAvatarsForTeam,
+  type PosterTeam,
   type PostPosterAvatarSlug,
 } from "@/lib/post-avatars";
 import {
@@ -54,7 +56,7 @@ export default function PostForm({
   initialParentId = null,
   initialSiteNumber = "",
   initialCommonArea = "",
-  initialPosterAvatar = DEFAULT_POST_POSTER_AVATAR,
+  initialPosterAvatar,
   initialImages = [],
   categories,
   contentTags,
@@ -87,11 +89,30 @@ export default function PostForm({
   const [parentId, setParentId] = useState<string>(initialParentId ?? "");
   const [siteNumber, setSiteNumber] = useState(initialSiteNumber);
   const [commonArea, setCommonArea] = useState(initialCommonArea);
-  const [posterAvatar, setPosterAvatar] = useState<PostPosterAvatarSlug>(
-    isPostPosterAvatarSlug(initialPosterAvatar)
-      ? initialPosterAvatar
-      : DEFAULT_POST_POSTER_AVATAR,
-  );
+  const postTeam: PosterTeam =
+    category === "landscaping" ? "landscaping" : "maintenance";
+
+  const [posterAvatar, setPosterAvatar] = useState<PostPosterAvatarSlug>(() => {
+    const normalized = normalizePosterAvatarSlug(initialPosterAvatar);
+    const team: PosterTeam =
+      initialCategory === "landscaping" ? "landscaping" : "maintenance";
+    if (normalized) {
+      const match = posterAvatarsForTeam(team).find((a) => a.slug === normalized);
+      if (match) return match.slug;
+    }
+    return defaultPosterAvatarForTeam(team);
+  });
+
+  function setCategoryAndAvatar(next: string) {
+    setCategory(next);
+    const team: PosterTeam =
+      next === "landscaping" ? "landscaping" : "maintenance";
+    const normalized = normalizePosterAvatarSlug(posterAvatar);
+    const valid =
+      normalized &&
+      posterAvatarsForTeam(team).some((a) => a.slug === normalized);
+    if (!valid) setPosterAvatar(defaultPosterAvatarForTeam(team));
+  }
   const [existing, setExisting] = useState<ExistingImage[]>(initialImages);
   const [removed, setRemoved] = useState<ExistingImage[]>([]);
   const [newImages, setNewImages] = useState<NewImage[]>([]);
@@ -285,6 +306,7 @@ export default function PostForm({
         <PostPosterAvatarPicker
           value={posterAvatar}
           onChange={setPosterAvatar}
+          team={postTeam}
         />
       </Field>
 
@@ -294,7 +316,7 @@ export default function PostForm({
             <button
               key={c.slug}
               type="button"
-              onClick={() => setCategory(c.slug)}
+              onClick={() => setCategoryAndAvatar(c.slug)}
               className={
                 category === c.slug
                   ? "rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white"

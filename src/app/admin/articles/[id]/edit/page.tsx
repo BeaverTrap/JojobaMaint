@@ -59,6 +59,7 @@ export default async function EditArticlePage({
         initialTags={initialTags.length > 0 ? initialTags : [a.category]}
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
+        initialPosterAvatar={a.poster_avatar ?? undefined}
         tags={tags}
         redirectTo="/admin/articles"
       />

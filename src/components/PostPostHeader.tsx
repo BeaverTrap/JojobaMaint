@@ -8,6 +8,7 @@ export default function PostPostHeader({
   avatarSize = 36,
   canEdit = false,
   editHref,
+  isDraft = false,
 }: {
   posterAvatar: string | null | undefined;
   categoryLabel: string;
@@ -15,6 +16,7 @@ export default function PostPostHeader({
   avatarSize?: number;
   canEdit?: boolean;
   editHref?: string;
+  isDraft?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3 px-4 pt-4">
@@ -27,14 +29,21 @@ export default function PostPostHeader({
         <p className="text-sm font-semibold text-ink">{categoryLabel}</p>
         <p className="text-xs text-muted">{timeAgo}</p>
       </div>
-      {canEdit && editHref && (
-        <Link
-          href={editHref}
-          className="ml-auto shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium text-muted transition hover:bg-hover hover:text-ink"
-        >
-          Edit
-        </Link>
-      )}
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {isDraft && (
+          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            Draft
+          </span>
+        )}
+        {canEdit && editHref && (
+          <Link
+            href={editHref}
+            className="rounded-lg px-2.5 py-1 text-xs font-medium text-muted transition hover:bg-hover hover:text-ink"
+          >
+            Edit
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

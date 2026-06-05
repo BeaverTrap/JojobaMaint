@@ -8,7 +8,7 @@ import {
 import type { ArticleWithAuthor } from "@/lib/database.types";
 
 export const ARTICLE_SELECT =
-  "id, slug, title, summary, body, reference_list, category, cover_image_url, published, author_id, created_at, updated_at, " +
+  "id, slug, title, summary, body, reference_list, category, poster_avatar, cover_image_url, published, author_id, created_at, updated_at, " +
   "author:profiles(id, display_name, avatar_url)";
 
 export const ARTICLE_TAG_EMBED =

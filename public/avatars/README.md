@@ -1,18 +1,24 @@
-# Post crew icons (quail)
+# Crew quail icons
 
-Staff pick one of these when posting to the feed. The feed shows the icon plus **Landscaping** or **Maintenance**, not the Google profile.
+**Naming:** `maintenance-{color}.png` (hard hat) or `landscaping-{color}.png` (sun hat).
 
-| File | Notes |
+| File | Section |
 | --- | --- |
-| `crew-1.png` | Hard hat · light blue |
-| `crew-2.png` | Sun hat · light blue |
-| `crew-3.png` | Hard hat · red |
-| `crew-4.png` | Sun hat · red |
-| `crew-5.png` | Hard hat · navy |
-| `crew-6.png` | Sun hat · navy |
-| `crew-7.png` | Hard hat · green |
-| `crew-8.png` | Sun hat · green |
-| `crew-9.png` | Hard hat · olive |
-| `crew-10.png` | Sun hat · olive |
+| `maintenance-sky.png` | Maintenance · light blue |
+| `landscaping-sky.png` | Landscaping · light blue |
+| `maintenance-red.png` | Maintenance · red |
+| `landscaping-red.png` | Landscaping · red |
+| `maintenance-navy.png` | Maintenance · navy |
+| `landscaping-navy.png` | Landscaping · navy |
+| `maintenance-green.png` | Maintenance · green |
+| `landscaping-green.png` | Landscaping · green |
+| `maintenance-olive.png` | Maintenance · olive |
+| `landscaping-olive.png` | Landscaping · olive |
 
-To add or change icons, drop PNGs here and update `src/lib/post-avatars.ts`.
+## Adding a new icon
+
+1. Drop the PNG in this folder using the naming pattern above.
+2. Add one entry in `src/lib/post-avatars.ts` (slug, team, label, src).
+3. Run the app — icons are **not** picked up automatically from the folder alone.
+
+The post form only shows maintenance icons when **Maintenance** is selected, and landscaping icons when **Landscaping** is selected.

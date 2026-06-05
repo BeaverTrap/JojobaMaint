@@ -18,12 +18,19 @@ import ArticleBody from "@/components/ArticleBody";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
+import PostPosterAvatarPicker from "@/components/PostPosterAvatarPicker";
 import {
   isTagsSchemaError,
   primaryTagSlug,
   syncArticleTags,
   type ContentTag,
 } from "@/lib/content-tags";
+import {
+  defaultPosterAvatarForTeam,
+  normalizePosterAvatarSlug,
+  resolvePostPosterAvatar,
+  type PostPosterAvatarSlug,
+} from "@/lib/post-avatars";
 
 type Props =
   | {
@@ -42,6 +49,7 @@ type Props =
       initialTags: string[];
       initialPublished: boolean;
       initialCoverUrl: string | null;
+      initialPosterAvatar?: string;
       tags: ContentTag[];
       redirectTo: string;
     };
@@ -65,6 +73,12 @@ export default function ArticleForm(props: Props) {
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : false,
   );
+  const [posterAvatar, setPosterAvatar] = useState<PostPosterAvatarSlug>(() => {
+    const normalized = normalizePosterAvatarSlug(
+      isEdit && props.mode === "edit" ? props.initialPosterAvatar : null,
+    );
+    return normalized ?? defaultPosterAvatarForTeam("maintenance");
+  });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(
     isEdit ? props.initialCoverUrl : null,
@@ -215,6 +229,7 @@ export default function ArticleForm(props: Props) {
         body: body.trim(),
         reference_list: referenceList.trim() || null,
         category: primaryTagSlug(selectedTags),
+        poster_avatar: posterAvatar,
         cover_image_url: coverUrl,
         published,
         ...(isEdit ? {} : { slug, author_id: user.id }),
@@ -284,6 +299,17 @@ export default function ArticleForm(props: Props) {
         selected={selectedTags}
         onChange={setSelectedTags}
       />
+
+      <div>
+        <label className="text-sm font-medium text-ink">Posted as</label>
+        <div className="mt-2">
+          <PostPosterAvatarPicker
+            value={posterAvatar}
+            onChange={setPosterAvatar}
+            team="all"
+          />
+        </div>
+      </div>
 
       <div>
         <div className="flex items-center justify-between gap-2">
