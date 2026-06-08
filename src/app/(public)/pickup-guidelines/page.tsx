@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import ArticleBody from "@/components/ArticleBody";
-import { pickupScheduleLabel } from "@/lib/pickup-schedule";
 import { fetchPickupGuidelines } from "@/lib/pickup-guidelines";
 
 export const dynamic = "force-dynamic";
@@ -25,12 +23,6 @@ export default async function PickupGuidelinesPage() {
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           {guidelines.title}
         </h1>
-        <p className="mt-2 text-xs text-muted">
-          Updated {format(new Date(guidelines.updated_at), "MMM d, yyyy")} ·{" "}
-          {pickupScheduleLabel(
-            guidelines.is_summer_schedule ? "summer" : "regular",
-          )}
-        </p>
         {isAuthorized && (
           <Link
             href="/admin/pickup-guidelines"

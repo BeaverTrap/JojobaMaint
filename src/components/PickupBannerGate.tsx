@@ -10,6 +10,7 @@ const PICKUP_BANNER_PATHS = new Set([
   "/maintenance-assessments",
   "/articles",
   "/schedule",
+  "/pickup-guidelines",
 ]);
 
 export default function PickupBannerGate({
@@ -19,5 +20,10 @@ export default function PickupBannerGate({
 }) {
   const pathname = usePathname();
   if (!PICKUP_BANNER_PATHS.has(pathname)) return null;
-  return <PickupBanner isSummerSchedule={isSummerSchedule} />;
+  return (
+    <PickupBanner
+      isSummerSchedule={isSummerSchedule}
+      showGuidelinesLink={pathname !== "/pickup-guidelines"}
+    />
+  );
 }

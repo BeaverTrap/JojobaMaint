@@ -19,8 +19,10 @@ function PickupLeafIcon({ className }: { className?: string }) {
 
 export default function PickupBanner({
   isSummerSchedule,
+  showGuidelinesLink = true,
 }: {
   isSummerSchedule: boolean;
+  showGuidelinesLink?: boolean;
 }) {
   const scheduleLabel = isSummerSchedule
     ? "SUMMER SCHEDULE: Mondays Only"
@@ -55,14 +57,16 @@ export default function PickupBanner({
               Thursday pickups are temporarily paused for the summer schedule.
             </p>
           )}
-          <p>
-            <Link
-              href="/pickup-guidelines"
-              className="text-xs font-semibold text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800 dark:text-brand-300"
-            >
-              Full pickup guidelines →
-            </Link>
-          </p>
+          {showGuidelinesLink && (
+            <p>
+              <Link
+                href="/pickup-guidelines"
+                className="text-xs font-semibold text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800 dark:text-brand-300"
+              >
+                Full pickup guidelines →
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </aside>
