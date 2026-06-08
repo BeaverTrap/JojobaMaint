@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import PostCard from "@/components/PostCard";
 import PostPostHeader from "@/components/PostPostHeader";
+import FeedSectionBadge from "@/components/FeedSectionBadge";
 import ShareButtons from "@/components/ShareButtons";
 import type { FeedItem } from "@/lib/feed";
 import { formatPostedEditedLines } from "@/lib/content-dates";
@@ -27,7 +28,7 @@ export default function FeedItemCard({
       {useCrewIcon ? (
         <PostPostHeader
           posterAvatar={item.posterAvatar}
-          categoryLabel={item.kindLabel}
+          feedSection={item.feedSection}
           createdAt={item.createdAt}
           updatedAt={item.updatedAt}
           canEdit={canEdit}
@@ -59,9 +60,7 @@ export default function FeedItemCard({
             ))}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/70 dark:text-brand-200">
-              {item.kindLabel}
-            </span>
+            <FeedSectionBadge section={item.feedSection} />
             {item.isDraft && (
               <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
                 Draft

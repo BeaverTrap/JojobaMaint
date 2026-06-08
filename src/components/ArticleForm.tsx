@@ -18,6 +18,7 @@ import ArticleBody from "@/components/ArticleBody";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
+import FeedSectionPicker from "@/components/FeedSectionPicker";
 import PostPosterAvatarPicker from "@/components/PostPosterAvatarPicker";
 import {
   isTagsSchemaError,
@@ -31,6 +32,10 @@ import {
   resolvePostPosterAvatar,
   type PostPosterAvatarSlug,
 } from "@/lib/post-avatars";
+import {
+  parseFeedSection,
+  type FeedSection,
+} from "@/lib/feed-section";
 
 type Props =
   | {
@@ -50,6 +55,7 @@ type Props =
       initialPublished: boolean;
       initialCoverUrl: string | null;
       initialPosterAvatar?: string;
+      initialFeedSection?: string;
       tags: ContentTag[];
       redirectTo: string;
     };
@@ -72,6 +78,11 @@ export default function ArticleForm(props: Props) {
   );
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : false,
+  );
+  const [feedSection, setFeedSection] = useState<FeedSection>(() =>
+    isEdit && props.mode === "edit"
+      ? parseFeedSection(props.initialFeedSection)
+      : "maintenance",
   );
   const [posterAvatar, setPosterAvatar] = useState<PostPosterAvatarSlug>(() => {
     const normalized = normalizePosterAvatarSlug(
@@ -229,6 +240,7 @@ export default function ArticleForm(props: Props) {
         body: body.trim(),
         reference_list: referenceList.trim() || null,
         category: primaryTagSlug(selectedTags),
+        feed_section: feedSection,
         poster_avatar: posterAvatar,
         cover_image_url: coverUrl,
         published,
@@ -292,6 +304,16 @@ export default function ArticleForm(props: Props) {
           placeholder="One line for the article list (optional)"
           className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-ink">Feed section</label>
+        <p className="mt-0.5 text-xs text-muted">
+          Where this guide appears when residents filter the feed.
+        </p>
+        <div className="mt-2">
+          <FeedSectionPicker value={feedSection} onChange={setFeedSection} />
+        </div>
       </div>
 
       <TagPicker

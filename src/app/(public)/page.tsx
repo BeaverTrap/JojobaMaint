@@ -20,7 +20,7 @@ export default async function FeedPage() {
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink">Feed</h1>
           <p className="text-sm text-muted">
-            Maintenance, landscaping, and articles.
+            Log posts, guides, and assessments in one place.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

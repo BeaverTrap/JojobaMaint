@@ -1,10 +1,13 @@
 import Link from "next/link";
 import PostPosterAvatar from "@/components/PostPosterAvatar";
+import FeedSectionBadge from "@/components/FeedSectionBadge";
 import { formatPostedEditedLines } from "@/lib/content-dates";
+import { parseFeedSection, type FeedSection } from "@/lib/feed-section";
 
 export default function PostPostHeader({
   posterAvatar,
   categoryLabel,
+  feedSection,
   createdAt,
   updatedAt,
   avatarSize = 36,
@@ -13,7 +16,8 @@ export default function PostPostHeader({
   isDraft = false,
 }: {
   posterAvatar: string | null | undefined;
-  categoryLabel: string;
+  categoryLabel?: string;
+  feedSection?: FeedSection | string;
   createdAt: string;
   updatedAt?: string | null;
   avatarSize?: number;
@@ -22,6 +26,17 @@ export default function PostPostHeader({
   isDraft?: boolean;
 }) {
   const dateLines = formatPostedEditedLines(createdAt, updatedAt);
+  const section = feedSection
+    ? parseFeedSection(feedSection)
+    : categoryLabel
+      ? parseFeedSection(
+          categoryLabel.toLowerCase() === "landscaping"
+            ? "landscaping"
+            : categoryLabel.toLowerCase() === "both"
+              ? "both"
+              : "maintenance",
+        )
+      : "maintenance";
 
   return (
     <div className="flex items-center gap-3 px-4 pt-4">
@@ -31,9 +46,9 @@ export default function PostPostHeader({
         className={avatarSize >= 40 ? "h-10 w-10" : "h-9 w-9"}
       />
       <div className="min-w-0 leading-tight">
-        <p className="text-sm font-semibold text-ink">{categoryLabel}</p>
+        <FeedSectionBadge section={section} />
         {dateLines.map((line) => (
-          <p key={line} className="text-xs text-muted">
+          <p key={line} className="mt-1 text-xs text-muted">
             {line}
           </p>
         ))}

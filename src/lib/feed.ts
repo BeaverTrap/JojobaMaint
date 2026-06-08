@@ -15,6 +15,12 @@ import {
   MAINTENANCE_ASSESSMENT_SELECT,
 } from "@/lib/maintenance-assessments";
 import { TREE_ASSESSMENT_SELECT } from "@/lib/tree-assessments";
+import {
+  feedSectionLabel,
+  matchesFeedSectionFilter,
+  parseFeedSection,
+  type FeedSection,
+} from "@/lib/feed-section";
 
 export type FeedItemKind =
   | "maintenance"
@@ -26,6 +32,7 @@ export type FeedItemKind =
 export type FeedItem = {
   id: string;
   kind: FeedItemKind;
+  feedSection: FeedSection;
   kindLabel: string;
   title: string;
   summary: string | null;
@@ -45,12 +52,7 @@ export type FeedItem = {
   post?: PostWithAuthor;
 };
 
-export type FeedFilter =
-  | "all"
-  | "maintenance"
-  | "landscaping"
-  | "article"
-  | "assessment";
+export type FeedFilter = "all" | "maintenance" | "landscaping";
 
 export async function fetchFeedItems(
   supabase: SupabaseClient,
@@ -96,12 +98,18 @@ export async function fetchFeedItems(
   for (const row of normalizePostRows(
     (posts ?? []) as unknown as PostWithAuthor[],
   )) {
+    const feedSection = parseFeedSection(row.category);
     const kind: FeedItemKind =
-      row.category === "landscaping" ? "landscaping" : "maintenance";
+      feedSection === "landscaping"
+        ? "landscaping"
+        : feedSection === "maintenance"
+          ? "maintenance"
+          : "maintenance";
     items.push({
       id: `post-${row.id}`,
       kind,
-      kindLabel: kind === "landscaping" ? "Landscaping" : "Maintenance",
+      feedSection,
+      kindLabel: feedSectionLabel(feedSection),
       title: postTitle(row),
       summary: postBody(row) || row.description || null,
       href: `/posts/${row.id}`,
@@ -121,10 +129,12 @@ export async function fetchFeedItems(
   }
 
   for (const row of (articles ?? []) as unknown as ArticleWithAuthor[]) {
+    const feedSection = parseFeedSection(row.feed_section);
     items.push({
       id: `article-${row.id}`,
       kind: "article",
-      kindLabel: "Article",
+      feedSection,
+      kindLabel: feedSectionLabel(feedSection),
       title: row.title,
       summary: row.summary,
       href: `/articles/${row.slug}`,
@@ -146,7 +156,8 @@ export async function fetchFeedItems(
     items.push({
       id: `tree-${row.id}`,
       kind: "tree-assessment",
-      kindLabel: "Landscaping",
+      feedSection: "landscaping",
+      kindLabel: feedSectionLabel("landscaping"),
       title: row.title,
       summary: row.summary,
       href: `/tree-assessments/${row.slug}`,
@@ -168,7 +179,8 @@ export async function fetchFeedItems(
     items.push({
       id: `maint-${row.id}`,
       kind: "maintenance-assessment",
-      kindLabel: "Maintenance",
+      feedSection: "maintenance",
+      kindLabel: feedSectionLabel("maintenance"),
       title: row.title,
       summary: row.summary,
       href: `/maintenance-assessments/${row.slug}`,
@@ -200,17 +212,7 @@ export function filterFeedItems(
 ): FeedItem[] {
   const q = query.trim().toLowerCase();
   return items.filter((item) => {
-    const matchesFilter =
-      filter === "all" ||
-      (filter === "maintenance" &&
-        (item.kind === "maintenance" ||
-          item.kind === "maintenance-assessment")) ||
-      (filter === "landscaping" &&
-        (item.kind === "landscaping" || item.kind === "tree-assessment")) ||
-      (filter === "article" && item.kind === "article") ||
-      (filter === "assessment" &&
-        (item.kind === "tree-assessment" ||
-          item.kind === "maintenance-assessment"));
+    const matchesFilter = matchesFeedSectionFilter(item.feedSection, filter);
 
     const haystack = [
       item.title,

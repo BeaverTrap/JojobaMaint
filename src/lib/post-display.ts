@@ -7,6 +7,7 @@ export function postCategoryLabel(
   const match = categories?.find((c) => c.slug === category);
   if (match) return match.label;
   if (category === "landscaping") return "Landscaping";
+  if (category === "both") return "Both";
   return "Maintenance";
 }
 

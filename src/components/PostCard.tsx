@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   postBody,
-  postCategoryLabel,
   postLocationLabel,
   postTitle,
 } from "@/lib/post-display";
@@ -21,13 +20,12 @@ export default function PostCard({
   const headline = postTitle(post);
   const details = postBody(post);
   const location = postLocationLabel(post);
-  const categoryLabel = postCategoryLabel(post.category);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
       <PostPostHeader
         posterAvatar={post.poster_avatar}
-        categoryLabel={categoryLabel}
+        feedSection={post.category}
         createdAt={post.created_at}
         updatedAt={post.updated_at}
         canEdit={canEdit}

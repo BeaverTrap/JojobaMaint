@@ -47,6 +47,25 @@ type NewImage = {
 const inputClass =
   "w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800";
 
+function avatarValidForTeam(
+  slug: PostPosterAvatarSlug,
+  team: PosterTeam | "all",
+): boolean {
+  if (team === "all") {
+    return (
+      posterAvatarsForTeam("maintenance").some((a) => a.slug === slug) ||
+      posterAvatarsForTeam("landscaping").some((a) => a.slug === slug)
+    );
+  }
+  return posterAvatarsForTeam(team).some((a) => a.slug === slug);
+}
+
+function defaultAvatarForTeam(team: PosterTeam | "all"): PostPosterAvatarSlug {
+  return team === "all"
+    ? defaultPosterAvatarForTeam("maintenance")
+    : defaultPosterAvatarForTeam(team);
+}
+
 export default function PostForm({
   mode,
   postId,
@@ -89,29 +108,39 @@ export default function PostForm({
   const [parentId, setParentId] = useState<string>(initialParentId ?? "");
   const [siteNumber, setSiteNumber] = useState(initialSiteNumber);
   const [commonArea, setCommonArea] = useState(initialCommonArea);
-  const postTeam: PosterTeam =
-    category === "landscaping" ? "landscaping" : "maintenance";
+  const postTeam: PosterTeam | "all" =
+    category === "landscaping"
+      ? "landscaping"
+      : category === "maintenance"
+        ? "maintenance"
+        : "all";
 
   const [posterAvatar, setPosterAvatar] = useState<PostPosterAvatarSlug>(() => {
     const normalized = normalizePosterAvatarSlug(initialPosterAvatar);
-    const team: PosterTeam =
-      initialCategory === "landscaping" ? "landscaping" : "maintenance";
-    if (normalized) {
-      const match = posterAvatarsForTeam(team).find((a) => a.slug === normalized);
-      if (match) return match.slug;
+    const team: PosterTeam | "all" =
+      initialCategory === "landscaping"
+        ? "landscaping"
+        : initialCategory === "maintenance"
+          ? "maintenance"
+          : "all";
+    if (normalized && avatarValidForTeam(normalized, team)) {
+      return normalized;
     }
-    return defaultPosterAvatarForTeam(team);
+    return defaultAvatarForTeam(team);
   });
 
   function setCategoryAndAvatar(next: string) {
     setCategory(next);
-    const team: PosterTeam =
-      next === "landscaping" ? "landscaping" : "maintenance";
+    const team: PosterTeam | "all" =
+      next === "landscaping"
+        ? "landscaping"
+        : next === "maintenance"
+          ? "maintenance"
+          : "all";
     const normalized = normalizePosterAvatarSlug(posterAvatar);
-    const valid =
-      normalized &&
-      posterAvatarsForTeam(team).some((a) => a.slug === normalized);
-    if (!valid) setPosterAvatar(defaultPosterAvatarForTeam(team));
+    if (!normalized || !avatarValidForTeam(normalized, team)) {
+      setPosterAvatar(defaultAvatarForTeam(team));
+    }
   }
   const [existing, setExisting] = useState<ExistingImage[]>(initialImages);
   const [removed, setRemoved] = useState<ExistingImage[]>([]);

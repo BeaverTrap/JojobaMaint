@@ -11,7 +11,6 @@ const NAV_LINKS = [
   { href: "/schedule", label: "Schedule" },
   { href: "/tree-assessments", label: "Landscaping" },
   { href: "/maintenance-assessments", label: "Maintenance" },
-  { href: "/articles", label: "Articles" },
 ] as const;
 
 export default function Navbar({

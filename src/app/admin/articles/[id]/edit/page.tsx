@@ -60,6 +60,7 @@ export default async function EditArticlePage({
         initialPublished={a.published}
         initialCoverUrl={a.cover_image_url}
         initialPosterAvatar={a.poster_avatar ?? undefined}
+        initialFeedSection={a.feed_section}
         tags={tags}
         redirectTo="/admin/articles"
       />

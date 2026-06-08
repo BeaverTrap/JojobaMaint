@@ -16,11 +16,6 @@ const PRIMARY = [
     match: (p: string) => p.startsWith("/maintenance-assessments"),
   },
   {
-    href: "/articles",
-    label: "Articles",
-    match: (p: string) => p.startsWith("/articles"),
-  },
-  {
     href: "/schedule",
     label: "Schedule",
     match: (p: string) => p.startsWith("/schedule"),

@@ -91,6 +91,7 @@ export interface Article {
   body: string;
   reference_list: string | null;
   category: string;
+  feed_section: string;
   poster_avatar?: string | null;
   cover_image_url: string | null;
   published: boolean;
