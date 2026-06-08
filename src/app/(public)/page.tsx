@@ -23,14 +23,22 @@ export default async function FeedPage() {
             Maintenance, landscaping, and articles.
           </p>
         </div>
-        {isAuthorized && (
+        <div className="flex shrink-0 items-center gap-2">
           <Link
-            href="/admin"
-            className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+            href="/schedule"
+            className="rounded-xl border border-line bg-surface px-3 py-2 text-sm font-semibold text-ink transition hover:bg-hover"
           >
-            + New
+            Schedule
           </Link>
-        )}
+          {isAuthorized && (
+            <Link
+              href="/admin"
+              className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+            >
+              + New
+            </Link>
+          )}
+        </div>
       </div>
 
       <Feed items={items} canEdit={isAuthorized} />

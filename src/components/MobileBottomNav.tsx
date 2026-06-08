@@ -20,6 +20,11 @@ const PRIMARY = [
     label: "Articles",
     match: (p: string) => p.startsWith("/articles"),
   },
+  {
+    href: "/schedule",
+    label: "Schedule",
+    match: (p: string) => p.startsWith("/schedule"),
+  },
 ] as const;
 
 export default function MobileBottomNav({
@@ -85,6 +90,18 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
             stroke={stroke}
             strokeWidth="2"
             strokeLinecap="round"
+          />
+        </svg>
+      );
+    case "Schedule":
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M7 3v2M17 3v2M4 8h16M6 5h12a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+            stroke={stroke}
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       );

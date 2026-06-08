@@ -203,3 +203,18 @@ export interface MaintenanceAssessment {
 export type MaintenanceAssessmentWithAuthor = MaintenanceAssessment & {
   author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
 };
+
+export type CalendarEventStatus = "confirmed" | "cancelled" | "tentative";
+
+export interface CalendarEvent {
+  id: string;
+  google_event_id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  all_day: boolean;
+  status: CalendarEventStatus;
+  created_at: string;
+  updated_at: string;
+}
