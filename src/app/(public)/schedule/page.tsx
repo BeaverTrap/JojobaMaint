@@ -34,6 +34,15 @@ export default async function SchedulePage() {
       </div>
 
       <ScheduleCalendar events={events} />
+
+      {events.length === 0 && (
+        <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
+          No events in the cache yet.
+          {isAuthorized
+            ? " Sign in as staff and tap Sync calendar once Google credentials are configured in .env.local (or Vercel env)."
+            : " Events appear here after staff sync the maintenance Google Calendar."}
+        </p>
+      )}
     </div>
   );
 }

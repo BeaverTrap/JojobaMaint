@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
+  calendarSetupHints,
+  getCalendarConfigIssues,
+} from "@/lib/calendar-config";
+import {
   ensureCalendarWatchChannel,
   syncGoogleCalendarEvents,
 } from "@/lib/google-calendar";
@@ -26,6 +30,18 @@ export async function POST() {
 
   if (!profile?.is_authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const configIssues = getCalendarConfigIssues();
+  if (configIssues.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Calendar sync is not configured",
+        missing: configIssues,
+        hints: calendarSetupHints(configIssues),
+      },
+      { status: 503 },
+    );
   }
 
   try {

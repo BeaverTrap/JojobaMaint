@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { google, type calendar_v3 } from "googleapis";
 import { addMonths, subMonths } from "date-fns";
+import {
+  getCalendarConfigIssues,
+  isCalendarConfigured,
+  parseServiceAccountJson,
+} from "@/lib/calendar-config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -32,14 +37,13 @@ function parseServiceAccountCredentials(): {
   if (!raw) {
     throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not configured");
   }
-  const json = JSON.parse(raw) as {
-    client_email?: string;
-    private_key?: string;
-  };
-  if (!json.client_email || !json.private_key) {
-    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is missing required fields");
+  try {
+    return parseServiceAccountJson(raw);
+  } catch {
+    throw new Error(
+      "GOOGLE_SERVICE_ACCOUNT_JSON is invalid — use one-line JSON with \\n in private_key",
+    );
   }
-  return { client_email: json.client_email, private_key: json.private_key };
 }
 
 function getCalendarClient(): calendar_v3.Calendar {
@@ -204,6 +208,13 @@ export async function syncGoogleCalendarEvents(): Promise<{
   synced: number;
   mode: "full" | "incremental";
 }> {
+  const configIssues = getCalendarConfigIssues();
+  if (configIssues.length > 0) {
+    throw new Error(
+      `Calendar sync is not configured (${configIssues.join(", ")})`,
+    );
+  }
+
   const calendar = getCalendarClient();
   const calendarId = getCalendarId();
   const state = await loadSyncState();
@@ -291,3 +302,5 @@ export function verifyCalendarWebhookToken(
   if (!expected) return true;
   return headerToken === expected;
 }
+
+export { isCalendarConfigured };

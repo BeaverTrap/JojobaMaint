@@ -218,3 +218,11 @@ export interface CalendarEvent {
   created_at: string;
   updated_at: string;
 }
+
+export interface PickupGuidelines {
+  id: string;
+  title: string;
+  body: string;
+  is_summer_schedule: boolean;
+  updated_at: string;
+}

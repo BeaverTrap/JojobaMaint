@@ -16,8 +16,16 @@ export default function CalendarSyncButton() {
         synced?: number;
         mode?: string;
         error?: string;
+        missing?: string[];
+        hints?: string[];
       };
       if (!res.ok) {
+        if (data.missing?.length && data.hints?.length) {
+          setMessage(
+            `${data.error ?? "Not configured"}: ${data.hints.join(" ")}`,
+          );
+          return;
+        }
         setMessage(data.error ?? "Sync failed");
         return;
       }
@@ -42,7 +50,9 @@ export default function CalendarSyncButton() {
         {loading ? "Syncing…" : "Sync calendar"}
       </button>
       {message && (
-        <p className="max-w-[14rem] text-right text-xs text-muted">{message}</p>
+        <p className="max-w-xs text-right text-xs leading-snug text-muted">
+          {message}
+        </p>
       )}
     </div>
   );
