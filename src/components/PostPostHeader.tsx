@@ -40,11 +40,13 @@ export default function PostPostHeader({
 
   return (
     <div className="flex items-center gap-3 px-4 pt-4">
-      <PostPosterAvatar
-        slug={posterAvatar}
-        size={avatarSize}
-        className={avatarSize >= 40 ? "h-10 w-10" : "h-9 w-9"}
-      />
+      <div className="print-screen-only shrink-0">
+        <PostPosterAvatar
+          slug={posterAvatar}
+          size={avatarSize}
+          className={avatarSize >= 40 ? "h-10 w-10" : "h-9 w-9"}
+        />
+      </div>
       <div className="min-w-0 leading-tight">
         <FeedSectionBadge section={section} />
         {dateLines.map((line) => (
@@ -53,7 +55,7 @@ export default function PostPostHeader({
           </p>
         ))}
       </div>
-      <div className="ml-auto flex shrink-0 items-center gap-2">
+      <div className="no-print ml-auto flex shrink-0 items-center gap-2">
         {isDraft && (
           <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
             Draft

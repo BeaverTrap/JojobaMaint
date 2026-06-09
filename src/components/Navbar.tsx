@@ -32,7 +32,7 @@ export default function Navbar({
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur dark:bg-black/95">
+      <header className="no-print sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur dark:bg-black/95">
         <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-3 sm:px-4">
           <Link href="/" className="shrink-0" aria-label="Go to feed">
             <Logo size={36} />

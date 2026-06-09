@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import { createClient } from "@/lib/supabase/server";
@@ -15,8 +14,9 @@ import ReferencesSection from "@/components/ReferencesSection";
 import AssessmentResolutionSection from "@/components/AssessmentResolutionSection";
 import type { MaintenanceAssessmentWithAuthor } from "@/lib/database.types";
 import { buildContentMetadata } from "@/lib/content-metadata";
-import ShareButtons from "@/components/ShareButtons";
 import PostPostHeader from "@/components/PostPostHeader";
+import PrintReportHeader from "@/components/PrintReportHeader";
+import PrintReportToolbar from "@/components/PrintReportToolbar";
 
 export const dynamic = "force-dynamic";
 
@@ -71,14 +71,20 @@ export default async function MaintenanceAssessmentPage({
     issueTypes.find((i) => i.slug === a.issue_type)?.label ?? a.issue_type;
 
   return (
-    <article className="space-y-6">
-      <div>
-        <Link
-          href="/maintenance-assessments"
-          className="text-sm font-medium text-brand-700 hover:underline"
-        >
-          ← All maintenance assessments
-        </Link>
+    <article className="print-report space-y-6">
+      <PrintReportHeader />
+      <PrintReportToolbar
+        backHref="/maintenance-assessments"
+        backLabel="← All maintenance assessments"
+        fileName={a.title}
+        shareContent={{
+          path: `/maintenance-assessments/${a.slug}`,
+          title: a.title,
+          description: maintenanceLocationLine(a),
+        }}
+      />
+
+      <div className="print-report-content">
         {a.cover_image_url && (
           <div className="mt-4">
             <ContentCoverImage
@@ -92,7 +98,7 @@ export default async function MaintenanceAssessmentPage({
         <div className="mt-3 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
           <PostPostHeader
             posterAvatar={a.poster_avatar}
-            categoryLabel="Maintenance"
+            feedSection="maintenance"
             createdAt={a.created_at}
             updatedAt={a.updated_at}
             avatarSize={40}
@@ -112,7 +118,7 @@ export default async function MaintenanceAssessmentPage({
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           {a.title}
         </h1>
-        <p className="mt-2 text-base font-medium text-brand-700">
+        <p className="print-report-meta mt-2 text-base font-medium text-brand-700">
           {maintenanceLocationLine(a)}
         </p>
         {a.how_found && (
@@ -124,21 +130,13 @@ export default async function MaintenanceAssessmentPage({
           </div>
         )}
         {a.summary && (
-          <p className="mt-3 text-base text-muted">{a.summary}</p>
+          <p className="print-report-meta mt-3 text-base text-muted">{a.summary}</p>
         )}
       </div>
 
       <ArticleBody body={a.body} />
       <AssessmentResolutionSection assessment={a} />
       <ReferencesSection referenceList={a.reference_list} />
-
-      <ShareButtons
-        content={{
-          path: `/maintenance-assessments/${a.slug}`,
-          title: a.title,
-          description: maintenanceLocationLine(a),
-        }}
-      />
     </article>
   );
 }

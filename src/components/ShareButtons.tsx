@@ -109,7 +109,7 @@ export default function ShareButtons({
 
   return (
     <section
-      className={`rounded-xl border border-line bg-surface px-4 py-4 ${className}`}
+      className={`no-print rounded-xl border border-line bg-surface px-4 py-4 ${className}`}
       aria-label="Share with neighbors"
     >
       <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">

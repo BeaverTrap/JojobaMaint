@@ -12,11 +12,13 @@ import {
 import ContentTagList from "@/components/ContentTagList";
 import ArticleBody from "@/components/ArticleBody";
 import ReferencesSection from "@/components/ReferencesSection";
+import FeedSectionBadge from "@/components/FeedSectionBadge";
+import PrintReportHeader from "@/components/PrintReportHeader";
+import PrintReportToolbar from "@/components/PrintReportToolbar";
 import type { ArticleWithAuthor } from "@/lib/database.types";
 import { buildContentMetadata } from "@/lib/content-metadata";
-import ShareButtons from "@/components/ShareButtons";
-import PostPosterAvatar from "@/components/PostPosterAvatar";
 import { formatPostedEditedLines } from "@/lib/content-dates";
+import { parseFeedSection } from "@/lib/feed-section";
 
 export const dynamic = "force-dynamic";
 
@@ -63,15 +65,24 @@ export default async function ArticlePage({
   );
   if (!a.published && !isAuthorized) notFound();
 
+  const dateLines = formatPostedEditedLines(a.created_at, a.updated_at);
+  const feedSection = parseFeedSection(a.feed_section);
+
   return (
-    <article className="space-y-6">
-      <div>
-        <Link
-          href="/articles"
-          className="text-sm font-medium text-brand-700 hover:underline"
-        >
-          ← All articles
-        </Link>
+    <article className="print-report space-y-6">
+      <PrintReportHeader />
+      <PrintReportToolbar
+        backHref="/"
+        backLabel="← Back to feed"
+        fileName={a.title}
+        shareContent={{
+          path: `/articles/${a.slug}`,
+          title: a.title,
+          description: a.summary,
+        }}
+      />
+
+      <div className="print-report-content">
         {a.cover_image_url && (
           <div className="mt-4">
             <ContentCoverImage
@@ -83,9 +94,10 @@ export default async function ArticlePage({
           </div>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <FeedSectionBadge section={feedSection} />
           <ContentTagList tags={a.tags} />
           {!a.published && (
-            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+            <span className="no-print rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
               Draft
             </span>
           )}
@@ -94,21 +106,17 @@ export default async function ArticlePage({
           {a.title}
         </h1>
         {a.summary && (
-          <p className="mt-2 text-base text-muted">{a.summary}</p>
+          <p className="print-report-meta mt-2 text-base text-muted">{a.summary}</p>
         )}
-        <div className="mt-3 flex items-center gap-2">
-          <PostPosterAvatar slug={a.poster_avatar} size={32} className="h-8 w-8" />
-          <div className="text-xs text-muted">
-            <p className="font-medium text-ink">Article</p>
-            {formatPostedEditedLines(a.created_at, a.updated_at).map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-          </div>
+        <div className="print-report-meta mt-3 text-xs text-muted">
+          {dateLines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
         </div>
         {isAuthorized && (
           <Link
             href={`/admin/articles/${a.id}/edit`}
-            className="mt-3 inline-flex rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-hover"
+            className="no-print mt-3 inline-flex rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-hover"
           >
             Edit article
           </Link>
@@ -117,14 +125,6 @@ export default async function ArticlePage({
 
       <ArticleBody body={a.body} />
       <ReferencesSection referenceList={a.reference_list} />
-
-      <ShareButtons
-        content={{
-          path: `/articles/${a.slug}`,
-          title: a.title,
-          description: a.summary,
-        }}
-      />
     </article>
   );
 }

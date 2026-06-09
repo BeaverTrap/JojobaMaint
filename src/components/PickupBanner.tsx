@@ -32,7 +32,7 @@ export default function PickupBanner({
     <aside
       role="status"
       aria-label="Weekly waste pickup schedule"
-      className="border-b border-brand-200 bg-brand-50 dark:border-brand-800/60 dark:bg-brand-950/50"
+      className="no-print border-b border-brand-200 bg-brand-50 dark:border-brand-800/60 dark:bg-brand-950/50"
     >
       <div className="mx-auto flex max-w-5xl items-start gap-3 px-3 py-3 sm:items-center sm:gap-3.5 sm:px-4 sm:py-3.5">
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600/10 text-brand-700 dark:bg-brand-400/10 dark:text-brand-300 sm:mt-0">

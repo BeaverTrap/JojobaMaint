@@ -265,3 +265,211 @@ body {
   height: 100%;
   object-fit: cover;
 }
+
+/* ── Print / Save as PDF reports ── */
+@media print {
+  @page {
+    margin: 0.65in;
+  }
+
+  /* Force light palette so dark-mode pages are not blank/white-on-white */
+  :root,
+  .dark {
+    --canvas: #ffffff;
+    --surface: #ffffff;
+    --ink: #1a201c;
+    --muted: #4b5563;
+    --line: #d1d5db;
+    --hover: #f3f4f3;
+    --accent: #f1f7f2;
+    --accent-ink: #25553a;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #1a201c !important;
+  }
+
+  .print-report,
+  .print-report * {
+    color: #1a201c !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-report .text-muted,
+  .print-report .print-report-meta {
+    color: #4b5563 !important;
+  }
+
+  .print-report .text-brand-700,
+  .print-report .text-brand-800 {
+    color: #25553a !important;
+  }
+
+  .no-print,
+  header.no-print,
+  footer,
+  nav[aria-label="Main navigation"],
+  .print-screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-report {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-report-content {
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .print-report .overflow-hidden.rounded-2xl.border,
+  .print-report section.rounded-2xl.border {
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .print-report-content h1 {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+    color: #1a201c !important;
+  }
+
+  .print-report-meta {
+    color: #4b5563 !important;
+  }
+
+  .print-report-photos {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+    margin-top: 1rem !important;
+  }
+
+  .print-report-photos > * {
+    position: relative !important;
+    aspect-ratio: 4 / 3 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.375rem !important;
+    page-break-inside: avoid;
+  }
+
+  .print-report-photos img {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    inset: auto !important;
+  }
+
+  .print-report .article-prose .article-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .print-report .article-prose .article-gallery-item {
+    aspect-ratio: 4 / 3 !important;
+    page-break-inside: avoid;
+  }
+
+  .print-report .article-prose .article-img,
+  .print-report .article-prose .article-gallery-img {
+    border-color: #d1d5db !important;
+  }
+
+  img {
+    max-width: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Same layout as print, used when generating a PDF download in-browser. */
+.print-report.pdf-export-mode {
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #fff !important;
+  color: #1a201c !important;
+}
+
+.print-report.pdf-export-mode,
+.print-report.pdf-export-mode * {
+  color: #1a201c !important;
+}
+
+.print-report.pdf-export-mode .text-muted,
+.print-report.pdf-export-mode .print-report-meta {
+  color: #4b5563 !important;
+}
+
+.print-report.pdf-export-mode .text-brand-700,
+.print-report.pdf-export-mode .text-brand-800 {
+  color: #25553a !important;
+}
+
+.print-report.pdf-export-mode .no-print,
+.print-report.pdf-export-mode .print-screen-only {
+  display: none !important;
+}
+
+.print-report.pdf-export-mode .print-only {
+  display: block !important;
+}
+
+.print-report.pdf-export-mode .print-report-content,
+.print-report.pdf-export-mode .overflow-hidden.rounded-2xl.border,
+.print-report.pdf-export-mode section.rounded-2xl.border {
+  border: none !important;
+  box-shadow: none !important;
+  background: #fff !important;
+}
+
+.print-report.pdf-export-mode .print-report-photos {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.5rem !important;
+  margin-top: 1rem !important;
+}
+
+.print-report.pdf-export-mode .print-report-photos > * {
+  position: relative !important;
+  aspect-ratio: 4 / 3 !important;
+  height: auto !important;
+  overflow: hidden !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.375rem !important;
+}
+
+.print-report.pdf-export-mode .print-report-photos img {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.print-report.pdf-export-mode .article-prose .article-gallery {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.5rem !important;
+}
+
+.print-report.pdf-export-mode .article-prose .article-gallery-item {
+  aspect-ratio: 4 / 3 !important;
+}
+
+.print-report.pdf-export-mode img {
+  max-width: 100% !important;
+}
