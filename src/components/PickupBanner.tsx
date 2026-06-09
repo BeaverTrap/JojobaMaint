@@ -46,7 +46,7 @@ export default function PickupBanner({
           </p>
           <p className="font-medium text-ink">
             Weekly green waste and cactus waste pickups — material bound for the
-            chipping pits — occur on{" "}
+            chipper or the cactus pits — occur on{" "}
             <span className="font-semibold text-brand-700 dark:text-brand-300">
               {isSummerSchedule ? "Mondays" : "Mondays and Thursdays"}
             </span>

@@ -46,7 +46,7 @@ If your tarp is old, worn out, or full of holes, we will not keep using it. Our 
 
 ### Green Waste
 
-This includes standard yard trimmings, leaves, and branches bound for the chipping pits.
+This includes standard yard trimmings, leaves, and branches bound for the chipper.
 
 **Note on Oleander:** Oleander does go into the green waste pile. Once it dries out, it is no longer poisonous to animals and is perfectly safe for us to chip.
 
