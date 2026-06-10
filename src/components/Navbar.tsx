@@ -9,8 +9,7 @@ import type { Profile } from "@/lib/database.types";
 const NAV_LINKS = [
   { href: "/", label: "Feed" },
   { href: "/schedule", label: "Schedule" },
-  { href: "/tree-assessments", label: "Landscaping" },
-  { href: "/maintenance-assessments", label: "Maintenance" },
+  { href: "/water", label: "Water" },
 ] as const;
 
 export default function Navbar({

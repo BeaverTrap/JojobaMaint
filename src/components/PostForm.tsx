@@ -11,6 +11,7 @@ import {
 import MultiPhotoPicker from "@/components/MultiPhotoPicker";
 import TagPicker from "@/components/TagPicker";
 import PostPosterAvatarPicker from "@/components/PostPosterAvatarPicker";
+import RichTextEditor from "@/components/RichTextEditor";
 import { filterImageFiles } from "@/lib/image-accept";
 import {
   defaultPosterAvatarForTeam,
@@ -322,12 +323,12 @@ export default function PostForm({
       </Field>
 
       <Field label="Details" hint="Optional — notes, steps, materials, etc.">
-        <textarea
+        <RichTextEditor
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={setBody}
+          disabled={submitting}
+          minHeight="160px"
           placeholder="What was done, anything the next person should know…"
-          rows={5}
-          className={`${inputClass} resize-y`}
         />
       </Field>
 

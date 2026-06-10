@@ -5,16 +5,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/upload";
 import { slugify, slugWithSuffix } from "@/lib/slug";
-import {
-  htmlToMarkdown,
-  normalizeDocsPlainText,
-} from "@/lib/article-format";
 import { treeAssessmentStorageFolder } from "@/lib/tree-assessments";
 import {
   appendPhotoBlockToBody,
   uploadInlineImageMarkdown,
 } from "@/lib/inline-images";
 import ArticleBody from "@/components/ArticleBody";
+import RichTextEditor from "@/components/RichTextEditor";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
@@ -72,8 +69,6 @@ type Props =
 export default function TreeAssessmentForm(props: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
-
   const isEdit = props.mode === "edit";
   const defaultConcern =
     props.concerns.find((c) => c.slug === "resident-inquiry")?.slug ??
@@ -135,29 +130,6 @@ export default function TreeAssessmentForm(props: Props) {
     return base || "draft";
   }
 
-  function insertAtCursor(
-    textarea: HTMLTextAreaElement | null,
-    chunk: string,
-    replaceAll = false,
-  ) {
-    if (replaceAll) {
-      setBody(chunk);
-      return;
-    }
-    if (!textarea) {
-      setBody((prev) => prev + chunk);
-      return;
-    }
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    setBody((prev) => prev.slice(0, start) + chunk + prev.slice(end));
-    const caret = start + chunk.length;
-    requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(caret, caret);
-    });
-  }
-
   async function handleInlineImage(files: FileList | null) {
     if (!files?.length) return;
     if (showPreview) {
@@ -187,24 +159,6 @@ export default function TreeAssessmentForm(props: Props) {
       );
     } finally {
       setInsertingImage(false);
-    }
-  }
-
-  function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const html = e.clipboardData.getData("text/html");
-    const plain = e.clipboardData.getData("text/plain");
-    if (html && html.length > 30 && /<[a-z][\s\S]*>/i.test(html)) {
-      e.preventDefault();
-      insertAtCursor(e.currentTarget, htmlToMarkdown(html), body.length === 0);
-      return;
-    }
-    if (plain && plain.includes("\n")) {
-      e.preventDefault();
-      insertAtCursor(
-        e.currentTarget,
-        normalizeDocsPlainText(plain),
-        body.length === 0,
-      );
     }
   }
 
@@ -449,9 +403,8 @@ export default function TreeAssessmentForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Write your notes first if you like, then add photos — they are placed
-          in a gallery on the page (no need to position each one). Pick several
-          at once; on Android checkmark each photo, then Done.
+          Use the toolbar for bold, size, and lists. Add photos below — they
+          appear in a gallery on the page.
         </p>
         {!showPreview && (
           <div className="mt-2">
@@ -467,13 +420,13 @@ export default function TreeAssessmentForm(props: Props) {
             <ArticleBody body={body} />
           </div>
         ) : (
-          <textarea
-            ref={bodyRef}
+          <RichTextEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onPaste={handleBodyPaste}
-            rows={12}
-            className={`${inputClass} mt-2 resize-y`}
+            onChange={setBody}
+            disabled={submitting}
+            minHeight="280px"
+            placeholder="Write assessment findings…"
+            className="mt-2"
           />
         )}
       </div>

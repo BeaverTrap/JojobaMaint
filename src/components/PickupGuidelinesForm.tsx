@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PICKUP_GUIDELINES_ID } from "@/lib/pickup-guidelines";
 import PickupScheduleToggle from "@/components/PickupScheduleToggle";
+import RichTextEditor from "@/components/RichTextEditor";
 import {
   pickupScheduleFromFlag,
   type PickupScheduleMode,
@@ -89,15 +90,16 @@ export default function PickupGuidelinesForm({
         </label>
 
         <label className="block space-y-1.5">
-          <span className="text-sm font-medium text-ink">Guidelines (Markdown)</span>
+          <span className="text-sm font-medium text-ink">Guidelines</span>
           <p className="text-xs text-muted">
-            Use ## headings, **bold**, and blank lines between sections.
+            Use the toolbar for bold, text size, and lists — no coding needed.
           </p>
-          <textarea
+          <RichTextEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={24}
-            className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-mono text-sm leading-relaxed text-ink"
+            onChange={setBody}
+            disabled={submitting}
+            minHeight="420px"
+            placeholder="Write pickup guidelines…"
           />
         </label>
 

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { prepareArticleBody } from "@/lib/article-format";
 import { splitArticleBody } from "@/lib/article-body-segments";
 import ArticleGallery from "@/components/ArticleGallery";
@@ -32,6 +33,7 @@ function MarkdownChunk({ text }: { text: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
       components={{
         h1: ({ children }) => (
           <h2 className="article-h2 mt-8 first:mt-0">{children}</h2>

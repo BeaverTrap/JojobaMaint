@@ -6,19 +6,14 @@ import { usePathname } from "next/navigation";
 const PRIMARY = [
   { href: "/", label: "Feed", match: (p: string) => p === "/" },
   {
-    href: "/tree-assessments",
-    label: "Landscape",
-    match: (p: string) => p.startsWith("/tree-assessments"),
-  },
-  {
-    href: "/maintenance-assessments",
-    label: "Maint",
-    match: (p: string) => p.startsWith("/maintenance-assessments"),
-  },
-  {
     href: "/schedule",
     label: "Schedule",
     match: (p: string) => p.startsWith("/schedule"),
+  },
+  {
+    href: "/water",
+    label: "Water",
+    match: (p: string) => p.startsWith("/water"),
   },
 ] as const;
 
@@ -100,38 +95,15 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
           />
         </svg>
       );
-    case "Landscape":
+    case "Water":
       return (
         <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
-            d="M12 3c-4 4-8 6-8 11a8 8 0 1 0 16 0c0-5-4-7-8-11Z"
-            stroke={stroke}
-            strokeWidth="1.75"
-          />
-        </svg>
-      );
-    case "Maint":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"
-            stroke={stroke}
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "Articles":
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"
+            d="M12 2.5c3.5 4.5 7 8.2 7 12a7 7 0 1 1-14 0c0-3.8 3.5-7.5 7-12Z"
             stroke={stroke}
             strokeWidth="1.75"
             strokeLinejoin="round"
           />
-          <path d="M14 4v5h5" stroke={stroke} strokeWidth="1.75" />
         </svg>
       );
     default:

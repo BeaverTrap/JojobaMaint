@@ -19,8 +19,11 @@ import {
   feedSectionLabel,
   matchesFeedSectionFilter,
   parseFeedSection,
+  type FeedFilter,
   type FeedSection,
 } from "@/lib/feed-section";
+
+export type { FeedFilter };
 
 export type FeedItemKind =
   | "maintenance"
@@ -51,8 +54,6 @@ export type FeedItem = {
   /** Original post row when kind is maintenance or landscaping */
   post?: PostWithAuthor;
 };
-
-export type FeedFilter = "all" | "maintenance" | "landscaping";
 
 export async function fetchFeedItems(
   supabase: SupabaseClient,

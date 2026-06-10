@@ -5,16 +5,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/upload";
 import { slugify, slugWithSuffix } from "@/lib/slug";
-import {
-  htmlToMarkdown,
-  normalizeDocsPlainText,
-} from "@/lib/article-format";
 import { articleStorageFolder } from "@/lib/article-images";
 import {
   appendPhotoBlockToBody,
   uploadInlineImageMarkdown,
 } from "@/lib/inline-images";
 import ArticleBody from "@/components/ArticleBody";
+import RichTextEditor from "@/components/RichTextEditor";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
@@ -63,8 +60,6 @@ type Props =
 export default function ArticleForm(props: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
-
   const isEdit = props.mode === "edit";
 
   const [title, setTitle] = useState(isEdit ? props.initialTitle : "");
@@ -106,29 +101,6 @@ export default function ArticleForm(props: Props) {
     return fromTitle || "draft";
   }
 
-  function insertAtCursor(
-    textarea: HTMLTextAreaElement | null,
-    chunk: string,
-    replaceAll = false,
-  ) {
-    if (replaceAll) {
-      setBody(chunk);
-      return;
-    }
-    if (!textarea) {
-      setBody((prev) => prev + chunk);
-      return;
-    }
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    setBody((prev) => prev.slice(0, start) + chunk + prev.slice(end));
-    const caret = start + chunk.length;
-    requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(caret, caret);
-    });
-  }
-
   async function handleInlineImage(files: FileList | null) {
     if (!files?.length) return;
     if (showPreview) {
@@ -160,24 +132,6 @@ export default function ArticleForm(props: Props) {
       );
     } finally {
       setInsertingImage(false);
-    }
-  }
-
-  function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const html = e.clipboardData.getData("text/html");
-    const plain = e.clipboardData.getData("text/plain");
-
-    if (html && html.length > 30 && /<[a-z][\s\S]*>/i.test(html)) {
-      e.preventDefault();
-      const md = htmlToMarkdown(html);
-      insertAtCursor(e.currentTarget, md, body.length === 0);
-      return;
-    }
-
-    if (plain && plain.includes("\n")) {
-      e.preventDefault();
-      const md = normalizeDocsPlainText(plain);
-      insertAtCursor(e.currentTarget, md, body.length === 0);
     }
   }
 
@@ -345,9 +299,8 @@ export default function ArticleForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Paste from Google Docs, then add photos — they appear in a gallery on
-          the page. Pick several at once; headings and lists are kept
-          automatically.
+          Use the toolbar for bold, size, and lists. Paste from Google Docs still
+          works. Add photos below — they appear in a gallery on the page.
         </p>
         {!showPreview && (
           <div className="mt-2">
@@ -364,13 +317,13 @@ export default function ArticleForm(props: Props) {
             <ArticleBody body={body} />
           </div>
         ) : (
-          <textarea
-            ref={bodyRef}
+          <RichTextEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onPaste={handleBodyPaste}
-            rows={14}
-            className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm leading-relaxed text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
+            onChange={setBody}
+            disabled={submitting}
+            minHeight="320px"
+            placeholder="Write your article here…"
+            className="mt-2"
           />
         )}
       </div>

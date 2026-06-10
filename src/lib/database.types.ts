@@ -227,3 +227,14 @@ export interface PickupGuidelines {
   is_summer_schedule: boolean;
   updated_at: string;
 }
+
+export interface WaterUsageReading {
+  id: string;
+  period_month: string;
+  gallons: number | null;
+  cost_usd: number | null;
+  notes: string | null;
+  sheet_row_key: string;
+  created_at: string;
+  updated_at: string;
+}

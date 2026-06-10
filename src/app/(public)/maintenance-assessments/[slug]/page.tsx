@@ -74,7 +74,7 @@ export default async function MaintenanceAssessmentPage({
     <article className="print-report space-y-6">
       <PrintReportHeader />
       <PrintReportToolbar
-        backHref="/maintenance-assessments"
+        backHref="/?section=maintenance"
         backLabel="← All maintenance assessments"
         fileName={a.title}
         shareContent={{

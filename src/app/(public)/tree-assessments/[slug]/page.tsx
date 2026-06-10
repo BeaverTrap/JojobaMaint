@@ -70,7 +70,7 @@ export default async function TreeAssessmentPage({
     <article className="print-report space-y-6">
       <PrintReportHeader />
       <PrintReportToolbar
-        backHref="/tree-assessments"
+        backHref="/?section=landscaping"
         backLabel="← All landscaping assessments"
         fileName={a.title}
         shareContent={{

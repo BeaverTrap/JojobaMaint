@@ -3,10 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import Feed from "@/components/Feed";
 import { fetchFeedItems } from "@/lib/feed";
+import { parseFeedFilter } from "@/lib/feed-section";
 
 export const dynamic = "force-dynamic";
 
-export default async function FeedPage() {
+export default async function FeedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ section?: string }>;
+}) {
+  const { section } = await searchParams;
+  const initialFilter = parseFeedFilter(section);
   const supabase = await createClient();
   const { isAuthorized } = await getCurrentUser();
 
@@ -20,16 +27,10 @@ export default async function FeedPage() {
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink">Feed</h1>
           <p className="text-sm text-muted">
-            Log posts, guides, and assessments in one place.
+            Posts, guides, and assessments — filter by section below.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href="/schedule"
-            className="rounded-xl border border-line bg-surface px-3 py-2 text-sm font-semibold text-ink transition hover:bg-hover"
-          >
-            Schedule
-          </Link>
           {isAuthorized && (
             <Link
               href="/admin"
@@ -41,7 +42,11 @@ export default async function FeedPage() {
         </div>
       </div>
 
-      <Feed items={items} canEdit={isAuthorized} />
+      <Feed
+        items={items}
+        canEdit={isAuthorized}
+        initialFilter={initialFilter}
+      />
     </div>
   );
 }

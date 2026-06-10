@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import FeedItemCard from "@/components/FeedItemCard";
-import { filterFeedItems, type FeedFilter, type FeedItem } from "@/lib/feed";
+import { filterFeedItems, type FeedItem } from "@/lib/feed";
+import { parseFeedFilter, type FeedFilter } from "@/lib/feed-section";
 
 const FILTERS: { id: FeedFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -14,12 +16,30 @@ const FILTERS: { id: FeedFilter; label: string }[] = [
 export default function Feed({
   items,
   canEdit = false,
+  initialFilter = "all",
 }: {
   items: FeedItem[];
   canEdit?: boolean;
+  initialFilter?: FeedFilter;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<FeedFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<FeedFilter>(initialFilter);
+
+  useEffect(() => {
+    setActiveFilter(parseFeedFilter(searchParams.get("section")));
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (activeFilter === "all") params.delete("section");
+    else params.set("section", activeFilter);
+    const next = params.toString();
+    const current = searchParams.toString();
+    if (next === current) return;
+    router.replace(next ? `/?${next}` : "/", { scroll: false });
+  }, [activeFilter, router, searchParams]);
 
   const filtered = useMemo(
     () => filterFeedItems(items, activeFilter, query),

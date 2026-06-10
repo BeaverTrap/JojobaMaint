@@ -19,6 +19,22 @@ export function htmlToMarkdown(html: string): string {
     replacement: (content) => (content ? `**${content}**` : ""),
   });
 
+  td.addRule("underline", {
+    filter: ["u"],
+    replacement: (content) => (content ? `<u>${content}</u>` : ""),
+  });
+
+  td.addRule("inlineImage", {
+    filter: "img",
+    replacement: (_content, node) => {
+      const el = node as HTMLImageElement;
+      const src = el.getAttribute("src") ?? "";
+      const alt = (el.getAttribute("alt") ?? "Photo").replace(/[\[\]]/g, "");
+      if (!src) return "";
+      return `\n\n![${alt}](${src})\n\n`;
+    },
+  });
+
   let md = td.turndown(html);
   md = md.replace(/\n{3,}/g, "\n\n").trim();
   return md;

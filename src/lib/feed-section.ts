@@ -16,9 +16,18 @@ export function feedSectionLabel(section: FeedSection | string): string {
   return match?.label ?? "Maintenance";
 }
 
+export type FeedFilter = "all" | "maintenance" | "landscaping";
+
+export function parseFeedFilter(
+  value: string | null | undefined,
+): FeedFilter {
+  if (value === "maintenance" || value === "landscaping") return value;
+  return "all";
+}
+
 export function matchesFeedSectionFilter(
   section: FeedSection,
-  filter: "all" | "maintenance" | "landscaping",
+  filter: FeedFilter,
 ): boolean {
   if (filter === "all") return true;
   if (filter === "maintenance") {

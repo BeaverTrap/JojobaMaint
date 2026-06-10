@@ -5,16 +5,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/upload";
 import { slugify, slugWithSuffix } from "@/lib/slug";
-import {
-  htmlToMarkdown,
-  normalizeDocsPlainText,
-} from "@/lib/article-format";
 import { maintenanceAssessmentStorageFolder } from "@/lib/maintenance-assessments";
 import {
   appendPhotoBlockToBody,
   uploadInlineImageMarkdown,
 } from "@/lib/inline-images";
 import ArticleBody from "@/components/ArticleBody";
+import RichTextEditor from "@/components/RichTextEditor";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import InlineImagePicker from "@/components/InlineImagePicker";
 import TagPicker from "@/components/TagPicker";
@@ -76,8 +73,6 @@ type Props =
 export default function MaintenanceAssessmentForm(props: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
-
   const isEdit = props.mode === "edit";
   const defaultWorkType =
     props.workTypes.find((w) => w.slug === "general")?.slug ??
@@ -147,29 +142,6 @@ export default function MaintenanceAssessmentForm(props: Props) {
     return base || "draft";
   }
 
-  function insertAtCursor(
-    textarea: HTMLTextAreaElement | null,
-    chunk: string,
-    replaceAll = false,
-  ) {
-    if (replaceAll) {
-      setBody(chunk);
-      return;
-    }
-    if (!textarea) {
-      setBody((prev) => prev + chunk);
-      return;
-    }
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    setBody((prev) => prev.slice(0, start) + chunk + prev.slice(end));
-    const caret = start + chunk.length;
-    requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(caret, caret);
-    });
-  }
-
   async function handleInlineImage(files: FileList | null) {
     if (!files?.length) return;
     if (showPreview) {
@@ -199,24 +171,6 @@ export default function MaintenanceAssessmentForm(props: Props) {
       );
     } finally {
       setInsertingImage(false);
-    }
-  }
-
-  function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const html = e.clipboardData.getData("text/html");
-    const plain = e.clipboardData.getData("text/plain");
-    if (html && html.length > 30 && /<[a-z][\s\S]*>/i.test(html)) {
-      e.preventDefault();
-      insertAtCursor(e.currentTarget, htmlToMarkdown(html), body.length === 0);
-      return;
-    }
-    if (plain && plain.includes("\n")) {
-      e.preventDefault();
-      insertAtCursor(
-        e.currentTarget,
-        normalizeDocsPlainText(plain),
-        body.length === 0,
-      );
     }
   }
 
@@ -488,8 +442,8 @@ export default function MaintenanceAssessmentForm(props: Props) {
           </button>
         </div>
         <p className="mt-0.5 text-xs text-muted">
-          Scope, contractors, rentals, timeline — then add photos; they show as a
-          gallery on the public page. Pick several at once from the gallery.
+          Use the toolbar for bold, size, and lists. Add photos below — they
+          show as a gallery on the public page.
         </p>
         {!showPreview && (
           <div className="mt-2">
@@ -505,13 +459,13 @@ export default function MaintenanceAssessmentForm(props: Props) {
             <ArticleBody body={body} />
           </div>
         ) : (
-          <textarea
-            ref={bodyRef}
+          <RichTextEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onPaste={handleBodyPaste}
-            rows={12}
-            className={`${inputClass} mt-2 resize-y`}
+            onChange={setBody}
+            disabled={submitting}
+            minHeight="280px"
+            placeholder="Write assessment details…"
+            className="mt-2"
           />
         )}
       </div>

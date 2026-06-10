@@ -144,6 +144,16 @@ body {
 }
 
 /* Long-form article typography */
+.rich-text-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.rich-text-editor:focus {
+  outline: none;
+}
+
 .article-prose {
   max-width: 42rem;
   font-size: 1.0625rem;
