@@ -19,7 +19,8 @@ export default async function WaterPage() {
             Water usage
           </h1>
           <p className="text-sm text-muted">
-            Monthly park water data — synced from Google Sheets.
+            Monthly gallons from the Usage Calculations tab — synced from Google
+            Sheets (2025 vs 2026 comparison).
           </p>
         </div>
         {isAuthorized && <WaterSyncButton />}
