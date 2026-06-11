@@ -438,6 +438,25 @@ export function rollingTwelveMonthTotal(
   return months.reduce((sum, row) => sum + row.total, 0);
 }
 
+export function rollingTwelveMonthAverage(
+  readings: WaterUsageReading[],
+  selectedKey: string,
+): number | null {
+  const months = chartMonthsForSelection(readings, selectedKey, 12);
+  if (months.length === 0) return null;
+  const sum = months.reduce((acc, row) => acc + row.total, 0);
+  return Math.round(sum / months.length);
+}
+
+export function vsRollingTwelveMonthAverage(
+  readings: WaterUsageReading[],
+  selectedKey: string,
+): number | null {
+  const average = rollingTwelveMonthAverage(readings, selectedKey);
+  const total = readingsByPeriod(readings).get(selectedKey)?.gallons ?? 0;
+  return percentChange(total, average);
+}
+
 const SPIKE_THRESHOLD_PCT = 25;
 
 /** One-line note when the selected month is unusually high vs prior month or year. */

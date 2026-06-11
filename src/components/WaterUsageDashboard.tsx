@@ -29,7 +29,9 @@ import {
   oakTwoTankChartData,
   pondFillChartData,
   rigsTrendChartData,
+  rollingTwelveMonthAverage,
   rollingTwelveMonthTotal,
+  vsRollingTwelveMonthAverage,
   selectedMonthBreakdown,
   selectedMonthStats,
   totalUsageTrendData,
@@ -640,6 +642,18 @@ export default function WaterUsageDashboard({
     [readings, selected, selectedPeriodKey],
   );
 
+  const rollingTwelveAvg = useMemo(
+    () =>
+      selected ? rollingTwelveMonthAverage(readings, selectedPeriodKey) : null,
+    [readings, selected, selectedPeriodKey],
+  );
+
+  const vsTwelveMonthAvg = useMemo(
+    () =>
+      selected ? vsRollingTwelveMonthAverage(readings, selectedPeriodKey) : null,
+    [readings, selected, selectedPeriodKey],
+  );
+
   const spikeCallout = useMemo(
     () =>
       selected ? waterUsageSpikeCallout(readings, selectedPeriodKey) : null,
@@ -1041,48 +1055,64 @@ export default function WaterUsageDashboard({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard
-                  label="Last 12 months"
-                  value={
-                    rollingTwelveTotal != null
-                      ? `${formatGallons(rollingTwelveTotal)} gal`
-                      : "—"
-                  }
-                  detail={`Ending ${monthLabel}`}
-                />
-                <StatCard
-                  label="Total usage"
-                  value={`${formatGallons(monthStats.totalGallons)} gal`}
-                />
-                <StatCard
-                  label="Daily average"
-                  value={
-                    monthStats.dailyAverage != null
-                      ? `${formatGallons(monthStats.dailyAverage)} gal`
-                      : "—"
-                  }
-                />
-                <StatCard
-                  label="Vs. prior month"
-                  value={formatPercentChange(monthStats.vsPriorMonth)}
-                  detail={
-                    monthStats.priorMonthLabel
-                      ? `Compared to ${monthStats.priorMonthLabel}`
-                      : "No prior month data"
-                  }
-                  valueClassName={changeTone(monthStats.vsPriorMonth)}
-                />
-                <StatCard
-                  label="Vs. same month last year"
-                  value={formatPercentChange(monthStats.vsPriorYear)}
-                  detail={
-                    monthStats.priorYearMonthLabel
-                      ? `Compared to ${monthStats.priorYearMonthLabel}`
-                      : "No prior-year data"
-                  }
-                  valueClassName={changeTone(monthStats.vsPriorYear)}
-                />
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard
+                    label="Total usage"
+                    value={`${formatGallons(monthStats.totalGallons)} gal`}
+                  />
+                  <StatCard
+                    label="Daily average"
+                    value={
+                      monthStats.dailyAverage != null
+                        ? `${formatGallons(monthStats.dailyAverage)} gal`
+                        : "—"
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard
+                    label="Vs. prior month"
+                    value={formatPercentChange(monthStats.vsPriorMonth)}
+                    detail={
+                      monthStats.priorMonthLabel
+                        ? `Compared to ${monthStats.priorMonthLabel}`
+                        : "No prior month data"
+                    }
+                    valueClassName={changeTone(monthStats.vsPriorMonth)}
+                  />
+                  <StatCard
+                    label="Vs. same month last year"
+                    value={formatPercentChange(monthStats.vsPriorYear)}
+                    detail={
+                      monthStats.priorYearMonthLabel
+                        ? `Compared to ${monthStats.priorYearMonthLabel}`
+                        : "No prior-year data"
+                    }
+                    valueClassName={changeTone(monthStats.vsPriorYear)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard
+                    label="Last 12 months"
+                    value={
+                      rollingTwelveTotal != null
+                        ? `${formatGallons(rollingTwelveTotal)} gal`
+                        : "—"
+                    }
+                    detail={`Ending ${monthLabel}`}
+                  />
+                  <StatCard
+                    label="Vs. 12-mo average"
+                    value={formatPercentChange(vsTwelveMonthAvg)}
+                    detail={
+                      rollingTwelveAvg != null
+                        ? `Avg ${formatGallons(rollingTwelveAvg)} gal/mo`
+                        : "Not enough history"
+                    }
+                    valueClassName={changeTone(vsTwelveMonthAvg)}
+                  />
+                </div>
               </div>
               {spikeCallout && (
                 <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100 md:col-span-2">

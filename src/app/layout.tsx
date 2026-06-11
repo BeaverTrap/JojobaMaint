@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import ThemeInitScript from "@/components/ThemeInitScript";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,19 +40,6 @@ export const viewport: Viewport = {
   ],
 };
 
-// Runs before paint to apply the saved (or system) theme and avoid a flash.
-const themeInitScript = `
-(function () {
-  try {
-    var stored = localStorage.getItem('theme');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (stored === 'dark' || (!stored && prefersDark)) {
-      document.documentElement.classList.add('dark');
-    }
-  } catch (e) {}
-})();
-`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -63,10 +51,8 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="min-h-full flex flex-col">
+        <ThemeInitScript />
         <ServiceWorkerRegister />
         {children}
       </body>
