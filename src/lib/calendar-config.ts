@@ -44,7 +44,9 @@ export function getServiceAccountCredentials(): {
     return parseServiceAccountJson(raw);
   }
 
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
+  const email =
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ||
+    process.env.GOOGLE_CLIENT_EMAIL?.trim();
   const privateKey = process.env.GOOGLE_PRIVATE_KEY?.trim();
   if (email && privateKey) {
     return {
@@ -68,7 +70,8 @@ export function hasServiceAccountCredentials(): boolean {
     }
   }
   return Boolean(
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() &&
+    (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ||
+      process.env.GOOGLE_CLIENT_EMAIL?.trim()) &&
       process.env.GOOGLE_PRIVATE_KEY?.trim(),
   );
 }

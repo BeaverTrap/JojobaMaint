@@ -12,7 +12,7 @@ export default function WaterSyncButton() {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/water/sync", { method: "POST" });
+      const res = await fetch("/api/sheets/sync?type=water", { method: "POST" });
       const data = (await res.json()) as {
         ok?: boolean;
         synced?: number;
@@ -29,7 +29,7 @@ export default function WaterSyncButton() {
         );
         return;
       }
-      setMessage(`Synced ${count} monthly report(s) from sheet.`);
+      setMessage(`Synced ${count} water log month(s) from sheet.`);
       router.refresh();
     } catch {
       setMessage("Sync failed — check server logs.");
@@ -46,7 +46,7 @@ export default function WaterSyncButton() {
         disabled={loading}
         className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
       >
-        {loading ? "Syncing…" : "Sync monthly reports"}
+        {loading ? "Syncing…" : "Sync Water Logs"}
       </button>
       {message && (
         <p className="max-w-[14rem] text-right text-xs text-muted">{message}</p>

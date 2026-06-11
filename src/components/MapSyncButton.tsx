@@ -12,7 +12,9 @@ export default function MapSyncButton() {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/map/sync", { method: "POST" });
+      const res = await fetch("/api/sheets/sync?type=valves", {
+        method: "POST",
+      });
       const data = (await res.json()) as {
         ok?: boolean;
         synced?: number;
@@ -49,7 +51,7 @@ export default function MapSyncButton() {
         disabled={loading}
         className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
       >
-        {loading ? "Syncing…" : "Sync from sheet"}
+        {loading ? "Syncing…" : "Sync Valve Inventory"}
       </button>
       {message && (
         <p className="max-w-[16rem] text-right text-xs text-muted">{message}</p>
