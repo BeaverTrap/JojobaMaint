@@ -75,6 +75,9 @@ const PDF_INLINE_PROPS = [
   "font-style",
   "line-height",
   "letter-spacing",
+  "word-spacing",
+  "font-kerning",
+  "text-rendering",
   "text-align",
   "text-decoration",
   "white-space",
@@ -177,12 +180,48 @@ function pdfChildren(el: Element): Element[] {
   return [...el.children].filter((child) => !shouldIgnorePdfElement(child));
 }
 
+const PDF_FONT_STACK =
+  'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+function injectDocumentFonts(clonedDoc: Document): void {
+  const rules: string[] = [];
+  for (const sheet of [...document.styleSheets]) {
+    try {
+      for (const rule of [...sheet.cssRules]) {
+        if (rule instanceof CSSFontFaceRule) {
+          const text = rule.cssText;
+          if (!MODERN_COLOR_RE.test(text)) rules.push(text);
+        }
+      }
+    } catch {
+      // Cross-origin stylesheets cannot be read.
+    }
+  }
+  if (rules.length === 0) return;
+  const style = clonedDoc.createElement("style");
+  style.textContent = rules.join("\n");
+  clonedDoc.head.appendChild(style);
+}
+
 function stripCloneStylesheets(clonedDoc: Document): void {
   clonedDoc.querySelectorAll("link, style").forEach((node) => node.remove());
+  injectDocumentFonts(clonedDoc);
 
   const style = clonedDoc.createElement("style");
   style.textContent = `
-    html, body { background: #ffffff !important; color: ${PDF_INK} !important; }
+    html, body {
+      background: #ffffff !important;
+      color: ${PDF_INK} !important;
+      font-family: ${PDF_FONT_STACK} !important;
+    }
+    .print-report, .print-report * {
+      font-family: ${PDF_FONT_STACK} !important;
+      letter-spacing: normal !important;
+      word-spacing: normal !important;
+      font-kerning: auto !important;
+      font-feature-settings: normal !important;
+      text-rendering: geometricPrecision !important;
+    }
     .print-report { background: #ffffff !important; color: ${PDF_INK} !important; }
     .water-report-charts .recharts-responsive-container { height: 16rem !important; }
     svg text, .recharts-text { fill: ${PDF_MUTED} !important; }
@@ -235,7 +274,44 @@ export function pdfCanvasScaleForElement(el: HTMLElement): number {
   const byWidth = (MAX_CANVAS_SIDE / width) * 0.97;
   const byArea = Math.sqrt(MAX_CANVAS_PIXELS / (width * height)) * 0.97;
   const scale = Math.min(2, byHeight, byWidth, byArea);
-  return Math.max(0.75, Math.round(scale * 10) / 10);
+  return Math.max(1.25, Math.round(scale * 10) / 10);
+}
+
+export function reportCaptureWidth(
+  reportRoot: HTMLElement,
+  block: HTMLElement,
+): number {
+  const content = reportRoot.querySelector<HTMLElement>(".print-report-content");
+  const basis = content?.clientWidth ?? reportRoot.clientWidth;
+  return Math.max(block.scrollWidth, block.offsetWidth, basis, 720);
+}
+
+export function prepareBlockWidthForCapture(
+  block: HTMLElement,
+  widthPx: number,
+): PdfExportRestore {
+  const previous = {
+    width: block.style.width,
+    minWidth: block.style.minWidth,
+    maxWidth: block.style.maxWidth,
+    boxSizing: block.style.boxSizing,
+  };
+
+  block.style.boxSizing = "border-box";
+  block.style.width = `${widthPx}px`;
+  block.style.minWidth = `${widthPx}px`;
+  block.style.maxWidth = `${widthPx}px`;
+
+  return () => {
+    if (previous.width) block.style.width = previous.width;
+    else block.style.removeProperty("width");
+    if (previous.minWidth) block.style.minWidth = previous.minWidth;
+    else block.style.removeProperty("min-width");
+    if (previous.maxWidth) block.style.maxWidth = previous.maxWidth;
+    else block.style.removeProperty("max-width");
+    if (previous.boxSizing) block.style.boxSizing = previous.boxSizing;
+    else block.style.removeProperty("box-sizing");
+  };
 }
 
 export function usesSectionalPdfCapture(root: HTMLElement): boolean {
@@ -326,6 +402,7 @@ export function prepareClonedDocumentForPdf(
   clonedDoc: Document,
   sourceRoot: HTMLElement,
   clonedRoot: HTMLElement,
+  captureWidthPx: number,
 ): void {
   stripCloneStylesheets(clonedDoc);
 
@@ -352,7 +429,10 @@ export function prepareClonedDocumentForPdf(
     root.style.color = PDF_INK;
   }
 
-  clonedRoot.style.width = `${sourceRoot.offsetWidth}px`;
+  clonedRoot.style.boxSizing = "border-box";
+  clonedRoot.style.width = `${captureWidthPx}px`;
+  clonedRoot.style.minWidth = `${captureWidthPx}px`;
+  clonedRoot.style.maxWidth = `${captureWidthPx}px`;
 
   inlineComputedStylesForPdf(sourceRoot, clonedRoot);
   scrubCloneInlineColors(clonedDoc);

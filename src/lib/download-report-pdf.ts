@@ -2,8 +2,10 @@ import type { jsPDF } from "jspdf";
 import {
   collectPdfBlocks,
   pdfCanvasScaleForElement,
+  prepareBlockWidthForCapture,
   prepareClonedDocumentForPdf,
   prepareLiveDocumentForPdf,
+  reportCaptureWidth,
   shouldIgnorePdfElement,
   usesSectionalPdfCapture,
 } from "@/lib/pdf-export-prepare";
@@ -23,40 +25,45 @@ async function loadJsPDF() {
 }
 
 function canvasToDataUrl(canvas: HTMLCanvasElement): string {
-  try {
-    return canvas.toDataURL("image/jpeg", 0.92);
-  } catch {
-    return canvas.toDataURL("image/png");
-  }
+  return canvas.toDataURL("image/png");
 }
 
 async function captureBlock(
   element: HTMLElement,
   scale: number,
+  captureWidthPx: number,
 ): Promise<HTMLCanvasElement> {
   const html2canvas = await loadHtml2Canvas();
 
   return html2canvas(element, {
     scale,
+    width: captureWidthPx,
+    windowWidth: captureWidthPx,
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
     ignoreElements: shouldIgnorePdfElement,
     onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
-      prepareClonedDocumentForPdf(clonedDoc, element, clonedElement);
+      prepareClonedDocumentForPdf(
+        clonedDoc,
+        element,
+        clonedElement,
+        captureWidthPx,
+      );
     },
   });
 }
 
 async function captureWithRetry(
   element: HTMLElement,
+  captureWidthPx: number,
 ): Promise<HTMLCanvasElement> {
   let scale = pdfCanvasScaleForElement(element);
   let lastError: unknown;
 
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
-      return await captureBlock(element, scale);
+      return await captureBlock(element, scale, captureWidthPx);
     } catch (error) {
       lastError = error;
       scale = Math.max(0.5, Math.round(scale * 0.75 * 10) / 10);
@@ -192,6 +199,8 @@ export async function downloadReportPdf(
 
   const restoreLive = prepareLiveDocumentForPdf(root);
   try {
+    await document.fonts.ready;
+
     const pdf = new jsPDF({
       unit: "in",
       format: "letter",
@@ -206,16 +215,22 @@ export async function downloadReportPdf(
       });
       await new Promise<void>((resolve) => setTimeout(resolve, 150));
 
-      const canvas = await captureWithRetry(block);
-      if (canvas.width < 2 || canvas.height < 2) continue;
+      const captureWidth = reportCaptureWidth(root, block);
+      const restoreWidth = prepareBlockWidthForCapture(block, captureWidth);
+      try {
+        const canvas = await captureWithRetry(block, captureWidth);
+        if (canvas.width < 2 || canvas.height < 2) continue;
 
-      cursorY = appendCanvas(
-        pdf,
-        canvas,
-        PDF_MARGIN_IN,
-        cursorY,
-        blockKeepsTogether(block),
-      );
+        cursorY = appendCanvas(
+          pdf,
+          canvas,
+          PDF_MARGIN_IN,
+          cursorY,
+          blockKeepsTogether(block),
+        );
+      } finally {
+        restoreWidth();
+      }
     }
 
     pdf.save(`${safeName}.pdf`);
