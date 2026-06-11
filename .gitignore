@@ -34,11 +34,22 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Google service account keys (never commit)
+jjhmaint-*.json
+*-gserviceaccount*.json
+
+# Supabase CLI temp
+supabase/.temp/
+
 # firecrawl local cache
 .firecrawl
 
 # vercel
 .vercel
+
+# legacy reference app (not deployed)
+old app/
+OLD APP/
 
 # typescript
 *.tsbuildinfo

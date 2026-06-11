@@ -7,7 +7,7 @@ const SETUP_HINTS: Record<CalendarConfigKey, string> = {
   SUPABASE_SERVICE_ROLE_KEY:
     "Add SUPABASE_SERVICE_ROLE_KEY from Supabase → Project Settings → API (server-only).",
   GOOGLE_SERVICE_ACCOUNT_JSON:
-    "Add GOOGLE_SERVICE_ACCOUNT_JSON — paste the service account key JSON as one line (keep \\n in private_key).",
+    "Add GOOGLE_SERVICE_ACCOUNT_JSON (one-line JSON), or GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY from the park-ops key file.",
   GOOGLE_CALENDAR_ID:
     "Add GOOGLE_CALENDAR_ID — the shared calendar’s ID (often an email like maintenance@….com).",
 };
@@ -29,6 +29,50 @@ export function parseServiceAccountJson(raw: string): {
   return { client_email: json.client_email, private_key };
 }
 
+function normalizePrivateKey(key: string): string {
+  const trimmed = key.trim().replace(/^"|"$/g, "");
+  return trimmed.includes("\\n") ? trimmed.replace(/\\n/g, "\n") : trimmed;
+}
+
+/** One-line JSON or legacy park-ops split env vars. */
+export function getServiceAccountCredentials(): {
+  client_email: string;
+  private_key: string;
+} {
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
+  if (raw) {
+    return parseServiceAccountJson(raw);
+  }
+
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.trim();
+  if (email && privateKey) {
+    return {
+      client_email: email,
+      private_key: normalizePrivateKey(privateKey),
+    };
+  }
+
+  throw new Error(
+    "Google service account is not configured — set GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY",
+  );
+}
+
+export function hasServiceAccountCredentials(): boolean {
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim()) {
+    try {
+      parseServiceAccountJson(process.env.GOOGLE_SERVICE_ACCOUNT_JSON.trim());
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return Boolean(
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() &&
+      process.env.GOOGLE_PRIVATE_KEY?.trim(),
+  );
+}
+
 /** Returns missing or invalid server env keys needed for Google Calendar sync. */
 export function getCalendarConfigIssues(): CalendarConfigKey[] {
   const issues: CalendarConfigKey[] = [];
@@ -40,15 +84,8 @@ export function getCalendarConfigIssues(): CalendarConfigKey[] {
     issues.push("GOOGLE_CALENDAR_ID");
   }
 
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
-  if (!raw) {
+  if (!hasServiceAccountCredentials()) {
     issues.push("GOOGLE_SERVICE_ACCOUNT_JSON");
-  } else {
-    try {
-      parseServiceAccountJson(raw);
-    } catch {
-      issues.push("GOOGLE_SERVICE_ACCOUNT_JSON");
-    }
   }
 
   return issues;

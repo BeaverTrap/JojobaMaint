@@ -10,6 +10,8 @@ const NAV_LINKS = [
   { href: "/", label: "Feed" },
   { href: "/schedule", label: "Schedule" },
   { href: "/water", label: "Water" },
+  { href: "/map", label: "Map" },
+  { href: "/lots", label: "Lots" },
 ] as const;
 
 export default function Navbar({

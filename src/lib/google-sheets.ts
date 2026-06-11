@@ -1,5 +1,8 @@
 import { google, type sheets_v4 } from "googleapis";
-import { parseServiceAccountJson } from "@/lib/calendar-config";
+import {
+  getServiceAccountCredentials,
+  hasServiceAccountCredentials,
+} from "@/lib/calendar-config";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
@@ -60,11 +63,7 @@ async function getSheetRange(
 }
 
 function getSheetsClient(): sheets_v4.Sheets {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
-  if (!raw) {
-    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not configured");
-  }
-  const creds = parseServiceAccountJson(raw);
+  const creds = getServiceAccountCredentials();
   const auth = new google.auth.JWT({
     email: creds.client_email,
     key: creds.private_key,
@@ -294,7 +293,7 @@ export async function syncWaterUsageFromSheet(): Promise<{ synced: number }> {
 
 export function isWaterSheetConfigured(): boolean {
   return Boolean(
-    process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim() &&
+    hasServiceAccountCredentials() &&
       process.env.GOOGLE_WATER_SHEET_ID?.trim(),
   );
 }

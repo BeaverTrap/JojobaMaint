@@ -238,3 +238,19 @@ export interface WaterUsageReading {
   created_at: string;
   updated_at: string;
 }
+
+export interface Lot {
+  lot_number: string;
+  slug: string;
+  zones: string[];
+  valves: string[];
+  unit_id: string | null;
+  has_cross_connection: boolean | null;
+  sheet_notes: string | null;
+  staff_notes: string | null;
+  map_x: number | null;
+  map_y: number | null;
+  sheet_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

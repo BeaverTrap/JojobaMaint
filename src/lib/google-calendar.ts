@@ -3,8 +3,8 @@ import { google, type calendar_v3 } from "googleapis";
 import { addMonths, subMonths } from "date-fns";
 import {
   getCalendarConfigIssues,
+  getServiceAccountCredentials,
   isCalendarConfigured,
-  parseServiceAccountJson,
 } from "@/lib/calendar-config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSiteUrl } from "@/lib/site-url";
@@ -29,25 +29,9 @@ function getWebhookToken(): string | undefined {
   return process.env.GOOGLE_CALENDAR_WEBHOOK_TOKEN?.trim() || undefined;
 }
 
-function parseServiceAccountCredentials(): {
-  client_email: string;
-  private_key: string;
-} {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
-  if (!raw) {
-    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not configured");
-  }
-  try {
-    return parseServiceAccountJson(raw);
-  } catch {
-    throw new Error(
-      "GOOGLE_SERVICE_ACCOUNT_JSON is invalid — use one-line JSON with \\n in private_key",
-    );
-  }
-}
 
 function getCalendarClient(): calendar_v3.Calendar {
-  const creds = parseServiceAccountCredentials();
+  const creds = getServiceAccountCredentials();
   const auth = new google.auth.JWT({
     email: creds.client_email,
     key: creds.private_key,
