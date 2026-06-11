@@ -2,7 +2,23 @@ const PDF_LINE = "#d1d5db";
 const PDF_MUTED = "#6b7280";
 const PDF_INK = "#1a201c";
 
-const MODERN_COLOR_RE = /\b(?:lab|oklch|color)\(/;
+/** html2canvas chokes on Tailwind v4 / CSS Color 4 functions (note: \\blab\\( does not match oklab). */
+const MODERN_COLOR_RE = /(?:oklab|oklch|lab|lch|color)\(/i;
+
+const COLOR_PROPS = new Set([
+  "color",
+  "background-color",
+  "border-top-color",
+  "border-right-color",
+  "border-bottom-color",
+  "border-left-color",
+  "outline-color",
+  "caret-color",
+  "text-decoration-color",
+  "fill",
+  "stroke",
+  "stop-color",
+]);
 
 /** Layout + typography props copied as inline styles after stylesheets are stripped. */
 const PDF_INLINE_PROPS = [
@@ -81,7 +97,7 @@ function getColorParseCtx(): CanvasRenderingContext2D {
     const canvas = document.createElement("canvas");
     canvas.width = 1;
     canvas.height = 1;
-    colorParseCtx = canvas.getContext("2d")!;
+    colorParseCtx = canvas.getContext("2d", { willReadFrequently: true })!;
   }
   return colorParseCtx;
 }
@@ -102,10 +118,47 @@ function toSafeCssColor(value: string): string {
   }
 }
 
-function safeCSSValue(value: string): string {
+function safeCSSValue(prop: string, value: string): string {
   if (!value || value === "none" || value === "normal") return value;
-  if (MODERN_COLOR_RE.test(value)) return toSafeCssColor(value);
+  if (value === "transparent" || value === "rgba(0, 0, 0, 0)") return value;
+  if (COLOR_PROPS.has(prop) || MODERN_COLOR_RE.test(value)) {
+    return toSafeCssColor(value);
+  }
   return value;
+}
+
+function stripCloneClasses(root: Element): void {
+  root.removeAttribute("class");
+  for (const child of root.children) stripCloneClasses(child);
+}
+
+function scrubCloneInlineColors(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement | SVGElement>("*").forEach((node) => {
+    if ("style" in node && node.style) {
+      for (let i = node.style.length - 1; i >= 0; i--) {
+        const prop = node.style.item(i);
+        if (!prop) continue;
+        const value = node.style.getPropertyValue(prop);
+        const safe = safeCSSValue(prop, value);
+        if (safe !== value) node.style.setProperty(prop, safe);
+      }
+    }
+
+    if (node instanceof SVGElement) {
+      for (const attr of ["fill", "stroke", "stop-color"] as const) {
+        const value = node.getAttribute(attr);
+        if (!value || value === "none") continue;
+        if (usesCssVar(value)) {
+          node.setAttribute(
+            attr,
+            attr === "stroke" || attr === "stop-color" ? PDF_LINE : PDF_MUTED,
+          );
+        } else if (MODERN_COLOR_RE.test(value)) {
+          node.setAttribute(attr, toSafeCssColor(value));
+        }
+      }
+    }
+  });
 }
 
 function pdfChildren(el: Element): Element[] {
@@ -113,9 +166,7 @@ function pdfChildren(el: Element): Element[] {
 }
 
 function stripCloneStylesheets(clonedDoc: Document): void {
-  clonedDoc
-    .querySelectorAll('link[rel="stylesheet"], style')
-    .forEach((node) => node.remove());
+  clonedDoc.querySelectorAll("link, style").forEach((node) => node.remove());
 }
 
 function inlineComputedStylesForPdf(source: Element, clone: Element): void {
@@ -127,7 +178,7 @@ function inlineComputedStylesForPdf(source: Element, clone: Element): void {
     if (!value) continue;
     clone.style.setProperty(
       prop,
-      safeCSSValue(value),
+      safeCSSValue(prop, value),
       computed.getPropertyPriority(prop),
     );
   }
@@ -277,7 +328,13 @@ export function prepareClonedDocumentForPdf(
     root.style.color = PDF_INK;
   }
 
+  stripCloneClasses(clonedRoot);
   inlineComputedStylesForPdf(sourceRoot, clonedRoot);
+  scrubCloneInlineColors(clonedDoc);
+
+  clonedDoc.documentElement.style.background = "#ffffff";
+  clonedDoc.body.style.background = "#ffffff";
+  clonedDoc.body.style.color = PDF_INK;
 
   clonedDoc.querySelectorAll<HTMLElement>("[style*='order']").forEach((node) => {
     node.style.order = "0";
@@ -297,7 +354,7 @@ export function prepareClonedDocumentForPdf(
   });
 
   clonedDoc.querySelectorAll<HTMLElement>(".recharts-text").forEach((node) => {
-    node.style.fill = PDF_MUTED;
+    node.style.setProperty("fill", PDF_MUTED);
   });
 
   clonedDoc.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
