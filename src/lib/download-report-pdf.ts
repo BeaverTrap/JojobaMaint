@@ -66,36 +66,89 @@ async function captureWithRetry(
   throw lastError;
 }
 
-/** Place a captured block on the current page(s), continuing from startY. */
+/**
+ * Place one captured section on the PDF without slicing through it.
+ * Scales down to fit a single page; starts a new page when needed.
+ */
 function appendCanvas(
   pdf: jsPDF,
   canvas: HTMLCanvasElement,
   margin: number,
   startY: number,
+  keepTogether: boolean,
 ): number {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const contentWidth = pageWidth - margin * 2;
+  const contentHeight = pageHeight - margin * 2;
   const contentBottom = pageHeight - margin;
-  const imgWidth = contentWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
   const imgData = canvasToDataUrl(canvas);
   const format = imgData.startsWith("data:image/png") ? "PNG" : "JPEG";
 
   let y = startY;
-  if (y > contentBottom - 0.2) {
+  let available = contentBottom - y;
+
+  if (available < 0.2) {
     pdf.addPage();
     y = margin;
+    available = contentHeight;
   }
 
+  let imgWidth = contentWidth;
+  let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  if (keepTogether && imgHeight > contentHeight) {
+    const fitScale = contentHeight / imgHeight;
+    imgWidth *= fitScale;
+    imgHeight = contentHeight;
+  }
+
+  if (imgHeight > available) {
+    pdf.addPage();
+    y = margin;
+    available = contentHeight;
+  }
+
+  if (keepTogether) {
+    pdf.addImage(imgData, format, margin, y, imgWidth, imgHeight);
+    return y + imgHeight + SECTION_GAP_IN;
+  }
+
+  return appendCanvasAcrossPages(
+    pdf,
+    imgData,
+    format,
+    margin,
+    y,
+    imgWidth,
+    imgHeight,
+    contentBottom,
+    contentHeight,
+  );
+}
+
+/** Last resort for unusually tall blocks (not chart sections). */
+function appendCanvasAcrossPages(
+  pdf: jsPDF,
+  imgData: string,
+  format: "PNG" | "JPEG",
+  margin: number,
+  startY: number,
+  imgWidth: number,
+  imgHeight: number,
+  contentBottom: number,
+  contentHeight: number,
+): number {
+  let y = startY;
   let drawn = 0;
 
   while (drawn < imgHeight - 0.01) {
-    const available = contentBottom - y;
+    let available = contentBottom - y;
     if (available <= 0.05) {
       pdf.addPage();
       y = margin;
-      continue;
+      available = contentHeight;
     }
 
     const remaining = imgHeight - drawn;
@@ -111,6 +164,14 @@ function appendCanvas(
   }
 
   return y + SECTION_GAP_IN;
+}
+
+function blockKeepsTogether(block: HTMLElement): boolean {
+  return (
+    block.matches("section") ||
+    block.classList.contains("print-only") ||
+    block.classList.contains("print-report-meta")
+  );
 }
 
 export async function downloadReportPdf(
@@ -148,7 +209,13 @@ export async function downloadReportPdf(
       const canvas = await captureWithRetry(block);
       if (canvas.width < 2 || canvas.height < 2) continue;
 
-      cursorY = appendCanvas(pdf, canvas, PDF_MARGIN_IN, cursorY);
+      cursorY = appendCanvas(
+        pdf,
+        canvas,
+        PDF_MARGIN_IN,
+        cursorY,
+        blockKeepsTogether(block),
+      );
     }
 
     pdf.save(`${safeName}.pdf`);
