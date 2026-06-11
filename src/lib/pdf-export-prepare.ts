@@ -84,6 +84,7 @@ const PDF_INLINE_PROPS = [
   "overflow",
   "object-fit",
   "list-style-type",
+  "box-sizing",
 ] as const;
 
 let colorParseCtx: CanvasRenderingContext2D | null = null;
@@ -102,34 +103,45 @@ function getColorParseCtx(): CanvasRenderingContext2D {
   return colorParseCtx;
 }
 
+function isAlreadySafeColor(value: string): boolean {
+  const v = value.trim();
+  return (
+    /^#[0-9a-f]{3,8}$/i.test(v) ||
+    /^rgba?\(/i.test(v) ||
+    /^hsla?\(/i.test(v)
+  );
+}
+
 /** html2canvas cannot parse Tailwind v4 lab()/oklch() colors from stylesheets. */
-function toSafeCssColor(value: string): string {
+function toSafeCssColor(value: string, fallback = PDF_INK): string {
+  if (isAlreadySafeColor(value)) return value;
+
   const ctx = getColorParseCtx();
   try {
+    ctx.clearRect(0, 0, 1, 1);
     ctx.fillStyle = "#000000";
     ctx.fillStyle = value;
+    ctx.fillRect(0, 0, 1, 1);
     const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+    if (a === 0) return fallback;
     if (a < 255) {
       return `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(4)})`;
     }
     return `rgb(${r}, ${g}, ${b})`;
   } catch {
-    return "#000000";
+    return fallback;
   }
 }
 
 function safeCSSValue(prop: string, value: string): string {
   if (!value || value === "none" || value === "normal") return value;
   if (value === "transparent" || value === "rgba(0, 0, 0, 0)") return value;
+  if (isAlreadySafeColor(value)) return value;
   if (COLOR_PROPS.has(prop) || MODERN_COLOR_RE.test(value)) {
-    return toSafeCssColor(value);
+    const fallback = prop.includes("background") ? "#ffffff" : PDF_INK;
+    return toSafeCssColor(value, fallback);
   }
   return value;
-}
-
-function stripCloneClasses(root: Element): void {
-  root.removeAttribute("class");
-  for (const child of root.children) stripCloneClasses(child);
 }
 
 function scrubCloneInlineColors(root: ParentNode): void {
@@ -167,20 +179,32 @@ function pdfChildren(el: Element): Element[] {
 
 function stripCloneStylesheets(clonedDoc: Document): void {
   clonedDoc.querySelectorAll("link, style").forEach((node) => node.remove());
+
+  const style = clonedDoc.createElement("style");
+  style.textContent = `
+    html, body { background: #ffffff !important; color: ${PDF_INK} !important; }
+    .print-report { background: #ffffff !important; color: ${PDF_INK} !important; }
+    .water-report-charts .recharts-responsive-container { height: 16rem !important; }
+    svg text, .recharts-text { fill: ${PDF_MUTED} !important; }
+  `;
+  clonedDoc.head.appendChild(style);
 }
 
 function inlineComputedStylesForPdf(source: Element, clone: Element): void {
-  if (!(source instanceof HTMLElement) || !(clone instanceof HTMLElement)) return;
+  if (shouldIgnorePdfElement(source)) return;
 
-  const computed = window.getComputedStyle(source);
-  for (const prop of PDF_INLINE_PROPS) {
-    const value = computed.getPropertyValue(prop);
-    if (!value) continue;
-    clone.style.setProperty(
-      prop,
-      safeCSSValue(prop, value),
-      computed.getPropertyPriority(prop),
-    );
+  if ("style" in source && "style" in clone) {
+    const styleTarget = clone as HTMLElement | SVGElement;
+    const computed = window.getComputedStyle(source);
+    for (const prop of PDF_INLINE_PROPS) {
+      const value = computed.getPropertyValue(prop);
+      if (!value) continue;
+      styleTarget.style.setProperty(
+        prop,
+        safeCSSValue(prop, value),
+        computed.getPropertyPriority(prop),
+      );
+    }
   }
 
   const sourceKids = pdfChildren(source);
@@ -328,7 +352,8 @@ export function prepareClonedDocumentForPdf(
     root.style.color = PDF_INK;
   }
 
-  stripCloneClasses(clonedRoot);
+  clonedRoot.style.width = `${sourceRoot.offsetWidth}px`;
+
   inlineComputedStylesForPdf(sourceRoot, clonedRoot);
   scrubCloneInlineColors(clonedDoc);
 

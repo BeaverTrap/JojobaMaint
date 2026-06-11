@@ -139,7 +139,15 @@ export async function downloadReportPdf(
 
     let cursorY = PDF_MARGIN_IN;
     for (const block of blocks) {
+      block.scrollIntoView({ block: "start" });
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      await new Promise<void>((resolve) => setTimeout(resolve, 150));
+
       const canvas = await captureWithRetry(block);
+      if (canvas.width < 2 || canvas.height < 2) continue;
+
       cursorY = appendCanvas(pdf, canvas, PDF_MARGIN_IN, cursorY);
     }
 
