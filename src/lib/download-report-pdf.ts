@@ -41,8 +41,8 @@ async function captureBlock(
     logging: false,
     backgroundColor: "#ffffff",
     ignoreElements: shouldIgnorePdfElement,
-    onclone: (clonedDoc: Document) => {
-      prepareClonedDocumentForPdf(clonedDoc);
+    onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
+      prepareClonedDocumentForPdf(clonedDoc, element, clonedElement);
     },
   });
 }

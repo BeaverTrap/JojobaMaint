@@ -2,8 +2,141 @@ const PDF_LINE = "#d1d5db";
 const PDF_MUTED = "#6b7280";
 const PDF_INK = "#1a201c";
 
+const MODERN_COLOR_RE = /\b(?:lab|oklch|color)\(/;
+
+/** Layout + typography props copied as inline styles after stylesheets are stripped. */
+const PDF_INLINE_PROPS = [
+  "display",
+  "visibility",
+  "position",
+  "top",
+  "left",
+  "right",
+  "bottom",
+  "width",
+  "height",
+  "min-width",
+  "min-height",
+  "max-width",
+  "max-height",
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+  "border-top-width",
+  "border-right-width",
+  "border-bottom-width",
+  "border-left-width",
+  "border-top-style",
+  "border-right-style",
+  "border-bottom-style",
+  "border-left-style",
+  "border-top-color",
+  "border-right-color",
+  "border-bottom-color",
+  "border-left-color",
+  "border-radius",
+  "flex",
+  "flex-grow",
+  "flex-shrink",
+  "flex-basis",
+  "flex-direction",
+  "flex-wrap",
+  "align-items",
+  "align-self",
+  "justify-content",
+  "gap",
+  "order",
+  "grid-template-columns",
+  "grid-template-rows",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "line-height",
+  "letter-spacing",
+  "text-align",
+  "text-decoration",
+  "white-space",
+  "color",
+  "background-color",
+  "opacity",
+  "overflow",
+  "object-fit",
+  "list-style-type",
+] as const;
+
+let colorParseCtx: CanvasRenderingContext2D | null = null;
+
 function usesCssVar(value: string | null): boolean {
   return Boolean(value && value.includes("var("));
+}
+
+function getColorParseCtx(): CanvasRenderingContext2D {
+  if (!colorParseCtx) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    colorParseCtx = canvas.getContext("2d")!;
+  }
+  return colorParseCtx;
+}
+
+/** html2canvas cannot parse Tailwind v4 lab()/oklch() colors from stylesheets. */
+function toSafeCssColor(value: string): string {
+  const ctx = getColorParseCtx();
+  try {
+    ctx.fillStyle = "#000000";
+    ctx.fillStyle = value;
+    const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+    if (a < 255) {
+      return `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(4)})`;
+    }
+    return `rgb(${r}, ${g}, ${b})`;
+  } catch {
+    return "#000000";
+  }
+}
+
+function safeCSSValue(value: string): string {
+  if (!value || value === "none" || value === "normal") return value;
+  if (MODERN_COLOR_RE.test(value)) return toSafeCssColor(value);
+  return value;
+}
+
+function pdfChildren(el: Element): Element[] {
+  return [...el.children].filter((child) => !shouldIgnorePdfElement(child));
+}
+
+function stripCloneStylesheets(clonedDoc: Document): void {
+  clonedDoc
+    .querySelectorAll('link[rel="stylesheet"], style')
+    .forEach((node) => node.remove());
+}
+
+function inlineComputedStylesForPdf(source: Element, clone: Element): void {
+  if (!(source instanceof HTMLElement) || !(clone instanceof HTMLElement)) return;
+
+  const computed = window.getComputedStyle(source);
+  for (const prop of PDF_INLINE_PROPS) {
+    const value = computed.getPropertyValue(prop);
+    if (!value) continue;
+    clone.style.setProperty(
+      prop,
+      safeCSSValue(value),
+      computed.getPropertyPriority(prop),
+    );
+  }
+
+  const sourceKids = pdfChildren(source);
+  const cloneKids = pdfChildren(clone);
+  for (let i = 0; i < sourceKids.length && i < cloneKids.length; i++) {
+    inlineComputedStylesForPdf(sourceKids[i]!, cloneKids[i]!);
+  }
 }
 
 const MAX_CANVAS_SIDE = 16384;
@@ -114,7 +247,13 @@ export function prepareLiveDocumentForPdf(root: HTMLElement): PdfExportRestore {
 }
 
 /** Fix cloned DOM so html2canvas can rasterize charts and theme tokens. */
-export function prepareClonedDocumentForPdf(clonedDoc: Document): void {
+export function prepareClonedDocumentForPdf(
+  clonedDoc: Document,
+  sourceRoot: HTMLElement,
+  clonedRoot: HTMLElement,
+): void {
+  stripCloneStylesheets(clonedDoc);
+
   clonedDoc.documentElement.classList.remove("dark");
   clonedDoc.documentElement.classList.add("pdf-export-mode");
   clonedDoc.documentElement.style.background = "#ffffff";
@@ -137,6 +276,8 @@ export function prepareClonedDocumentForPdf(clonedDoc: Document): void {
     root.style.background = "#ffffff";
     root.style.color = PDF_INK;
   }
+
+  inlineComputedStylesForPdf(sourceRoot, clonedRoot);
 
   clonedDoc.querySelectorAll<HTMLElement>("[style*='order']").forEach((node) => {
     node.style.order = "0";
