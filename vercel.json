@@ -5,11 +5,7 @@
       "schedule": "0 0 * * *"
     },
     {
-      "path": "/api/sheets/sync?type=water",
-      "schedule": "0 0 * * 0"
-    },
-    {
-      "path": "/api/sheets/sync?type=valves",
+      "path": "/api/sheets/sync?type=all",
       "schedule": "0 0 * * 0"
     }
   ]

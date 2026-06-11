@@ -2,13 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import {
   parseSheetSyncType,
+  runAllSheetSyncs,
   runSheetSync,
-  type SheetSyncType,
+  type SheetSyncRequestType,
 } from "@/lib/sheet-sync";
 import { isAuthorizedStaff } from "@/lib/staff-api-auth";
 
-async function handleSync(request: NextRequest, type: SheetSyncType) {
+async function handleSync(type: SheetSyncRequestType) {
   try {
+    if (type === "all") {
+      const result = await runAllSheetSyncs();
+      return NextResponse.json({ ok: true, type, ...result });
+    }
+
     const result = await runSheetSync(type);
     return NextResponse.json({ ok: true, type, ...result });
   } catch (err) {
@@ -35,11 +41,14 @@ async function authorizeRequest(
   return null;
 }
 
-export async function GET(request: NextRequest) {
+async function syncFromRequest(request: NextRequest) {
   const type = parseSheetSyncType(request.nextUrl.searchParams.get("type"));
   if (!type) {
     return NextResponse.json(
-      { error: "Missing or invalid type — use ?type=water or ?type=valves" },
+      {
+        error:
+          "Missing or invalid type — use ?type=water, ?type=valves, or ?type=all",
+      },
       { status: 400 },
     );
   }
@@ -47,20 +56,13 @@ export async function GET(request: NextRequest) {
   const denied = await authorizeRequest(request);
   if (denied) return denied;
 
-  return handleSync(request, type);
+  return handleSync(type);
+}
+
+export async function GET(request: NextRequest) {
+  return syncFromRequest(request);
 }
 
 export async function POST(request: NextRequest) {
-  const type = parseSheetSyncType(request.nextUrl.searchParams.get("type"));
-  if (!type) {
-    return NextResponse.json(
-      { error: "Missing or invalid type — use ?type=water or ?type=valves" },
-      { status: 400 },
-    );
-  }
-
-  const denied = await authorizeRequest(request);
-  if (denied) return denied;
-
-  return handleSync(request, type);
+  return syncFromRequest(request);
 }
