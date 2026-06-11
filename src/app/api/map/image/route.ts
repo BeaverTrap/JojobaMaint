@@ -1,30 +1,8 @@
 import { NextResponse } from "next/server";
-import * as fs from "fs";
-import * as path from "path";
+import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
 
-const MAP_IMAGE_FILENAME = "park_map_clean.png";
-
-export async function GET() {
-  try {
-    const filePath = path.join(
-      process.cwd(),
-      "public",
-      "images",
-      MAP_IMAGE_FILENAME,
-    );
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: "Map image not found" }, { status: 404 });
-    }
-    const buffer = fs.readFileSync(filePath);
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-      },
-    });
-  } catch (e) {
-    console.error("Error serving map image:", e);
-    return NextResponse.json({ error: "Failed to load image" }, { status: 500 });
-  }
+/** Redirect to the static asset in public/ (reliable on Vercel). */
+export async function GET(request: Request) {
+  const url = new URL(PARK_MAP_IMAGE_PATH, request.url);
+  return NextResponse.redirect(url, 307);
 }

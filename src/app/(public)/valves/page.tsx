@@ -1,21 +1,15 @@
-import { Suspense } from "react";
-import ValveLookup from "@/components/ValveLookup";
+import { redirect } from "next/navigation";
 
-export default function ValvesPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-ink">
-          Valve & zone lookup
-        </h1>
-        <p className="text-sm text-muted">
-          Find which valves serve a lot or zone — data synced from the Master
-          Zone & Valve spreadsheet.
-        </p>
-      </div>
-      <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
-        <ValveLookup />
-      </Suspense>
-    </div>
-  );
+export default async function ValvesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(sp)) {
+    if (typeof value === "string") params.set(key, value);
+  }
+  const qs = params.toString();
+  redirect(qs ? `/map?${qs}` : "/map");
 }

@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { fetchArticleCategories } from "@/lib/articles";
+import {
+  fetchArticleCategories,
+  fetchRecentArticlesForPicker,
+} from "@/lib/articles";
 import ArticleForm from "@/components/ArticleForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewArticlePage() {
   const supabase = await createClient();
-  const tags = await fetchArticleCategories(supabase);
+  const [tags, recentArticles] = await Promise.all([
+    fetchArticleCategories(supabase),
+    fetchRecentArticlesForPicker(supabase),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -27,7 +33,12 @@ export default async function NewArticlePage() {
         </p>
       </div>
 
-      <ArticleForm mode="create" tags={tags} redirectTo="/admin/articles" />
+      <ArticleForm
+        mode="create"
+        tags={tags}
+        recentArticles={recentArticles}
+        redirectTo="/admin/articles"
+      />
     </div>
   );
 }

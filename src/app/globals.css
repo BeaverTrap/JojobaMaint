@@ -322,7 +322,8 @@ body {
   header.no-print,
   footer,
   nav[aria-label="Main navigation"],
-  .print-screen-only {
+  .print-screen-only,
+  .print-exclude {
     display: none !important;
   }
 
@@ -405,6 +406,10 @@ body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
+  .water-report-charts .recharts-responsive-container {
+    height: 16rem !important;
+  }
 }
 
 /* Same layout as print, used when generating a PDF download in-browser. */
@@ -432,7 +437,8 @@ body {
 }
 
 .print-report.pdf-export-mode .no-print,
-.print-report.pdf-export-mode .print-screen-only {
+.print-report.pdf-export-mode .print-screen-only,
+.print-report.pdf-export-mode .print-exclude {
   display: none !important;
 }
 
@@ -482,4 +488,13 @@ body {
 
 .print-report.pdf-export-mode img {
   max-width: 100% !important;
+}
+
+.print-report.pdf-export-mode .water-report-charts .recharts-responsive-container {
+  height: 16rem !important;
+}
+
+.print-report.pdf-export-mode .water-report-charts svg {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }

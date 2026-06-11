@@ -130,6 +130,18 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000), sign in with Google, and start posting.
 
+## 8. Work request portal (MaintainX)
+
+The public **Submit Request** page (`/request`) embeds an external MaintainX portal when configured.
+
+```env
+NEXT_PUBLIC_MAINTAINX_URL=https://app.getmaintainx.com/work-request/your-portal-id
+```
+
+Add that to `.env.local` (and Vercel env vars in production), restart the dev server, and redeploy. Without it, `/request` shows an offline placeholder.
+
+**Full setup, troubleshooting, and file map:** [docs/work-request-portal.md](docs/work-request-portal.md)
+
 ---
 
 ## Custom branding

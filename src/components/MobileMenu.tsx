@@ -35,7 +35,7 @@ export default function MobileMenu({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-ink lg:hidden"
+        className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-ink md:hidden"
         aria-label="Open menu"
         aria-expanded={open}
       >
@@ -43,7 +43,7 @@ export default function MobileMenu({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
+        <div className="fixed inset-0 z-[100] md:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"

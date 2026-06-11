@@ -7,7 +7,7 @@ import PickupBanner from "@/components/PickupBanner";
 const PICKUP_BANNER_PATHS = new Set([
   "/",
   "/schedule",
-  "/water",
+  "/request",
   "/pickup-guidelines",
 ]);
 

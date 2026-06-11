@@ -3,6 +3,7 @@ import {
   clearValveCache,
   getLotsForZone,
   getValveData,
+  getValvesForZone,
   getZonesForLot,
 } from "@/lib/google-valves";
 
@@ -23,8 +24,11 @@ export async function GET(request: Request) {
     }
 
     if (zoneName) {
-      const lots = await getLotsForZone(zoneName);
-      return NextResponse.json({ zone: zoneName, lots });
+      const [lots, valves] = await Promise.all([
+        getLotsForZone(zoneName),
+        getValvesForZone(zoneName),
+      ]);
+      return NextResponse.json({ zone: zoneName, lots, valves });
     }
 
     const result = await getValveData();

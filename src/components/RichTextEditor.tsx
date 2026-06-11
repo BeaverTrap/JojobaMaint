@@ -69,7 +69,8 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(
     ref,
   ) {
     const editorRef = useRef<HTMLDivElement>(null);
-    const lastEmitted = useRef(value);
+    /** null until first DOM sync — avoids skipping initial hydrate when value === ref default */
+    const lastEmitted = useRef<string | null>(null);
     const skipSync = useRef(false);
 
     useEffect(() => {

@@ -21,7 +21,7 @@ export default function LotSyncButton() {
         return;
       }
       setMessage(
-        `Synced ${data.synced ?? 0} lot(s). Refresh to see updates.`,
+        `Synced ${data.synced ?? 0} site(s). Refresh to see updates.`,
       );
     } catch {
       setMessage("Sync failed — check server logs.");
@@ -38,7 +38,7 @@ export default function LotSyncButton() {
         disabled={loading}
         className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
       >
-        {loading ? "Syncing…" : "Sync lots from sheet"}
+        {loading ? "Syncing…" : "Sync from sheet"}
       </button>
       {message && (
         <p className="max-w-[14rem] text-right text-xs text-muted">{message}</p>

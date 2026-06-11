@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { fetchArticleCategories, ARTICLE_SELECT } from "@/lib/articles";
+import {
+  fetchArticleCategories,
+  fetchArticleRelatedIds,
+  fetchRecentArticlesForPicker,
+  ARTICLE_SELECT,
+} from "@/lib/articles";
 import { fetchArticleTagSlugs } from "@/lib/content-tags";
 import ArticleForm from "@/components/ArticleForm";
 import DeleteArticleButton from "@/components/DeleteArticleButton";
@@ -17,11 +22,14 @@ export default async function EditArticlePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: article }, tags, initialTags] = await Promise.all([
-    supabase.from("articles").select(ARTICLE_SELECT).eq("id", id).maybeSingle(),
-    fetchArticleCategories(supabase),
-    fetchArticleTagSlugs(supabase, id),
-  ]);
+  const [{ data: article }, tags, initialTags, initialRelatedIds, recentArticles] =
+    await Promise.all([
+      supabase.from("articles").select(ARTICLE_SELECT).eq("id", id).maybeSingle(),
+      fetchArticleCategories(supabase),
+      fetchArticleTagSlugs(supabase, id),
+      fetchArticleRelatedIds(supabase, id).catch(() => [] as string[]),
+      fetchRecentArticlesForPicker(supabase, id),
+    ]);
 
   if (!article) notFound();
   const a = article as unknown as ArticleWithAuthor;
@@ -57,7 +65,11 @@ export default async function EditArticlePage({
         initialBody={a.body}
         initialReferenceList={a.reference_list ?? ""}
         initialTags={initialTags.length > 0 ? initialTags : [a.category]}
+        initialRelatedIds={initialRelatedIds}
+        initialSiteNumber={a.site_number ?? ""}
+        initialCommonArea={a.common_area ?? ""}
         initialPublished={a.published}
+        recentArticles={recentArticles}
         initialCoverUrl={a.cover_image_url}
         initialPosterAvatar={a.poster_avatar ?? undefined}
         initialFeedSection={a.feed_section}

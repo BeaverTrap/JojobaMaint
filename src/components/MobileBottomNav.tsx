@@ -2,74 +2,47 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NAV_LINKS, REQUEST_NAV, matchNavPath } from "@/lib/nav-links";
 
-const PRIMARY = [
-  { href: "/", label: "Feed", match: (p: string) => p === "/" },
-  {
-    href: "/schedule",
-    label: "Schedule",
-    match: (p: string) => p.startsWith("/schedule"),
-  },
-  {
-    href: "/water",
-    label: "Water",
-    match: (p: string) => p.startsWith("/water"),
-  },
-] as const;
-
-export default function MobileBottomNav({
-  isAuthorized,
-}: {
-  isAuthorized: boolean;
-}) {
+export default function MobileBottomNav() {
   const pathname = usePathname();
 
   return (
     <nav
-      className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur lg:hidden dark:bg-black/95"
+      className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur md:hidden dark:bg-black/95"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Main navigation"
     >
-      <div className="mx-auto flex max-w-5xl items-stretch justify-around px-1">
-        {PRIMARY.map((item) => {
-          const active = item.match(pathname);
+      <div className="mx-auto flex max-w-5xl items-stretch justify-around px-0.5">
+        {[...NAV_LINKS, REQUEST_NAV].map((item) => {
+          const active = matchNavPath(item.href, pathname);
+          const label = "shortLabel" in item ? item.shortLabel : item.label;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={
                 active
-                  ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-brand-600 dark:text-brand-300"
-                  : "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-muted"
+                  ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-brand-600 dark:text-brand-300"
+                  : item.href === REQUEST_NAV.href
+                    ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-brand-600 dark:text-brand-400"
+                    : "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-muted"
               }
             >
               <NavIcon name={item.label} active={active} />
               <span className="max-w-full truncate text-[10px] font-semibold leading-none">
-                {item.label}
+                {label}
               </span>
             </Link>
           );
         })}
-        <Link
-          href={isAuthorized ? "/admin" : "/login"}
-          className={
-            pathname.startsWith("/admin") || pathname === "/login"
-              ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-brand-600 dark:text-brand-300"
-              : "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-muted"
-          }
-        >
-          <NavIcon name="More" active={pathname.startsWith("/admin")} />
-          <span className="max-w-full truncate text-[10px] font-semibold leading-none">
-            {isAuthorized ? "Create" : "Sign in"}
-          </span>
-        </Link>
       </div>
     </nav>
   );
 }
 
 function NavIcon({ name, active }: { name: string; active: boolean }) {
-  const stroke = active ? "currentColor" : "currentColor";
+  const stroke = "currentColor";
   const className = "h-5 w-5";
   switch (name) {
     case "Feed":
@@ -106,12 +79,38 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
           />
         </svg>
       );
+    case "Park map":
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M9 4 3 6.5V20l6-2.5L15 20l6-2.5V4l-6 2.5L9 4Z"
+            stroke={stroke}
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M9 4v13.5M15 6.5V20"
+            stroke={stroke}
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    case "Submit Request":
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M12 5v14M5 12h14"
+            stroke={stroke}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
     default:
       return (
         <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <circle cx="12" cy="6" r="1.5" fill={stroke} />
-          <circle cx="12" cy="12" r="1.5" fill={stroke} />
-          <circle cx="12" cy="18" r="1.5" fill={stroke} />
+          <circle cx="12" cy="12" r="2" fill={active ? stroke : "none"} stroke={stroke} strokeWidth="1.75" />
         </svg>
       );
   }

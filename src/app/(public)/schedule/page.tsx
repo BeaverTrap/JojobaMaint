@@ -27,7 +27,7 @@ export default async function SchedulePage() {
             Maintenance schedule
           </h1>
           <p className="text-sm text-muted">
-            Park maintenance calendar — synced from Google Calendar.
+            Park maintenance calendar.
           </p>
         </div>
         {isAuthorized && <CalendarSyncButton />}
@@ -39,8 +39,8 @@ export default async function SchedulePage() {
         <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
           No events in the cache yet.
           {isAuthorized
-            ? " Sign in as staff and tap Sync calendar once Google credentials are configured in .env.local (or Vercel env)."
-            : " Events appear here after staff sync the maintenance Google Calendar."}
+            ? " Tap Sync calendar to load events."
+            : " Events appear here when the schedule is updated."}
         </p>
       )}
     </div>

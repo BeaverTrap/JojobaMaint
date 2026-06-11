@@ -5,14 +5,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import MobileMenu from "@/components/MobileMenu";
 import type { Profile } from "@/lib/database.types";
-
-const NAV_LINKS = [
-  { href: "/", label: "Feed" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/water", label: "Water" },
-  { href: "/map", label: "Map" },
-  { href: "/lots", label: "Lots" },
-] as const;
+import { NAV_LINKS, REQUEST_NAV } from "@/lib/nav-links";
 
 export default function Navbar({
   profile,
@@ -26,6 +19,7 @@ export default function Navbar({
   const displayName = profile?.display_name ?? "Member";
   const menuLinks = [
     ...NAV_LINKS,
+    REQUEST_NAV,
     ...(isAuthorized
       ? [{ href: "/admin", label: "Create / dashboard" }]
       : []),
@@ -40,10 +34,16 @@ export default function Navbar({
           </Link>
 
           {/* Desktop */}
-          <div className="hidden min-w-0 flex-1 items-center justify-end gap-0.5 lg:flex">
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-0.5 md:flex">
             {NAV_LINKS.map((item) => (
               <NavLink key={item.href} href={item.href} label={item.label} />
             ))}
+            <Link
+              href={REQUEST_NAV.href}
+              className="shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700"
+            >
+              {REQUEST_NAV.label}
+            </Link>
             {isAuthorized && (
               <NavLink href="/admin" label="Dashboard" highlight />
             )}
@@ -80,7 +80,7 @@ export default function Navbar({
           </div>
 
           {/* Mobile header: optional quick new + overflow menu */}
-          <div className="flex shrink-0 items-center gap-2 lg:hidden">
+          <div className="flex shrink-0 items-center gap-2 md:hidden">
             {isAuthorized && (
               <Link
                 href="/admin"
@@ -98,7 +98,7 @@ export default function Navbar({
         </nav>
       </header>
 
-      <MobileBottomNav isAuthorized={isAuthorized} />
+      <MobileBottomNav />
     </>
   );
 }

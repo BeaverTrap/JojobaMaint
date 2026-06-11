@@ -24,6 +24,12 @@ import {
   type ContentTag,
 } from "@/lib/content-tags";
 import {
+  isRelatedLinksSchemaError,
+  syncArticleRelatedLinks,
+  type ArticlePickerItem,
+} from "@/lib/articles";
+import RelatedArticlePicker from "@/components/RelatedArticlePicker";
+import {
   defaultPosterAvatarForTeam,
   normalizePosterAvatarSlug,
   resolvePostPosterAvatar,
@@ -34,12 +40,12 @@ import {
   type FeedSection,
 } from "@/lib/feed-section";
 
-type Props =
-  | {
-      mode: "create";
-      tags: ContentTag[];
-      redirectTo: string;
-    }
+type Props = {
+  tags: ContentTag[];
+  recentArticles: ArticlePickerItem[];
+  redirectTo: string;
+} & (
+  | { mode: "create" }
   | {
       mode: "edit";
       articleId: string;
@@ -49,13 +55,15 @@ type Props =
       initialBody: string;
       initialReferenceList?: string;
       initialTags: string[];
+      initialRelatedIds: string[];
+      initialSiteNumber: string;
+      initialCommonArea: string;
       initialPublished: boolean;
       initialCoverUrl: string | null;
       initialPosterAvatar?: string;
       initialFeedSection?: string;
-      tags: ContentTag[];
-      redirectTo: string;
-    };
+    }
+);
 
 export default function ArticleForm(props: Props) {
   const router = useRouter();
@@ -70,6 +78,15 @@ export default function ArticleForm(props: Props) {
   );
   const [selectedTags, setSelectedTags] = useState<string[]>(
     isEdit ? props.initialTags : [],
+  );
+  const [selectedRelatedIds, setSelectedRelatedIds] = useState<string[]>(
+    isEdit ? props.initialRelatedIds : [],
+  );
+  const [siteNumber, setSiteNumber] = useState(
+    isEdit ? props.initialSiteNumber : "",
+  );
+  const [commonArea, setCommonArea] = useState(
+    isEdit ? props.initialCommonArea : "",
   );
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : false,
@@ -197,6 +214,8 @@ export default function ArticleForm(props: Props) {
         feed_section: feedSection,
         poster_avatar: posterAvatar,
         cover_image_url: coverUrl,
+        site_number: siteNumber.trim() || null,
+        common_area: commonArea.trim() || null,
         published,
         ...(isEdit ? {} : { slug, author_id: user.id }),
       };
@@ -224,7 +243,12 @@ export default function ArticleForm(props: Props) {
         await syncArticleTags(supabase, articleId, selectedTags);
       } catch (tagErr) {
         if (!isTagsSchemaError(tagErr)) throw tagErr;
-        // Migration not applied yet — category column still holds primary tag.
+      }
+
+      try {
+        await syncArticleRelatedLinks(supabase, articleId, selectedRelatedIds);
+      } catch (relatedErr) {
+        if (!isRelatedLinksSchemaError(relatedErr)) throw relatedErr;
       }
 
       router.push(props.redirectTo);
@@ -275,6 +299,46 @@ export default function ArticleForm(props: Props) {
         selected={selectedTags}
         onChange={setSelectedTags}
       />
+
+      <div>
+        <label className="text-sm font-medium text-ink">Related articles</label>
+        <p className="mt-0.5 text-xs text-muted">
+          Link to past guides on the same topic or location.
+        </p>
+        <div className="mt-2">
+          <RelatedArticlePicker
+            articles={props.recentArticles}
+            selected={selectedRelatedIds}
+            onChange={setSelectedRelatedIds}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-ink">Location</label>
+        <p className="mt-0.5 text-xs text-muted">
+          Optional — tie this guide to a lot or common area.
+        </p>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={siteNumber}
+            onChange={(e) => setSiteNumber(e.target.value)}
+            placeholder="Site number (e.g. 142)"
+            className="w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
+            maxLength={20}
+          />
+          <input
+            type="text"
+            value={commonArea}
+            onChange={(e) => setCommonArea(e.target.value)}
+            placeholder="Common area (e.g. Pool deck, Dog park)"
+            className="w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:border-brand-500 dark:focus:ring-brand-800"
+            maxLength={120}
+          />
+        </div>
+      </div>
 
       <div>
         <label className="text-sm font-medium text-ink">Posted as</label>

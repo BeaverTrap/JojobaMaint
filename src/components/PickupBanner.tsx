@@ -28,6 +28,10 @@ export default function PickupBanner({
     ? "SUMMER SCHEDULE: Mondays Only"
     : "Mondays & Thursdays";
 
+  const scheduleDays = isSummerSchedule
+    ? "Mondays"
+    : "Mondays and Thursdays";
+
   return (
     <aside
       role="status"
@@ -45,12 +49,8 @@ export default function PickupBanner({
             </span>
           </p>
           <p className="font-medium text-ink">
-            Weekly green waste and cactus waste pickups — material bound for the
-            chipper or the cactus pits — occur on{" "}
-            <span className="font-semibold text-brand-700 dark:text-brand-300">
-              {isSummerSchedule ? "Mondays" : "Mondays and Thursdays"}
-            </span>
-            .
+            Weekly waste pickups — material bound for the chipper or the cactus
+            pits — occur on {scheduleDays}.
           </p>
           {isSummerSchedule && (
             <p className="text-xs text-muted">

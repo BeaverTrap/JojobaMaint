@@ -1,10 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MdPlumbing } from "react-icons/md";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import {
+  TransformWrapper,
+  TransformComponent,
+  type ReactZoomPanPinchRef,
+} from "react-zoom-pan-pinch";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
+import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
+import type { MapPositions } from "@/lib/map-positions";
+import {
+  centerMapOnPercent,
+  focusMapMarker,
+  MAP_FOCUS_SCALE_DETAIL,
+  MAP_FOCUS_SCALE_SELECTION,
+  MAP_PINCH_STEP,
+  MAP_WHEEL_STEP,
+} from "@/lib/map-viewport";
+import { useTapHandler } from "@/lib/map-tap";
+import { siteToSlug } from "@/lib/site-slug";
 import { getZoneFillColor, type ZoneColorMap } from "@/lib/zone-colors";
 
 type LotPositions = Record<string, { x: number; y: number }>;
@@ -25,6 +40,8 @@ type ParkMapProps = {
   zoneColors?: ZoneColorMap;
   /** Optional: highlight this valve (e.g. selected valve) */
   highlightValve?: string | null;
+  /** Optional: highlight this place/amenity marker */
+  highlightPlace?: string | null;
   /** When provided, lot labels are clickable and this is called with the lot id */
   onLotClick?: (lotId: string) => void;
   /** When provided, place markers are clickable and this is called with the place name */
@@ -45,11 +62,187 @@ type ParkMapProps = {
   contextValve?: string | null;
   /** Valve IDs for the current zone (e.g. ["1", "2"] → "Valves: V1, V2") */
   contextValves?: string[];
+  /** Skip client fetch when positions are loaded on the server */
+  initialMapData?: MapPositions;
+  /** Pan/zoom to highlighted lot or place when it changes */
+  autoFocusHighlight?: boolean;
+  /** Target zoom when focusing a marker (default depends on autoFocusHighlight) */
+  focusScale?: number;
+  /** Return to full view when highlight is cleared */
+  resetWhenHighlightClears?: boolean;
 };
 
 function formatValveDisplay(id: string): string {
   if (!id) return "V?";
   return /^\d+$/.test(id) ? `V${id}` : id;
+}
+
+function LotMarker({
+  lotId,
+  pos,
+  isHighlight,
+  lotClass,
+  onLotClick,
+}: {
+  lotId: string;
+  pos: { x: number; y: number } | undefined;
+  isHighlight: boolean;
+  isInSearch: boolean;
+  lotClass: string;
+  onLotClick?: (lotId: string) => void;
+}) {
+  const tap = useTapHandler(() => onLotClick?.(lotId));
+  if (!pos) return null;
+  return (
+    <div
+      id={`map-lot-${lotId}`}
+      className="absolute -translate-x-1/2 -translate-y-1/2 transform"
+      style={{
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        pointerEvents: onLotClick ? "auto" : "none",
+      }}
+    >
+      <span
+        role={onLotClick ? "button" : undefined}
+        tabIndex={onLotClick ? 0 : undefined}
+        onKeyDown={
+          onLotClick
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") onLotClick(lotId);
+              }
+            : undefined
+        }
+        className={`
+          map-marker-btn inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded px-2 py-1.5 text-[11px] font-bold transition-colors duration-200 sm:min-h-0 sm:min-w-0 sm:px-1.5 sm:py-0.5 sm:text-xs
+          ${onLotClick ? "cursor-pointer touch-manipulation hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
+          ${isHighlight ? "scale-110 ring-2 ring-white" : ""}
+          ${lotClass}
+        `}
+        {...(onLotClick ? tap : {})}
+      >
+        {lotId}
+      </span>
+    </div>
+  );
+}
+
+function PlaceMarker({
+  placeName,
+  pos,
+  isHighlight,
+  onPlaceClick,
+}: {
+  placeName: string;
+  pos: { x: number; y: number; icon?: string };
+  isHighlight?: boolean;
+  onPlaceClick?: (placeName: string) => void;
+}) {
+  const tap = useTapHandler(() => onPlaceClick?.(placeName));
+  const IconComponent = getPlaceIcon(pos.icon || "MdPlace");
+  const isClickable = !!onPlaceClick;
+  return (
+    <div
+      id={`map-place-${siteToSlug(placeName)}`}
+      className="group absolute flex -translate-x-1/2 -translate-y-1/2 transform flex-col items-center"
+      style={{
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        pointerEvents: isClickable ? "auto" : "none",
+      }}
+      title={placeName}
+    >
+      <span
+        role={isClickable ? "button" : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        onKeyDown={
+          isClickable
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") onPlaceClick?.(placeName);
+              }
+            : undefined
+        }
+        className={`
+          map-marker-btn inline-flex h-11 w-11 items-center justify-center rounded-full p-2.5 transition-colors duration-200 sm:h-9 sm:w-9 sm:p-1.5
+          ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white" : getPlaceColor(pos.icon ?? "MdPlace")}
+          ${isHighlight ? "scale-110" : ""}
+          ${isClickable ? "cursor-pointer touch-manipulation hover:opacity-90 hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
+        `}
+        {...(isClickable ? tap : {})}
+      >
+        <IconComponent className="h-5 w-5 shrink-0 sm:h-[18px] sm:w-[18px]" size={20} />
+      </span>
+      <span className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white shadow-lg group-hover:visible">
+        {placeName}
+      </span>
+    </div>
+  );
+}
+
+function ValveMarker({
+  valveId,
+  pos,
+  isHighlight,
+  onValveClick,
+}: {
+  valveId: string;
+  pos: { x: number; y: number };
+  isHighlight: boolean;
+  onValveClick?: (valveId: string) => void;
+}) {
+  const tap = useTapHandler(() => onValveClick?.(valveId));
+  const isClickable = !!onValveClick;
+  const displayId =
+    valveId === ""
+      ? "V?"
+      : /^\d+$/.test(valveId)
+        ? `V${valveId}`
+        : valveId;
+  return (
+    <div
+      className="absolute flex -translate-x-1/2 -translate-y-1/2 transform flex-col items-center"
+      style={{
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        pointerEvents: isClickable ? "auto" : "none",
+      }}
+      title={`Valve ${displayId}`}
+    >
+      <span
+        role={isClickable ? "button" : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        onKeyDown={
+          isClickable
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") onValveClick?.(valveId);
+              }
+            : undefined
+        }
+        className={`
+          inline-flex flex-col items-center transition-colors duration-200
+          ${isClickable ? "cursor-pointer touch-manipulation rounded hover:opacity-90 hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
+        `}
+        {...(isClickable ? tap : {})}
+      >
+        <span
+          className={`
+            inline-flex h-11 w-11 items-center justify-center rounded-full p-2.5 sm:h-9 sm:w-9 sm:p-1.5
+            ${isHighlight ? "bg-slate-700 text-white ring-2 ring-white" : "bg-slate-600 text-white"}
+          `}
+        >
+          <MdPlumbing className="h-5 w-5 shrink-0 sm:h-[18px] sm:w-[18px]" size={20} />
+        </span>
+        <span
+          className={`
+            mt-1 min-w-[2rem] rounded px-2 py-0.5 text-center text-[11px] font-bold sm:mt-0.5 sm:min-w-[1.75rem] sm:px-1.5 sm:py-0.5 sm:text-[10px]
+            ${isHighlight ? "bg-slate-700 text-white ring-1 ring-white/50" : "bg-slate-700/90 text-white"}
+          `}
+        >
+          {displayId}
+        </span>
+      </span>
+    </div>
+  );
 }
 
 /** Convex hull (Gift wrapping) of points in % coords. Returns ordered polygon points. */
@@ -76,25 +269,94 @@ function convexHull(points: { x: number; y: number }[]): { x: number; y: number 
   return out;
 }
 
-export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [], lotZones = {}, zoneColors = {}, highlightValve = null, onLotClick, onPlaceClick, onValveClick, showLots = true, showPlaces = true, showValves = true, fillHeight = false, zoomable = true, contextZone = null, contextLot = null, contextValve = null, contextValves = [] }: ParkMapProps) {
-  const [lots, setLots] = useState<LotPositions>({});
-  const [places, setPlaces] = useState<PlacePositions>({});
-  const [valves, setValves] = useState<ValvePositions>({});
-  const [imageVersion, setImageVersion] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [], lotZones = {}, zoneColors = {}, highlightValve = null, highlightPlace = null, onLotClick, onPlaceClick, onValveClick, showLots = true, showPlaces = true, showValves = true, fillHeight = false, zoomable = true, contextZone = null, contextLot = null, contextValve = null, contextValves = [], initialMapData, autoFocusHighlight = false, focusScale, resetWhenHighlightClears = false }: ParkMapProps) {
+  const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
+  const [lots, setLots] = useState<LotPositions>(initialMapData?.lots ?? {});
+  const [places, setPlaces] = useState<PlacePositions>(initialMapData?.places ?? {});
+  const [valves, setValves] = useState<ValvePositions>(initialMapData?.valves ?? {});
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!initialMapData);
 
   useEffect(() => {
+    if (initialMapData) return;
+
     fetch("/api/map")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Map data failed (${res.status})`);
+        return res.json();
+      })
       .then((data) => {
         setLots(data.lots || {});
         setPlaces(data.places || {});
         setValves(data.valves || {});
-        setImageVersion(data.imageVersion ?? 0);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .catch((err: Error) => {
+        setLoadError(err.message);
+        setLoading(false);
+      });
+  }, [initialMapData]);
+
+  const resolvedFocusScale =
+    focusScale ??
+    (autoFocusHighlight && !onLotClick && !onPlaceClick
+      ? MAP_FOCUS_SCALE_DETAIL
+      : MAP_FOCUS_SCALE_SELECTION);
+
+  useEffect(() => {
+    if (!zoomable || !autoFocusHighlight || loading || !transformRef.current) {
+      return;
+    }
+
+    const ref = transformRef.current;
+    const timer = window.setTimeout(() => {
+      if (highlightLot) {
+        if (
+          focusMapMarker(ref, `map-lot-${highlightLot}`, resolvedFocusScale)
+        ) {
+          return;
+        }
+        const pos = lots[highlightLot];
+        if (pos) {
+          centerMapOnPercent(ref, pos.x, pos.y, resolvedFocusScale);
+        }
+        return;
+      }
+
+      if (highlightPlace) {
+        if (
+          focusMapMarker(
+            ref,
+            `map-place-${siteToSlug(highlightPlace)}`,
+            resolvedFocusScale,
+          )
+        ) {
+          return;
+        }
+        const pos = places[highlightPlace];
+        if (pos) {
+          centerMapOnPercent(ref, pos.x, pos.y, resolvedFocusScale);
+        }
+        return;
+      }
+
+      if (resetWhenHighlightClears) {
+        ref.resetTransform(280, "easeOut");
+      }
+    }, 50);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    zoomable,
+    autoFocusHighlight,
+    loading,
+    highlightLot,
+    highlightPlace,
+    lots,
+    places,
+    resolvedFocusScale,
+    resetWhenHighlightClears,
+  ]);
 
   // Zone blobs: group lots by zone, compute convex hull per zone; fill uses same color family as lot labels (zoneColors order)
   const zoneBlobs = useMemo(() => {
@@ -132,8 +394,16 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
 
   if (loading) {
     return (
-      <div className="bg-gray-900 rounded-lg border border-gray-700 p-8 flex items-center justify-center min-h-[400px]">
+      <div className="flex min-h-[55dvh] items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8">
         <p className="text-gray-400">Loading map...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-[55dvh] items-center justify-center rounded-lg border border-amber-700/50 bg-gray-900 p-8">
+        <p className="text-sm text-amber-200">{loadError}</p>
       </div>
     );
   }
@@ -141,28 +411,22 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
   const allLotIds = Object.keys(lots);
   const allPlaceNames = Object.keys(places);
   const allValveIds = Object.keys(valves);
-  if (allLotIds.length === 0 && allPlaceNames.length === 0 && allValveIds.length === 0) {
-    return (
-      <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
-        <p className="text-gray-400 text-sm">
-          No lot, place, or valve positions in <code className="bg-gray-800 px-1 rounded">data/map-positions.json</code>.
-        </p>
-      </div>
-    );
-  }
+  const hasMarkers =
+    allLotIds.length > 0 ||
+    allPlaceNames.length > 0 ||
+    allValveIds.length > 0;
 
   const highlightSet = new Set(lotsToShow.map((id) => String(id)));
   const hasZoneColors = Object.keys(zoneColors).length > 0 && Object.keys(lotZones).length > 0;
 
   const mapContent = (
     <>
-        <Image
-          src={`/api/map/image?v=${imageVersion}`}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={PARK_MAP_IMAGE_PATH}
           alt="Park map"
-          fill
-          className="object-contain"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1024px"
-          unoptimized
+          className="absolute inset-0 h-full w-full object-contain"
+          draggable={false}
         />
         {zoneBlobs.length > 0 && (
           <svg
@@ -182,142 +446,67 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
             ))}
           </svg>
         )}
-        {showLots && allLotIds.map((lotId) => {
-          const pos = lots[lotId];
-          if (!pos) return null;
-          const isHighlight = highlightLot != null && String(lotId) === String(highlightLot);
-          const isInSearch = highlightSet.has(String(lotId));
-          const zones = lotZones[lotId] ?? [];
-          const zone = contextZones.length > 0
-            ? (contextZones.find((z) => zones.includes(z)) ?? zones[0])
-            : zones[0];
-          const colors = zone && zoneColors[zone];
-          const lotClass = hasZoneColors && isInSearch && colors
-            ? (isHighlight ? colors.highlight : colors.base)
-            : isHighlight
-              ? "bg-blue-800 text-white ring-2 ring-white"
-              : isInSearch
-                ? "bg-amber-600/90 text-white"
-                : "bg-black/60 text-white";
-          return (
-            <div
-              key={`lot-${lotId}`}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2"
-              style={{
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                pointerEvents: onLotClick ? "auto" : "none",
-              }}
-            >
-              <span
-                role={onLotClick ? "button" : undefined}
-                tabIndex={onLotClick ? 0 : undefined}
-                onClick={onLotClick ? () => onLotClick(lotId) : undefined}
-                onKeyDown={onLotClick ? (e) => { if (e.key === "Enter" || e.key === " ") onLotClick(lotId); } : undefined}
-                className={`
-                  inline-flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 px-2 py-1.5 sm:px-1.5 sm:py-0.5 text-[11px] sm:text-xs font-bold rounded touch-manipulation
-                  ${onLotClick ? "cursor-pointer hover:ring-2 hover:ring-white/80 active:scale-95 transition-all" : ""}
-                  ${lotClass}
-                `}
-              >
-                {lotId}
-              </span>
-            </div>
-          );
-        })}
+        {showLots && allLotIds.map((lotId) => (
+          <LotMarker
+            key={`lot-${lotId}`}
+            lotId={lotId}
+            pos={lots[lotId]}
+            isHighlight={highlightLot != null && String(lotId) === String(highlightLot)}
+            isInSearch={highlightSet.has(String(lotId))}
+            lotClass={(() => {
+              const zones = lotZones[lotId] ?? [];
+              const zone = contextZones.length > 0
+                ? (contextZones.find((z) => zones.includes(z)) ?? zones[0])
+                : zones[0];
+              const colors = zone && zoneColors[zone];
+              const isHighlight = highlightLot != null && String(lotId) === String(highlightLot);
+              const isInSearch = highlightSet.has(String(lotId));
+              if (hasZoneColors && isInSearch && colors) {
+                return isHighlight ? colors.highlight : colors.base;
+              }
+              if (isHighlight) return "bg-blue-800 text-white ring-2 ring-white";
+              if (isInSearch) return "bg-amber-600/90 text-white";
+              return "bg-black/60 text-white";
+            })()}
+            onLotClick={onLotClick}
+          />
+        ))}
         {showPlaces && allPlaceNames.map((placeName) => {
           const pos = places[placeName];
           if (!pos) return null;
-          const IconComponent = getPlaceIcon(pos.icon || "MdPlace");
-          const isClickable = !!onPlaceClick;
           return (
-            <div
+            <PlaceMarker
               key={`place-${placeName}`}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group"
-              style={{
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                pointerEvents: isClickable ? "auto" : "none",
-              }}
-              title={placeName}
-            >
-              <span
-                role={isClickable ? "button" : undefined}
-                tabIndex={isClickable ? 0 : undefined}
-                onClick={isClickable ? () => onPlaceClick?.(placeName) : undefined}
-                onKeyDown={isClickable ? (e) => { if (e.key === "Enter" || e.key === " ") onPlaceClick?.(placeName); } : undefined}
-                className={`
-                  inline-flex items-center justify-center rounded-full w-11 h-11 sm:w-9 sm:h-9 p-2.5 sm:p-1.5 touch-manipulation
-                  ${getPlaceColor(pos.icon ?? "MdPlace")}
-                  ${isClickable ? "cursor-pointer hover:opacity-90 active:scale-95 hover:ring-2 hover:ring-white/80 transition-all" : ""}
-                `}
-              >
-                <IconComponent className="shrink-0 w-5 h-5 sm:w-[18px] sm:h-[18px]" size={20} />
-              </span>
-              {/* Name: hover on desktop; on mobile native tooltip via title */}
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none z-10 invisible group-hover:visible">
-                {placeName}
-              </span>
-            </div>
+              placeName={placeName}
+              pos={pos}
+              isHighlight={
+                highlightPlace != null && placeName === highlightPlace
+              }
+              onPlaceClick={onPlaceClick}
+            />
           );
         })}
         {showValves && allValveIds.map((valveId) => {
           const pos = valves[valveId];
           if (!pos) return null;
-          const isHighlight = highlightValve != null && String(valveId) === String(highlightValve);
-          const isClickable = !!onValveClick;
-          const displayId =
-            valveId === ""
-              ? "V?"
-              : /^\d+$/.test(valveId)
-                ? `V${valveId}`
-                : valveId;
           return (
-            <div
+            <ValveMarker
               key={`valve-${valveId}`}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-              style={{
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                pointerEvents: isClickable ? "auto" : "none",
-              }}
-              title={`Valve ${displayId}`}
-            >
-              <span
-                role={isClickable ? "button" : undefined}
-                tabIndex={isClickable ? 0 : undefined}
-                onClick={isClickable ? () => onValveClick?.(valveId) : undefined}
-                onKeyDown={isClickable ? (e) => { if (e.key === "Enter" || e.key === " ") onValveClick?.(valveId); } : undefined}
-                className={`
-                  inline-flex flex-col items-center touch-manipulation
-                  ${isClickable ? "cursor-pointer hover:opacity-90 active:scale-95 hover:ring-2 hover:ring-white/80 rounded transition-all" : ""}
-                `}
-              >
-                <span
-                  className={`
-                    inline-flex items-center justify-center rounded-full w-11 h-11 sm:w-9 sm:h-9 p-2.5 sm:p-1.5
-                    ${isHighlight ? "bg-slate-700 text-white ring-2 ring-white" : "bg-slate-600 text-white"}
-                  `}
-                >
-                  <MdPlumbing className="shrink-0 w-5 h-5 sm:w-[18px] sm:h-[18px]" size={20} />
-                </span>
-                <span
-                  className={`
-                    mt-1 sm:mt-0.5 px-2 py-0.5 sm:px-1.5 sm:py-0.5 text-[11px] sm:text-[10px] font-bold rounded min-w-[2rem] sm:min-w-[1.75rem] text-center
-                    ${isHighlight ? "bg-slate-700 text-white ring-1 ring-white/50" : "bg-slate-700/90 text-white"}
-                  `}
-                >
-                  {displayId}
-                </span>
-              </span>
-            </div>
+              valveId={valveId}
+              pos={pos}
+              isHighlight={
+                highlightValve != null && String(valveId) === String(highlightValve)
+              }
+              onValveClick={onValveClick}
+            />
           );
         })}
     </>
   );
 
-  const innerClassName = `relative w-full ${fillHeight ? "flex-1 min-h-0" : "min-h-[55dvh] sm:min-h-0"}`;
-  const innerStyle = fillHeight ? undefined : { aspectRatio: "4/3" as const };
+  const surfaceClassName = fillHeight
+    ? "relative aspect-[4/3] min-h-[55dvh] w-full max-h-[80dvh]"
+    : "relative aspect-[4/3] min-h-[55dvh] w-full sm:min-h-0";
 
   const hasContext = contextZone || contextLot || contextValve || contextValves.length > 0;
   const contextBadge = hasContext ? (
@@ -340,70 +529,94 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
   ) : null;
 
   const mapInner = zoomable ? (
-    <TransformWrapper
-      initialScale={1}
-      minScale={0.4}
-      maxScale={5}
-      limitToBounds={true}
-      centerOnInit={false}
-      doubleClick={{ mode: "reset" }}
-    >
-      {({ zoomIn, zoomOut, resetTransform }) => (
-        <>
-          {contextBadge}
-          <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1.5 rounded-lg border border-gray-600 bg-gray-800/95 p-1.5 shadow-lg">
-            <button
-              type="button"
-              onClick={() => zoomIn()}
-              className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-lg font-bold text-white hover:bg-gray-600 active:bg-gray-500 touch-manipulation sm:h-9 sm:w-9"
-              aria-label="Zoom in"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              onClick={() => zoomOut()}
-              className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-lg font-bold text-white hover:bg-gray-600 active:bg-gray-500 touch-manipulation sm:h-9 sm:w-9"
-              aria-label="Zoom out"
-            >
-              −
-            </button>
-            <button
-              type="button"
-              onClick={() => resetTransform()}
-              className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-white hover:bg-gray-600 active:bg-gray-500 touch-manipulation sm:h-9 sm:w-9"
-              aria-label="Reset zoom"
-              title="Reset zoom"
-            >
-              ⟲
-            </button>
-          </div>
-          <TransformComponent
-            wrapperClass="!w-full !h-full"
-            contentClass="!w-full !h-full !min-w-full !min-h-full"
-          >
-            <div className={innerClassName} style={innerStyle}>
-              {mapContent}
+    <div className="relative h-full min-h-[55dvh] w-full">
+      <TransformWrapper
+        ref={transformRef}
+        initialScale={1}
+        minScale={0.5}
+        maxScale={4}
+        limitToBounds={true}
+        centerOnInit={false}
+        smooth={false}
+        panning={{ velocityDisabled: true, excluded: ["map-marker-btn"] }}
+        pinch={{ step: MAP_PINCH_STEP }}
+        wheel={{ step: MAP_WHEEL_STEP }}
+        doubleClick={{ mode: "reset", animationTime: 200 }}
+        velocityAnimation={{ disabled: true }}
+      >
+        {({ zoomIn, zoomOut, resetTransform }) => (
+          <>
+            {contextBadge}
+            <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1.5 rounded-lg border border-gray-600 bg-gray-800/95 p-1.5 shadow-lg">
+              <button
+                type="button"
+                onClick={() => zoomIn(0.2, 180, "easeOut")}
+                className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-lg font-bold text-white hover:bg-gray-600 active:bg-gray-500 touch-manipulation sm:h-9 sm:w-9"
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                onClick={() => zoomOut(0.2, 180, "easeOut")}
+                className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-lg font-bold text-white hover:bg-gray-600 active:bg-gray-500 touch-manipulation sm:h-9 sm:w-9"
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                onClick={() => resetTransform(280, "easeOut")}
+                className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-white hover:bg-gray-600 active:bg-gray-500 touch-manipulation sm:h-9 sm:w-9"
+                aria-label="Reset zoom"
+                title="Reset zoom"
+              >
+                ⟲
+              </button>
             </div>
-          </TransformComponent>
-        </>
-      )}
-    </TransformWrapper>
+            <TransformComponent
+              wrapperStyle={{ width: "100%", height: "100%" }}
+              contentStyle={{ width: "100%", height: "100%" }}
+            >
+              <div className={surfaceClassName}>{mapContent}</div>
+            </TransformComponent>
+          </>
+        )}
+      </TransformWrapper>
+    </div>
   ) : (
-    <div className={innerClassName} style={innerStyle}>
+    <div className={surfaceClassName}>
       {contextBadge}
       {mapContent}
     </div>
   );
 
   return (
-    <div className={`bg-gray-900 rounded-lg border border-gray-700 overflow-hidden w-full ${fillHeight ? "flex flex-col flex-1 min-h-0" : ""}`}>
-      <div className={fillHeight ? "flex-1 min-h-0 min-w-0 flex flex-col w-full" : "w-full"}>
+    <div
+      className={`w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900 ${fillHeight ? "flex min-h-[55dvh] flex-1 flex-col" : ""}`}
+    >
+      <div
+        className={
+          fillHeight
+            ? "relative min-h-[55dvh] w-full flex-1"
+            : "relative w-full"
+        }
+      >
         {mapInner}
       </div>
+      {!hasMarkers && (
+        <p className="border-t border-gray-800 p-2 text-xs text-amber-300/90">
+          Map image loaded, but lot markers are missing — check that{" "}
+          <code className="rounded bg-gray-800 px-1">data/map-positions.json</code>{" "}
+          is deployed.
+        </p>
+      )}
       {!fillHeight && (
-        <p className="text-gray-400 text-[10px] sm:text-xs p-2 border-t border-gray-800">
-          Lot numbers and facility icons on the map. {lotsToShow.length > 0 ? `${lotsToShow.length} lot(s) highlighted for current search.` : "Select a zone, lot, or valve to highlight."}
+        <p className="border-t border-gray-800 p-2 text-[10px] text-gray-400 sm:text-xs">
+          Lot numbers and facility icons on the map.{" "}
+          {lotsToShow.length > 0
+            ? `${lotsToShow.length} lot(s) highlighted for current search.`
+            : "Select a zone, lot, or valve to highlight."}
         </p>
       )}
     </div>

@@ -94,6 +94,8 @@ export interface Article {
   feed_section: string;
   poster_avatar?: string | null;
   cover_image_url: string | null;
+  site_number: string | null;
+  common_area: string | null;
   published: boolean;
   author_id: string;
   created_at: string;
@@ -232,6 +234,11 @@ export interface WaterUsageReading {
   id: string;
   period_month: string;
   gallons: number | null;
+  oak_grove_gallons: number | null;
+  two_tank_gallons: number | null;
+  rigs_facilities_gallons: number | null;
+  ponds_gallons: number | null;
+  irrigation_leaks_gallons: number | null;
   cost_usd: number | null;
   notes: string | null;
   sheet_row_key: string;
@@ -250,7 +257,29 @@ export interface Lot {
   staff_notes: string | null;
   map_x: number | null;
   map_y: number | null;
+  location_type: string;
+  place_icon: string | null;
   sheet_synced_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ParkMapPositions {
+  id: string;
+  lots: Record<string, { x: number; y: number }>;
+  places: Record<string, { x: number; y: number; icon?: string }>;
+  valves: Record<string, { x: number; y: number }>;
+  updated_at: string;
+}
+
+export type LocationPhotoEntityType = "site" | "valve";
+
+export interface LocationPhoto {
+  id: string;
+  entity_type: LocationPhotoEntityType;
+  entity_key: string;
+  image_url: string;
+  caption: string | null;
+  uploaded_by: string | null;
+  created_at: string;
 }

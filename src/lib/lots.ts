@@ -23,10 +23,11 @@ export async function fetchLotBySlug(
   return (data as Lot | null) ?? null;
 }
 
+/** CCCP = cross-connection control program device at the lot. */
 export function formatCrossConnection(
   value: boolean | null | undefined,
 ): string {
-  if (value === true) return "Yes";
+  if (value === true) return "Yes (CCCP installed)";
   if (value === false) return "No";
   return "Unknown";
 }

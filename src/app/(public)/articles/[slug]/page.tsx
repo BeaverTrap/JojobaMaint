@@ -7,8 +7,11 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   ARTICLE_SELECT,
   ARTICLE_TAG_EMBED,
+  ARTICLE_RELATED_EMBED,
   enrichArticle,
 } from "@/lib/articles";
+import { postLocationLabel } from "@/lib/post-display";
+import { siteHref } from "@/lib/site-slug";
 import ContentTagList from "@/components/ContentTagList";
 import ArticleBody from "@/components/ArticleBody";
 import ReferencesSection from "@/components/ReferencesSection";
@@ -55,7 +58,7 @@ export default async function ArticlePage({
 
   const { data: article } = await supabase
     .from("articles")
-    .select(ARTICLE_SELECT + ARTICLE_TAG_EMBED)
+    .select(ARTICLE_SELECT + ARTICLE_TAG_EMBED + ARTICLE_RELATED_EMBED)
     .eq("slug", slug)
     .maybeSingle();
 
@@ -108,6 +111,20 @@ export default async function ArticlePage({
         {a.summary && (
           <p className="print-report-meta mt-2 text-base text-muted">{a.summary}</p>
         )}
+        {postLocationLabel(a) && (
+          <p className="print-report-meta mt-2 text-base font-medium text-brand-700">
+            {a.site_number?.trim() ? (
+              <>
+                <Link href={siteHref(a.site_number)} className="hover:underline">
+                  Site {a.site_number.trim()}
+                </Link>
+                {a.common_area?.trim() && <> · {a.common_area.trim()}</>}
+              </>
+            ) : (
+              a.common_area?.trim()
+            )}
+          </p>
+        )}
         <div className="print-report-meta mt-3 text-xs text-muted">
           {dateLines.map((line) => (
             <p key={line}>{line}</p>
@@ -124,6 +141,30 @@ export default async function ArticlePage({
       </div>
 
       <ArticleBody body={a.body} />
+      {a.relatedArticles.length > 0 && (
+        <section className="no-print space-y-3 rounded-xl border border-line bg-surface p-4">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
+            Related articles
+          </h2>
+          <ul className="space-y-2">
+            {a.relatedArticles.map((rel) => (
+              <li key={rel.id}>
+                <Link
+                  href={`/articles/${rel.slug}`}
+                  className="block rounded-lg px-2 py-1.5 transition hover:bg-hover"
+                >
+                  <span className="font-medium text-ink">{rel.title}</span>
+                  {rel.summary?.trim() && (
+                    <span className="mt-0.5 block text-sm text-muted">
+                      {rel.summary.trim()}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <ReferencesSection referenceList={a.reference_list} />
     </article>
   );

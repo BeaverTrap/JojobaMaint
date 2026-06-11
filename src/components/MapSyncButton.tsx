@@ -1,0 +1,59 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+export default function MapSyncButton() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleSync() {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/map/sync", { method: "POST" });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        synced?: number;
+        valveCount?: number;
+        lotsMissingMapPosition?: number;
+        error?: string;
+      };
+      if (!res.ok) {
+        setMessage(data.error ?? "Sync failed");
+        return;
+      }
+      const parts = [
+        `${data.synced ?? 0} lot(s)`,
+        `${data.valveCount ?? 0} valve(s)`,
+      ];
+      let text = `Synced ${parts.join(" and ")} from sheet.`;
+      if ((data.lotsMissingMapPosition ?? 0) > 0) {
+        text += ` ${data.lotsMissingMapPosition} lot(s) need map coordinates.`;
+      }
+      setMessage(text);
+      router.refresh();
+    } catch {
+      setMessage("Sync failed — check server logs.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={handleSync}
+        disabled={loading}
+        className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
+      >
+        {loading ? "Syncing…" : "Sync from sheet"}
+      </button>
+      {message && (
+        <p className="max-w-[16rem] text-right text-xs text-muted">{message}</p>
+      )}
+    </div>
+  );
+}

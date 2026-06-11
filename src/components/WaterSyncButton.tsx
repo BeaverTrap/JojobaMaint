@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function WaterSyncButton() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -20,9 +22,15 @@ export default function WaterSyncButton() {
         setMessage(data.error ?? "Sync failed");
         return;
       }
-      setMessage(
-        `Synced ${data.synced ?? 0} row(s). Refresh to see updates.`,
-      );
+      const count = data.synced ?? 0;
+      if (count === 0) {
+        setMessage(
+          "Synced 0 months — check the water sheet is shared with the service account.",
+        );
+        return;
+      }
+      setMessage(`Synced ${count} monthly report(s) from sheet.`);
+      router.refresh();
     } catch {
       setMessage("Sync failed — check server logs.");
     } finally {
@@ -38,7 +46,7 @@ export default function WaterSyncButton() {
         disabled={loading}
         className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
       >
-        {loading ? "Syncing…" : "Sync from sheet"}
+        {loading ? "Syncing…" : "Sync monthly reports"}
       </button>
       {message && (
         <p className="max-w-[14rem] text-right text-xs text-muted">{message}</p>
