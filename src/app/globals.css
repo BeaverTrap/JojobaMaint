@@ -498,3 +498,14 @@ body {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
+
+.print-report.pdf-export-mode .recharts-cartesian-grid line,
+.print-report.pdf-export-mode .recharts-cartesian-grid path {
+  stroke: #d1d5db !important;
+}
+
+.print-report.pdf-export-mode .recharts-text,
+.print-report.pdf-export-mode .recharts-legend-item-text {
+  fill: #6b7280 !important;
+  color: #6b7280 !important;
+}
