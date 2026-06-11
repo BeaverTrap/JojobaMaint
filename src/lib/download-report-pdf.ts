@@ -10,6 +10,7 @@ import {
 import { sanitizePrintFileName } from "@/lib/print-file-name";
 
 const PDF_MARGIN_IN = 0.65;
+const SECTION_GAP_IN = 0.1;
 
 async function loadHtml2Canvas() {
   const mod = await import("html2canvas");
@@ -65,30 +66,51 @@ async function captureWithRetry(
   throw lastError;
 }
 
-function addCanvasFromTop(
+/** Place a captured block on the current page(s), continuing from startY. */
+function appendCanvas(
   pdf: jsPDF,
   canvas: HTMLCanvasElement,
   margin: number,
-): void {
+  startY: number,
+): number {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const imgWidth = pageWidth - margin * 2;
+  const contentWidth = pageWidth - margin * 2;
+  const contentBottom = pageHeight - margin;
+  const imgWidth = contentWidth;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
   const imgData = canvasToDataUrl(canvas);
   const format = imgData.startsWith("data:image/png") ? "PNG" : "JPEG";
 
-  let heightLeft = imgHeight;
-  let position = margin;
-
-  pdf.addImage(imgData, format, margin, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight - position - margin;
-
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight + margin;
+  let y = startY;
+  if (y > contentBottom - 0.2) {
     pdf.addPage();
-    pdf.addImage(imgData, format, margin, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight - margin * 2;
+    y = margin;
   }
+
+  let drawn = 0;
+
+  while (drawn < imgHeight - 0.01) {
+    const available = contentBottom - y;
+    if (available <= 0.05) {
+      pdf.addPage();
+      y = margin;
+      continue;
+    }
+
+    const remaining = imgHeight - drawn;
+    pdf.addImage(imgData, format, margin, y - drawn, imgWidth, imgHeight);
+
+    if (remaining <= available) {
+      return y + remaining + SECTION_GAP_IN;
+    }
+
+    drawn += available;
+    pdf.addPage();
+    y = margin;
+  }
+
+  return y + SECTION_GAP_IN;
 }
 
 export async function downloadReportPdf(
@@ -115,14 +137,10 @@ export async function downloadReportPdf(
       orientation: "portrait",
     });
 
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i]!;
+    let cursorY = PDF_MARGIN_IN;
+    for (const block of blocks) {
       const canvas = await captureWithRetry(block);
-
-      if (i > 0) {
-        pdf.addPage();
-      }
-      addCanvasFromTop(pdf, canvas, PDF_MARGIN_IN);
+      cursorY = appendCanvas(pdf, canvas, PDF_MARGIN_IN, cursorY);
     }
 
     pdf.save(`${safeName}.pdf`);
