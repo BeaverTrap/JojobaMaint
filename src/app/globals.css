@@ -411,3 +411,56 @@ body {
     height: 16rem !important;
   }
 }
+
+/* In-browser PDF capture — mirror print rules; hide chart toolbars (no-print). */
+html.pdf-export-mode,
+html.pdf-export-mode .dark {
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --ink: #1a201c;
+  --muted: #4b5563;
+  --line: #d1d5db;
+  --hover: #f3f4f3;
+  --accent: #f1f7f2;
+  --accent-ink: #25553a;
+}
+
+.print-report.pdf-export-mode {
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #fff !important;
+  color: #1a201c !important;
+}
+
+.print-report.pdf-export-mode .no-print,
+.print-report.pdf-export-mode .print-screen-only,
+.print-report.pdf-export-mode .print-exclude {
+  display: none !important;
+}
+
+.print-report.pdf-export-mode .print-only {
+  display: block !important;
+}
+
+.print-report.pdf-export-mode .print-report-content,
+.print-report.pdf-export-mode section.rounded-2xl.border {
+  border: none !important;
+  box-shadow: none !important;
+  background: #fff !important;
+}
+
+.print-report.pdf-export-mode .water-report-charts .recharts-responsive-container {
+  height: 16rem !important;
+}
+
+.print-report.pdf-export-mode .recharts-cartesian-grid line,
+.print-report.pdf-export-mode .recharts-cartesian-grid path {
+  stroke: #d1d5db !important;
+}
+
+.print-report.pdf-export-mode .recharts-text,
+.print-report.pdf-export-mode .recharts-legend-item-text {
+  fill: #6b7280 !important;
+  color: #6b7280 !important;
+}

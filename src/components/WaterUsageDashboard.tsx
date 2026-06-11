@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -725,6 +725,15 @@ export default function WaterUsageDashboard({
     router.replace(`/water?${params.toString()}`, { scroll: false });
   }
 
+  const prepareForPdfExport = useCallback(async () => {
+    if (collapsedSections.size === 0) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("collapsed", "");
+    persistChartPreferences([], undefined, chartOrder);
+    router.replace(`/water?${params.toString()}`, { scroll: false });
+    await new Promise<void>((resolve) => setTimeout(resolve, 900));
+  }, [chartOrder, collapsedSections, router, searchParams]);
+
   function moveChart(id: WaterChartSectionId, direction: -1 | 1) {
     const index = chartOrder.indexOf(id);
     if (index < 0) return;
@@ -816,7 +825,10 @@ export default function WaterUsageDashboard({
               Show all charts
             </button>
           )}
-          <PrintReportButton fileName={waterReportFileName(selected)} />
+          <PrintReportButton
+            fileName={waterReportFileName(selected)}
+            onBeforeExport={prepareForPdfExport}
+          />
         </div>
       </div>
 
