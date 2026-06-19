@@ -38,12 +38,23 @@ export default function Navbar({
             {NAV_LINKS.map((item) => (
               <NavLink key={item.href} href={item.href} label={item.label} />
             ))}
-            <Link
-              href={REQUEST_NAV.href}
-              className="shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700"
-            >
-              {REQUEST_NAV.label}
-            </Link>
+            {REQUEST_NAV.external ? (
+              <a
+                href={REQUEST_NAV.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700"
+              >
+                {REQUEST_NAV.label}
+              </a>
+            ) : (
+              <Link
+                href={REQUEST_NAV.href}
+                className="shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700"
+              >
+                {REQUEST_NAV.label}
+              </Link>
+            )}
             {isAuthorized && (
               <NavLink href="/admin" label="Dashboard" highlight />
             )}

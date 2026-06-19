@@ -73,13 +73,25 @@ export default function MobileMenu({
               <ul className="space-y-0.5">
                 {links.map((item) => (
                   <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={close}
-                      className="flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-ink hover:bg-hover"
-                    >
-                      {item.label}
-                    </Link>
+                    {item.href.startsWith("http") ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={close}
+                        className="flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-ink hover:bg-hover"
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onClick={close}
+                        className="flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-ink hover:bg-hover"
+                      >
+                        {item.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

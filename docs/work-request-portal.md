@@ -1,8 +1,8 @@
 # Work request portal (MaintainX)
 
-The public **Submit a Work Request** page lives at [`/request`](../src/app/(public)/request/page.tsx). It links out to an external MaintainX portal when configured, or shows an offline placeholder until the URL is set.
+**Submit Request** in the nav links straight to the MaintainX portal when `NEXT_PUBLIC_MAINTAINX_URL` is set (opens in a new tab). The [`/request`](../src/app/(public)/request/page.tsx) route redirects to the same URL for bookmarks; if the env var is missing, `/request` shows an offline placeholder.
 
-MaintainX does not allow embedding in iframes (`X-Frame-Options`), so the portal opens in a **new browser tab** instead.
+MaintainX does not allow embedding in iframes (`X-Frame-Options`), so the portal is an external link, not an in-app page.
 
 ---
 
@@ -20,16 +20,16 @@ MaintainX does not allow embedding in iframes (`X-Frame-Options`), so the portal
 
 4. **Production (Vercel):** add the same variable under **Project → Settings → Environment Variables** for Production (and Preview if you want it on preview deploys). Redeploy after saving.
 
-5. Open **`/request`** — click **Open Work Request Portal** to launch MaintainX in a new tab.
+5. Click **Submit Request** in the nav — MaintainX opens in a new tab.
 
 ---
 
 ## Behavior
 
-| `NEXT_PUBLIC_MAINTAINX_URL` | What users see on `/request` |
+| `NEXT_PUBLIC_MAINTAINX_URL` | What users see |
 | --- | --- |
-| Set to a valid `http:` or `https:` URL | Welcome message and **Open Work Request Portal** button (new tab) |
-| Missing or invalid | Styled offline message: “Request portal offline — please check back later.” |
+| Set to a valid `http:` or `https:` URL | Nav opens MaintainX in a new tab; `/request` redirects there |
+| Missing or invalid | `/request` shows an offline placeholder; nav still points to `/request` |
 
 The URL is validated server-side (`src/lib/maintainx.ts`). Only `http:` and `https:` schemes are accepted.
 
@@ -37,9 +37,9 @@ The URL is validated server-side (`src/lib/maintainx.ts`). Only `http:` and `htt
 
 ## Navigation
 
-- **Desktop:** green **Submit Request** button in the top navbar.
+- **Desktop:** green **Submit Request** button in the top navbar (external link when configured).
 - **Mobile:** **Request** tab in the bottom nav; also listed in the overflow menu.
-- The **weekly pickup banner** appears on `/request` (same as Feed and Schedule).
+- The **weekly pickup banner** still appears on `/request` when the portal is not configured.
 
 ---
 

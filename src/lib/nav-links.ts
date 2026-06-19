@@ -1,3 +1,5 @@
+import { getMaintainXPortalUrl } from "@/lib/maintainx";
+
 export const NAV_LINKS = [
   { href: "/", label: "Feed" },
   { href: "/schedule", label: "Schedule" },
@@ -5,11 +7,18 @@ export const NAV_LINKS = [
   { href: "/map", label: "Park map" },
 ] as const;
 
+const maintainXPortalUrl = getMaintainXPortalUrl();
+
 export const REQUEST_NAV = {
-  href: "/request",
+  href: maintainXPortalUrl ?? "/request",
   label: "Submit Request",
   shortLabel: "Request",
+  external: maintainXPortalUrl !== null,
 } as const;
+
+export function isExternalHref(href: string): boolean {
+  return href.startsWith("http://") || href.startsWith("https://");
+}
 
 export type NavLink = (typeof NAV_LINKS)[number];
 

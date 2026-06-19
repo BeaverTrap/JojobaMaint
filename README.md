@@ -132,7 +132,7 @@ Open [http://localhost:3000](http://localhost:3000), sign in with Google, and st
 
 ## 8. Work request portal (MaintainX)
 
-The public **Submit Request** page (`/request`) embeds an external MaintainX portal when configured.
+The public **Submit Request** nav link opens the MaintainX portal in a new tab when configured.
 
 ```env
 NEXT_PUBLIC_MAINTAINX_URL=https://app.getmaintainx.com/work-request/your-portal-id

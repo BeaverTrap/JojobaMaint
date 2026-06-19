@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_LINKS, REQUEST_NAV, matchNavPath } from "@/lib/nav-links";
+import {
+  NAV_LINKS,
+  REQUEST_NAV,
+  isExternalHref,
+  matchNavPath,
+} from "@/lib/nav-links";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -17,18 +22,32 @@ export default function MobileBottomNav() {
         {[...NAV_LINKS, REQUEST_NAV].map((item) => {
           const active = matchNavPath(item.href, pathname);
           const label = "shortLabel" in item ? item.shortLabel : item.label;
+          const className =
+            active
+              ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-brand-600 dark:text-brand-300"
+              : item.href === REQUEST_NAV.href
+                ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-brand-600 dark:text-brand-400"
+                : "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-muted";
+
+          if (isExternalHref(item.href)) {
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={className}
+              >
+                <NavIcon name={item.label} active={active} />
+                <span className="max-w-full truncate text-[10px] font-semibold leading-none">
+                  {label}
+                </span>
+              </a>
+            );
+          }
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={
-                active
-                  ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-brand-600 dark:text-brand-300"
-                  : item.href === REQUEST_NAV.href
-                    ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-brand-600 dark:text-brand-400"
-                    : "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-muted"
-              }
-            >
+            <Link key={item.href} href={item.href} className={className}>
               <NavIcon name={item.label} active={active} />
               <span className="max-w-full truncate text-[10px] font-semibold leading-none">
                 {label}
