@@ -8,6 +8,11 @@ import {
   Polygon,
   useMap,
 } from "@vis.gl/react-google-maps";
+import {
+  collectMapLatLngs,
+  GOOGLE_MAP_MARKER_ANCHOR,
+  MapFitBounds,
+} from "@/components/GoogleMapMarkers";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
 import { mapPositionToLatLng } from "@/lib/map-coords";
@@ -22,7 +27,7 @@ import type { ParkMapProps } from "@/components/ParkMap";
 
 const FOCUS_ZOOM_DETAIL = 18;
 const FOCUS_ZOOM_SELECTION = 17;
-const DEFAULT_ZOOM = 17;
+const OVERVIEW_MAX_ZOOM = 18;
 
 function formatValveDisplay(id: string): string {
   if (!id) return "V?";
@@ -39,6 +44,7 @@ function MapFocusController({
   places,
   valves,
   resetWhenHighlightClears,
+  overviewPositions,
 }: {
   loading: boolean;
   autoFocusHighlight: boolean;
@@ -49,6 +55,7 @@ function MapFocusController({
   places: Record<string, { x: number; y: number }>;
   valves: Record<string, { x: number; y: number }>;
   resetWhenHighlightClears: boolean;
+  overviewPositions: { lat: number; lng: number }[];
 }) {
   const map = useMap();
 
@@ -71,9 +78,18 @@ function MapFocusController({
         map.setZoom(FOCUS_ZOOM_SELECTION);
         return;
       }
-      if (resetWhenHighlightClears) {
-        map.panTo(parkMapCenter());
-        map.setZoom(DEFAULT_ZOOM);
+      if (resetWhenHighlightClears && overviewPositions.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        for (const p of overviewPositions) {
+          bounds.extend(p);
+        }
+        map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+        google.maps.event.addListenerOnce(map, "idle", () => {
+          const zoom = map.getZoom();
+          if (zoom != null && zoom > OVERVIEW_MAX_ZOOM) {
+            map.setZoom(OVERVIEW_MAX_ZOOM);
+          }
+        });
       }
     }, 50);
 
@@ -89,6 +105,7 @@ function MapFocusController({
     places,
     valves,
     resetWhenHighlightClears,
+    overviewPositions,
   ]);
 
   return null;
@@ -180,6 +197,14 @@ export function GoogleParkMap({
     allPlaceNames.length > 0 ||
     allValveIds.length > 0;
 
+  const overviewPositions = useMemo(
+    () => collectMapLatLngs(lots, places, valves),
+    [lots, places, valves],
+  );
+
+  const hasActiveHighlight =
+    highlightLot != null || highlightPlace != null || highlightValve != null;
+
   const hasContext =
     contextZone || contextLot || contextValve || contextValves.length > 0;
   const colorScheme = useGoogleMapColorScheme();
@@ -235,7 +260,7 @@ export function GoogleParkMap({
           <Map
             mapId={googleMapId()}
             defaultCenter={parkMapCenter()}
-            defaultZoom={DEFAULT_ZOOM}
+            defaultZoom={OVERVIEW_MAX_ZOOM}
             gestureHandling="greedy"
             mapTypeId="roadmap"
             colorScheme={colorScheme}
@@ -247,6 +272,11 @@ export function GoogleParkMap({
               strictBounds: false,
             }}
           >
+            <MapFitBounds
+              positions={overviewPositions}
+              enabled={!loading && overviewPositions.length > 0 && !hasActiveHighlight}
+              maxZoom={OVERVIEW_MAX_ZOOM}
+            />
             <MapFocusController
               loading={loading}
               autoFocusHighlight={autoFocusHighlight}
@@ -257,6 +287,7 @@ export function GoogleParkMap({
               places={places}
               valves={valves}
               resetWhenHighlightClears={resetWhenHighlightClears}
+              overviewPositions={overviewPositions}
             />
 
             {zoneBlobs.map((blob, i) => {
@@ -301,10 +332,11 @@ export function GoogleParkMap({
                     key={`lot-${lotId}`}
                     position={mapPositionToLatLng(pos)}
                     title={`Lot ${lotId}`}
+                    anchorPoint={GOOGLE_MAP_MARKER_ANCHOR}
                     onClick={() => onLotClick?.(lotId)}
                   >
                     <span
-                      className={`inline-flex cursor-pointer items-center justify-center rounded px-1.5 py-0.5 text-[10px] font-bold leading-none shadow-md touch-manipulation ${lotClass} ${isHighlight ? "scale-110 ring-2 ring-white" : ""}`}
+                      className={`inline-flex cursor-pointer items-center justify-center rounded px-0.5 py-px text-[7px] font-bold leading-none shadow-sm touch-manipulation sm:text-[8px] ${lotClass} ${isHighlight ? "scale-110 ring-2 ring-white" : ""}`}
                     >
                       {lotId}
                     </span>
@@ -324,12 +356,13 @@ export function GoogleParkMap({
                     key={`place-${placeName}`}
                     position={mapPositionToLatLng(pos)}
                     title={placeName}
+                    anchorPoint={GOOGLE_MAP_MARKER_ANCHOR}
                     onClick={() => onPlaceClick?.(placeName)}
                   >
                     <span
-                      className={`inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full p-1.5 shadow-md touch-manipulation ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white scale-110" : getPlaceColor(pos.icon ?? "MdPlace")}`}
+                      className={`inline-flex h-[18px] w-[18px] cursor-pointer items-center justify-center rounded-full p-0.5 shadow-sm touch-manipulation sm:h-5 sm:w-5 ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white scale-110" : getPlaceColor(pos.icon ?? "MdPlace")}`}
                     >
-                      <IconComponent className="h-4 w-4 shrink-0" />
+                      <IconComponent className="h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3" />
                     </span>
                   </AdvancedMarker>
                 );
@@ -348,16 +381,17 @@ export function GoogleParkMap({
                     key={`valve-${valveId}`}
                     position={mapPositionToLatLng(pos)}
                     title={`Valve ${displayId}`}
+                    anchorPoint={GOOGLE_MAP_MARKER_ANCHOR}
                     onClick={() => onValveClick?.(valveId)}
                   >
                     <span className="inline-flex cursor-pointer flex-col items-center touch-manipulation">
                       <span
-                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full p-1.5 shadow-md ${isHighlight ? "bg-slate-700 text-white ring-2 ring-white" : "bg-slate-600 text-white"}`}
+                        className={`inline-flex h-[18px] w-[18px] items-center justify-center rounded-full p-0.5 shadow-sm sm:h-5 sm:w-5 ${isHighlight ? "bg-slate-700 text-white ring-2 ring-white" : "bg-slate-600 text-white"}`}
                       >
-                        <MdPlumbing className="h-4 w-4 shrink-0" />
+                        <MdPlumbing className="h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3" />
                       </span>
                       <span
-                        className={`mt-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold leading-none shadow ${isHighlight ? "bg-slate-700 text-white" : "bg-slate-700/90 text-white"}`}
+                        className={`mt-px rounded px-0.5 py-px text-[7px] font-bold leading-none shadow sm:text-[8px] ${isHighlight ? "bg-slate-700 text-white" : "bg-slate-700/90 text-white"}`}
                       >
                         {displayId}
                       </span>

@@ -7,6 +7,11 @@ import {
   type MapMouseEvent,
 } from "@vis.gl/react-google-maps";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
+import {
+  collectMapLatLngs,
+  GOOGLE_MAP_MARKER_ANCHOR,
+  MapFitBounds,
+} from "@/components/GoogleMapMarkers";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
 import {
   formatMapPosition,
@@ -68,6 +73,7 @@ export default function MapEditGoogleMap({
   onSelectValve,
 }: MapEditGoogleMapProps) {
   const colorScheme = useGoogleMapColorScheme();
+  const overviewPositions = collectMapLatLngs(lots, places, valves);
 
   function handleMapClick(event: MapMouseEvent) {
     const coords = coordsFromMapEvent(event);
@@ -102,6 +108,11 @@ export default function MapEditGoogleMap({
           strictBounds: false,
         }}
       >
+        <MapFitBounds
+          positions={overviewPositions}
+          enabled={overviewPositions.length > 0}
+          maxZoom={18}
+        />
         {lotIds.map((lotId) => {
           const pos = lots[lotId];
           if (!pos) return null;
@@ -111,6 +122,7 @@ export default function MapEditGoogleMap({
               key={`edit-lot-${lotId}`}
               position={mapPositionToLatLng(pos)}
               title={`Lot ${lotId}`}
+              anchorPoint={GOOGLE_MAP_MARKER_ANCHOR}
               draggable
               onClick={(e) => {
                 e.domEvent?.stopPropagation();
@@ -119,7 +131,7 @@ export default function MapEditGoogleMap({
               onDragEnd={(e) => handleDragEnd(e, (coords) => onMoveLot(lotId, coords))}
             >
               <span
-                className={`inline-flex min-h-[32px] min-w-[32px] cursor-grab items-center justify-center rounded px-2 py-1 text-xs font-bold shadow-md active:cursor-grabbing ${
+                className={`inline-flex min-h-[24px] min-w-[24px] cursor-grab items-center justify-center rounded px-1 py-0.5 text-[8px] font-bold shadow-sm active:cursor-grabbing ${
                   isSelected
                     ? "bg-blue-600 text-white ring-2 ring-white"
                     : "bg-black/80 text-white"
@@ -141,6 +153,7 @@ export default function MapEditGoogleMap({
               key={`edit-place-${placeName}`}
               position={mapPositionToLatLng(pos)}
               title={placeName}
+              anchorPoint={GOOGLE_MAP_MARKER_ANCHOR}
               draggable
               onClick={(e) => {
                 e.domEvent?.stopPropagation();
@@ -151,13 +164,13 @@ export default function MapEditGoogleMap({
               }
             >
               <span
-                className={`inline-flex h-9 w-9 cursor-grab items-center justify-center rounded-full p-2 shadow-md active:cursor-grabbing ${
+                className={`inline-flex h-5 w-5 cursor-grab items-center justify-center rounded-full p-0.5 shadow-sm active:cursor-grabbing ${
                   isSelected
                     ? "bg-blue-600 text-white ring-2 ring-white"
                     : getPlaceColor(pos.icon ?? "MdPlace")
                 }`}
               >
-                <IconComponent className="h-4 w-4 shrink-0" />
+                <IconComponent className="h-2.5 w-2.5 shrink-0" />
               </span>
             </AdvancedMarker>
           );
@@ -173,6 +186,7 @@ export default function MapEditGoogleMap({
               key={`edit-valve-${valveId}`}
               position={mapPositionToLatLng(pos)}
               title={`Valve ${displayId}`}
+              anchorPoint={GOOGLE_MAP_MARKER_ANCHOR}
               draggable
               onClick={(e) => {
                 e.domEvent?.stopPropagation();
@@ -184,15 +198,15 @@ export default function MapEditGoogleMap({
             >
               <span className="inline-flex cursor-grab flex-col items-center active:cursor-grabbing">
                 <span
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full p-2 shadow-md ${
+                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full p-0.5 shadow-sm ${
                     isSelected
                       ? "bg-blue-600 text-white ring-2 ring-white"
                       : "bg-slate-600 text-white"
                   }`}
                 >
-                  <MdPlumbing className="h-4 w-4 shrink-0" />
+                  <MdPlumbing className="h-2.5 w-2.5 shrink-0" />
                 </span>
-                <span className="mt-0.5 rounded bg-slate-800/95 px-1.5 py-0.5 text-[10px] font-bold text-white shadow">
+                <span className="mt-px rounded bg-slate-800/95 px-0.5 py-px text-[7px] font-bold text-white shadow">
                   {displayId}
                 </span>
               </span>
