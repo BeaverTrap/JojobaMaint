@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdPlumbing } from "react-icons/md";
+import MapEditGoogleMap from "@/components/MapEditGoogleMap";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
 import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
 import {
@@ -10,6 +11,8 @@ import {
   MAP_STAGE_FIT_STYLE,
   MAP_VIEWPORT_CLASS,
 } from "@/lib/map-stage";
+import { formatMapPosition } from "@/lib/map-coords";
+import { isGoogleMapsEnabled } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
 import {
   isValidCoord,
@@ -148,7 +151,7 @@ export default function MapEditClient({
       if (mode === "lots" && selectedLot) {
         setLots((prev) => ({ ...prev, [selectedLot]: coords }));
         setMessage(
-          `Placed lot "${selectedLot}" at ${coords.x.toFixed(1)}%, ${coords.y.toFixed(1)}%`,
+          `Placed lot "${selectedLot}" at ${formatMapPosition(coords)}`,
         );
       } else if (mode === "places" && selectedPlace) {
         const existing = places[selectedPlace];
@@ -157,12 +160,12 @@ export default function MapEditClient({
           [selectedPlace]: { ...coords, icon: existing?.icon },
         }));
         setMessage(
-          `Placed "${selectedPlace}" at ${coords.x.toFixed(1)}%, ${coords.y.toFixed(1)}%`,
+          `Placed "${selectedPlace}" at ${formatMapPosition(coords)}`,
         );
       } else if (mode === "valves" && selectedValve) {
         setValves((prev) => ({ ...prev, [selectedValve]: coords }));
         setMessage(
-          `Placed valve "${selectedValve}" at ${coords.x.toFixed(1)}%, ${coords.y.toFixed(1)}%`,
+          `Placed valve "${selectedValve}" at ${formatMapPosition(coords)}`,
         );
       }
     },
@@ -315,8 +318,8 @@ export default function MapEditClient({
             Map position editor
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Select a lot, place, or valve, then click the map to place it — or
-            drag an existing marker. Save when done.
+            Select a lot, place, or valve, then click the map to place
+            it — or drag an existing marker. Save when done.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -388,6 +391,42 @@ export default function MapEditClient({
       </section>
 
       <div className="flex flex-col gap-6 lg:flex-row">
+        {isGoogleMapsEnabled() ? (
+          <MapEditGoogleMap
+            lots={lots}
+            places={places}
+            valves={valves}
+            lotIds={lotIds}
+            placeNames={placeNames}
+            valveIdsOnMap={valveIdsOnMap}
+            mode={mode}
+            selectedLot={selectedLot}
+            selectedPlace={selectedPlace}
+            selectedValve={selectedValve}
+            onPlaceCoords={placeMarker}
+            onMoveLot={(lotId, coords) => {
+              setLots((prev) => ({ ...prev, [lotId]: coords }));
+              setMessage(`Moved lot "${lotId}" to ${formatMapPosition(coords)}`);
+            }}
+            onMovePlace={(placeName, coords) => {
+              setPlaces((prev) => {
+                const existing = prev[placeName];
+                return {
+                  ...prev,
+                  [placeName]: { ...coords, icon: existing?.icon },
+                };
+              });
+              setMessage(`Moved "${placeName}" to ${formatMapPosition(coords)}`);
+            }}
+            onMoveValve={(valveId, coords) => {
+              setValves((prev) => ({ ...prev, [valveId]: coords }));
+              setMessage(`Moved valve "${valveId}" to ${formatMapPosition(coords)}`);
+            }}
+            onSelectLot={(lotId) => selectMarker("lot", lotId)}
+            onSelectPlace={(placeName) => selectMarker("place", placeName)}
+            onSelectValve={(valveId) => selectMarker("valve", valveId)}
+          />
+        ) : (
         <div
           className={`${MAP_VIEWPORT_CLASS} min-h-[55dvh] flex-1 cursor-crosshair overflow-hidden rounded-xl border border-line bg-black`}
           onClick={handleMapClick}
@@ -488,6 +527,7 @@ export default function MapEditClient({
           })}
           </div>
         </div>
+        )}
 
         <div className="flex w-full flex-col gap-2 lg:w-80">
           <div className="flex overflow-hidden rounded-xl border border-line">
@@ -543,7 +583,7 @@ export default function MapEditClient({
                     <span className="font-medium">{lotId}</span>
                     {hasCoords ? (
                       <span className="ml-auto shrink-0 text-xs opacity-70">
-                        {pos.x.toFixed(1)}%, {pos.y.toFixed(1)}%
+                        {formatMapPosition(pos)}
                       </span>
                     ) : (
                       <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
@@ -577,7 +617,7 @@ export default function MapEditClient({
                     <span className="truncate">{placeName}</span>
                     {hasCoords ? (
                       <span className="ml-auto shrink-0 text-xs opacity-70">
-                        {pos.x.toFixed(1)}%, {pos.y.toFixed(1)}%
+                        {formatMapPosition(pos)}
                       </span>
                     ) : (
                       <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
@@ -611,7 +651,7 @@ export default function MapEditClient({
                     <span className="font-medium">{displayId}</span>
                     {hasCoords ? (
                       <span className="ml-auto shrink-0 text-xs opacity-70">
-                        {pos.x.toFixed(1)}%, {pos.y.toFixed(1)}%
+                        {formatMapPosition(pos)}
                       </span>
                     ) : (
                       <span className="ml-auto shrink-0 text-xs font-medium opacity-80">

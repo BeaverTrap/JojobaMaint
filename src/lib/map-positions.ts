@@ -14,7 +14,7 @@ export type MapPositions = {
 
 const MAP_FILE = path.join(process.cwd(), "data", "map-positions.json");
 const MAP_COMMENT =
-  "x and y are percentages (0-100). Use /map/edit to place lots and places by clicking on the map.";
+  "x and y are map coordinates: legacy 0-100% on schematic, or lng/lat when placed on Google Maps. Use /map/edit.";
 
 function normalizePositions(data: Partial<MapPositions>): MapPositions {
   return {

@@ -3,20 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdPlumbing } from "react-icons/md";
 import {
-  APIProvider,
   AdvancedMarker,
   Map,
   Polygon,
   useMap,
 } from "@vis.gl/react-google-maps";
+import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
-import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
+import { mapPositionToLatLng } from "@/lib/map-coords";
 import {
   googleMapId,
-  googleMapsApiKey,
   parkMapBoundsLiteral,
   parkMapCenter,
-  percentToLatLng,
 } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
 import { computeZoneBlobs } from "@/lib/map-zone-blobs";
@@ -24,29 +22,11 @@ import type { ParkMapProps } from "@/components/ParkMap";
 
 const FOCUS_ZOOM_DETAIL = 18;
 const FOCUS_ZOOM_SELECTION = 17;
-const DEFAULT_ZOOM = 16;
+const DEFAULT_ZOOM = 17;
 
 function formatValveDisplay(id: string): string {
   if (!id) return "V?";
   return /^\d+$/.test(id) ? `V${id}` : id;
-}
-
-function ParkMapGroundOverlay({ imageUrl }: { imageUrl: string }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || typeof google === "undefined") return;
-    const bounds = parkMapBoundsLiteral();
-    const overlay = new google.maps.GroundOverlay(imageUrl, bounds, {
-      opacity: 1,
-    });
-    overlay.setMap(map);
-    return () => {
-      overlay.setMap(null);
-    };
-  }, [map, imageUrl]);
-
-  return null;
 }
 
 function MapFocusController({
@@ -77,20 +57,17 @@ function MapFocusController({
 
     const timer = window.setTimeout(() => {
       if (highlightLot && lots[highlightLot]) {
-        const pos = lots[highlightLot]!;
-        map.panTo(percentToLatLng(pos.x, pos.y));
+        map.panTo(mapPositionToLatLng(lots[highlightLot]!));
         map.setZoom(FOCUS_ZOOM_DETAIL);
         return;
       }
       if (highlightPlace && places[highlightPlace]) {
-        const pos = places[highlightPlace]!;
-        map.panTo(percentToLatLng(pos.x, pos.y));
+        map.panTo(mapPositionToLatLng(places[highlightPlace]!));
         map.setZoom(FOCUS_ZOOM_DETAIL);
         return;
       }
       if (highlightValve && valves[highlightValve]) {
-        const pos = valves[highlightValve]!;
-        map.panTo(percentToLatLng(pos.x, pos.y));
+        map.panTo(mapPositionToLatLng(valves[highlightValve]!));
         map.setZoom(FOCUS_ZOOM_SELECTION);
         return;
       }
@@ -205,21 +182,11 @@ export function GoogleParkMap({
 
   const hasContext =
     contextZone || contextLot || contextValve || contextValves.length > 0;
-
-  const apiKey = googleMapsApiKey();
-  if (!apiKey) {
-    return (
-      <div className="flex min-h-[55dvh] items-center justify-center rounded-lg border border-amber-700/50 bg-gray-900 p-8">
-        <p className="text-sm text-amber-200">
-          Google Maps API key is not configured.
-        </p>
-      </div>
-    );
-  }
+  const colorScheme = useGoogleMapColorScheme();
 
   if (loading) {
     return (
-      <div className="flex min-h-[55dvh] items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8">
+      <div className="flex min-h-[360px] items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8">
         <p className="text-gray-400">Loading map...</p>
       </div>
     );
@@ -227,21 +194,17 @@ export function GoogleParkMap({
 
   if (loadError) {
     return (
-      <div className="flex min-h-[55dvh] items-center justify-center rounded-lg border border-amber-700/50 bg-gray-900 p-8">
+      <div className="flex min-h-[360px] items-center justify-center rounded-lg border border-amber-700/50 bg-gray-900 p-8">
         <p className="text-sm text-amber-200">{loadError}</p>
       </div>
     );
   }
 
-  const mapHeightClass = fillHeight
-    ? "h-full min-h-0 flex-1"
-    : "min-h-[55dvh] w-full sm:min-h-[28rem]";
-
   return (
     <div
       className={`w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900 ${fillHeight ? "flex min-h-0 flex-1 flex-col" : ""}`}
     >
-      <div className={`relative ${mapHeightClass}`}>
+      <div className={`relative ${fillHeight ? "min-h-0 flex-1" : ""}`}>
         {hasContext && (
           <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1 rounded-lg border border-gray-600 bg-gray-900/95 px-3 py-2 shadow-lg backdrop-blur-sm">
             {contextZone && (
@@ -268,13 +231,14 @@ export function GoogleParkMap({
           </div>
         )}
 
-        <APIProvider apiKey={apiKey} libraries={["marker"]}>
+        <GoogleMapFrame fillHeight={fillHeight}>
           <Map
             mapId={googleMapId()}
             defaultCenter={parkMapCenter()}
             defaultZoom={DEFAULT_ZOOM}
             gestureHandling="greedy"
-            mapTypeId="satellite"
+            mapTypeId="roadmap"
+            colorScheme={colorScheme}
             disableDefaultUI={false}
             className="h-full w-full"
             style={{ width: "100%", height: "100%" }}
@@ -283,7 +247,6 @@ export function GoogleParkMap({
               strictBounds: false,
             }}
           >
-            <ParkMapGroundOverlay imageUrl={PARK_MAP_IMAGE_PATH} />
             <MapFocusController
               loading={loading}
               autoFocusHighlight={autoFocusHighlight}
@@ -301,7 +264,7 @@ export function GoogleParkMap({
               return (
                 <Polygon
                   key={`zone-${i}`}
-                  paths={blob.points.map((p) => percentToLatLng(p.x, p.y))}
+                  paths={blob.points.map((p) => mapPositionToLatLng(p))}
                   fillColor={fillColor}
                   fillOpacity={fillOpacity}
                   strokeColor="rgba(255,255,255,0.35)"
@@ -336,7 +299,7 @@ export function GoogleParkMap({
                 return (
                   <AdvancedMarker
                     key={`lot-${lotId}`}
-                    position={percentToLatLng(pos.x, pos.y)}
+                    position={mapPositionToLatLng(pos)}
                     title={`Lot ${lotId}`}
                     onClick={() => onLotClick?.(lotId)}
                   >
@@ -359,7 +322,7 @@ export function GoogleParkMap({
                 return (
                   <AdvancedMarker
                     key={`place-${placeName}`}
-                    position={percentToLatLng(pos.x, pos.y)}
+                    position={mapPositionToLatLng(pos)}
                     title={placeName}
                     onClick={() => onPlaceClick?.(placeName)}
                   >
@@ -383,7 +346,7 @@ export function GoogleParkMap({
                 return (
                   <AdvancedMarker
                     key={`valve-${valveId}`}
-                    position={percentToLatLng(pos.x, pos.y)}
+                    position={mapPositionToLatLng(pos)}
                     title={`Valve ${displayId}`}
                     onClick={() => onValveClick?.(valveId)}
                   >
@@ -403,19 +366,19 @@ export function GoogleParkMap({
                 );
               })}
           </Map>
-        </APIProvider>
+        </GoogleMapFrame>
       </div>
 
       {!hasMarkers && (
         <p className="border-t border-gray-800 p-2 text-xs text-amber-300/90">
-          Map image loaded, but lot markers are missing — check that{" "}
-          <code className="rounded bg-gray-800 px-1">data/map-positions.json</code>{" "}
-          is deployed.
+          Map loaded, but markers are missing — use{" "}
+          <code className="rounded bg-gray-800 px-1">/map/edit</code> to place
+          lots, places, and valves.
         </p>
       )}
       {!fillHeight && (
         <p className="border-t border-gray-800 p-2 text-[10px] text-gray-400 sm:text-xs">
-          Lot numbers and facility icons on the map.{" "}
+          Park map with lot numbers and facility icons.{" "}
           {lotsToShow.length > 0
             ? `${lotsToShow.length} lot(s) highlighted for current search.`
             : "Select a zone, lot, or valve to highlight."}
