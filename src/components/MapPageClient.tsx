@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import MapSyncButton from "@/components/MapSyncButton";
+import ParkWeatherPanel from "@/components/ParkWeatherPanel";
 import { ParkMapView } from "@/components/ParkMapView";
 import ValveLookupPanel, {
   type ValveLookupMapState,
 } from "@/components/ValveLookupPanel";
 import { siteHref } from "@/lib/site-slug";
+import { isParkWeatherPlace } from "@/lib/park-system-places";
 import type { MapPositions } from "@/lib/map-positions";
 
 type SelectedMarker = { type: "valve"; id: string };
@@ -61,6 +63,7 @@ function MapPageContent({
     null,
   );
   const [layersOpen, setLayersOpen] = useState(false);
+  const [weatherPanelOpen, setWeatherPanelOpen] = useState(false);
 
   useEffect(() => {
     setLookupQuery(initialLookupQuery(searchParams));
@@ -127,6 +130,11 @@ function MapPageContent({
   }
 
   function handlePlaceClick(placeName: string) {
+    if (isParkWeatherPlace(placeName)) {
+      setWeatherPanelOpen(true);
+      setSelectedMarker(null);
+      return;
+    }
     router.push(siteHref(placeName));
   }
 
@@ -243,6 +251,14 @@ function MapPageContent({
             </button>
           </div>
           {mobileView === "map" && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setWeatherPanelOpen(true)}
+                className="inline-flex min-h-[44px] items-center rounded-xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100"
+              >
+                Weather
+              </button>
             <div className="relative">
               <button
                 type="button"
@@ -265,6 +281,7 @@ function MapPageContent({
                 </>
               )}
             </div>
+            </div>
           )}
         </div>
 
@@ -286,6 +303,11 @@ function MapPageContent({
             {mapElement}
           </div>
         )}
+
+        <ParkWeatherPanel
+          open={weatherPanelOpen}
+          onClose={() => setWeatherPanelOpen(false)}
+        />
 
         {mobileView === "map" &&
           selectedMarker?.type === "valve" &&
@@ -323,9 +345,9 @@ function MapPageContent({
             Park map &amp; lookup
           </h1>
           <p className="text-sm text-muted">
-            Find valves, zones, and lots — then see them on the map. Click a
-            lot or place to open its site profile, or use lookup for valve
-            shutoff details.
+            Find valves, zones, and lots — then see them on the map. Tap the{" "}
+            <strong>sun marker</strong> for live weather. Click other places for
+            site profiles, or use lookup for valve shutoff details.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-start gap-2">
@@ -346,6 +368,13 @@ function MapPageContent({
           >
             Browse all sites
           </Link>
+          <button
+            type="button"
+            onClick={() => setWeatherPanelOpen(true)}
+            className="rounded-xl border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-900 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100 dark:hover:bg-sky-950/60"
+          >
+            Park weather
+          </button>
         </div>
       </div>
 
@@ -361,6 +390,11 @@ function MapPageContent({
       <div className="flex flex-wrap items-center gap-4">{layerControls}</div>
 
       <div className="min-h-[55dvh] flex-1">{mapElement}</div>
+
+      <ParkWeatherPanel
+        open={weatherPanelOpen}
+        onClose={() => setWeatherPanelOpen(false)}
+      />
     </div>
   );
 }

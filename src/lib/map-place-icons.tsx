@@ -21,6 +21,7 @@ import {
   MdDelete,
   MdPlace,
   MdLocalLaundryService,
+  MdWbSunny,
 } from "react-icons/md";
 import { GiWaterTank } from "react-icons/gi";
 
@@ -43,6 +44,7 @@ export type PlaceIconName =
   | "MdDelete"
   | "MdPlace"
   | "MdLocalLaundryService"
+  | "MdWbSunny"
   | "GiWaterTank";
 
 export type PlaceMarkerColor =
@@ -78,6 +80,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
   MdDelete,
   MdPlace,
   MdLocalLaundryService,
+  MdWbSunny,
   GiWaterTank,
 };
 
@@ -85,6 +88,7 @@ export const DEFAULT_PLACE_ICON = "MdPlace";
 
 export const PLACE_ICON_OPTIONS: { value: PlaceIconName; label: string }[] = [
   { value: "MdPlace", label: "Generic place" },
+  { value: "MdWbSunny", label: "Weather / sun" },
   { value: "FaTools", label: "Tools / shop" },
   { value: "FaIndustry", label: "Metal / industry" },
   { value: "MdLocalFlorist", label: "Garden" },
@@ -144,6 +148,7 @@ const iconColorMap: Record<string, string> = {
   MdDelete: "bg-slate-500 text-white",
   MdLocalLaundryService: "bg-blue-500 text-white",
   MdPlace: "bg-gray-600 text-white",
+  MdWbSunny: "bg-amber-500 text-white",
   GiWaterTank: "bg-sky-600 text-white",
 };
 
@@ -213,4 +218,5 @@ export const PLACE_ICON_DEFAULTS: Record<string, PlaceIconName> = {
   "Two Tanks": "GiWaterTank",
   "Water Tank 3": "GiWaterTank",
   "Oak Grove": "GiWaterTank",
+  "Park Weather": "MdWbSunny",
 };

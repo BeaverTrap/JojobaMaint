@@ -20,6 +20,7 @@ import {
 } from "@/lib/map-stage";
 import { formatMapPosition } from "@/lib/map-coords";
 import { isGoogleMapsEnabled } from "@/lib/map-geography";
+import { isSystemMapPlace } from "@/lib/park-system-places";
 import type { MapPositions } from "@/lib/map-positions";
 import {
   isValidCoord,
@@ -371,6 +372,12 @@ export default function MapEditClient({
 
   const handleRemovePlace = useCallback(
     (placeName: string) => {
+      if (isSystemMapPlace(placeName)) {
+        setMessage(
+          `"${placeName}" is a system marker — drag it to reposition, but it cannot be deleted.`,
+        );
+        return;
+      }
       if (!window.confirm(`Remove "${placeName}" from the map?`)) return;
 
       setPlaces((prev) => {
@@ -830,6 +837,11 @@ export default function MapEditClient({
                     >
                       <IconComponent size={16} className="shrink-0" />
                       <span className="truncate">{placeName}</span>
+                      {isSystemMapPlace(placeName) && (
+                        <span className="shrink-0 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
+                          Info
+                        </span>
+                      )}
                       {hasCoords ? (
                         <span className="ml-auto shrink-0 text-xs opacity-70">
                           {formatMapPosition(pos)}
@@ -844,8 +856,11 @@ export default function MapEditClient({
                       type="button"
                       title={`Remove ${placeName}`}
                       onClick={() => handleRemovePlace(placeName)}
+                      disabled={isSystemMapPlace(placeName)}
                       className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
-                        isSelected
+                        isSystemMapPlace(placeName)
+                          ? "cursor-not-allowed opacity-40"
+                          : isSelected
                           ? "text-white/90 hover:bg-white/20"
                           : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
                       }`}

@@ -3,6 +3,7 @@ import * as path from "path";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import bundledPositions from "../../data/map-positions.json";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { mergeSystemMapPlaces } from "@/lib/park-system-places";
 import type { PlaceMarkerColor } from "@/lib/map-place-icons";
 
 export type MapPlacePosition = {
@@ -25,7 +26,7 @@ const MAP_COMMENT =
 function normalizePositions(data: Partial<MapPositions>): MapPositions {
   return {
     lots: data.lots ?? {},
-    places: data.places ?? {},
+    places: mergeSystemMapPlaces(data.places ?? {}),
     valves: data.valves ?? {},
   };
 }
