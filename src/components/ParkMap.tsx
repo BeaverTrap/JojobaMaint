@@ -9,6 +9,11 @@ import {
 } from "react-zoom-pan-pinch";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
 import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
+import {
+  MAP_STAGE_CLASS,
+  MAP_STAGE_FIT_STYLE,
+  MAP_VIEWPORT_CLASS,
+} from "@/lib/map-stage";
 import type { MapPositions } from "@/lib/map-positions";
 import {
   centerMapOnPercent,
@@ -114,7 +119,7 @@ function LotMarker({
             : undefined
         }
         className={`
-          map-marker-btn inline-flex min-h-[clamp(28px,4.5cqw,40px)] min-w-[clamp(28px,4.5cqw,40px)] items-center justify-center rounded px-[clamp(4px,1cqw,8px)] py-[clamp(4px,1cqw,8px)] text-[clamp(9px,2cqw,12px)] font-bold transition-colors duration-200
+          map-marker-btn inline-flex items-center justify-center rounded px-[clamp(2px,0.8cqw,6px)] py-[clamp(1px,0.4cqw,4px)] text-[clamp(7px,2.4cqw,10px)] font-bold leading-none transition-colors duration-200
           ${onLotClick ? "cursor-pointer touch-manipulation hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
           ${isHighlight ? "scale-110 ring-2 ring-white" : ""}
           ${lotClass}
@@ -163,14 +168,14 @@ function PlaceMarker({
             : undefined
         }
         className={`
-          map-marker-btn inline-flex h-[clamp(28px,5cqw,40px)] w-[clamp(28px,5cqw,40px)] items-center justify-center rounded-full p-[clamp(4px,1cqw,10px)] transition-colors duration-200
+          map-marker-btn inline-flex h-[clamp(18px,4.5cqw,30px)] w-[clamp(18px,4.5cqw,30px)] items-center justify-center rounded-full p-[clamp(2px,0.8cqw,6px)] transition-colors duration-200
           ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white" : getPlaceColor(pos.icon ?? "MdPlace")}
           ${isHighlight ? "scale-110" : ""}
           ${isClickable ? "cursor-pointer touch-manipulation hover:opacity-90 hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
         `}
         {...(isClickable ? tap : {})}
       >
-        <IconComponent className="h-[clamp(14px,2.8cqw,20px)] w-[clamp(14px,2.8cqw,20px)] shrink-0" />
+        <IconComponent className="h-[clamp(10px,2.6cqw,16px)] w-[clamp(10px,2.6cqw,16px)] shrink-0" />
       </span>
       <span className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white shadow-lg group-hover:visible">
         {placeName}
@@ -226,15 +231,15 @@ function ValveMarker({
       >
         <span
           className={`
-            inline-flex h-[clamp(28px,5cqw,40px)] w-[clamp(28px,5cqw,40px)] items-center justify-center rounded-full p-[clamp(4px,1cqw,10px)]
+            inline-flex h-[clamp(18px,4.5cqw,30px)] w-[clamp(18px,4.5cqw,30px)] items-center justify-center rounded-full p-[clamp(2px,0.8cqw,6px)]
             ${isHighlight ? "bg-slate-700 text-white ring-2 ring-white" : "bg-slate-600 text-white"}
           `}
         >
-          <MdPlumbing className="h-[clamp(14px,2.8cqw,20px)] w-[clamp(14px,2.8cqw,20px)] shrink-0" />
+          <MdPlumbing className="h-[clamp(10px,2.6cqw,16px)] w-[clamp(10px,2.6cqw,16px)] shrink-0" />
         </span>
         <span
           className={`
-            mt-1 min-w-[clamp(1.75rem,4cqw,2rem)] rounded px-[clamp(4px,1cqw,8px)] py-0.5 text-center text-[clamp(9px,2cqw,11px)] font-bold
+            mt-[clamp(1px,0.4cqw,4px)] rounded px-[clamp(2px,0.8cqw,6px)] py-[clamp(1px,0.3cqw,3px)] text-center text-[clamp(7px,2.2cqw,10px)] font-bold leading-none
             ${isHighlight ? "bg-slate-700 text-white ring-1 ring-white/50" : "bg-slate-700/90 text-white"}
           `}
         >
@@ -419,94 +424,96 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
   const highlightSet = new Set(lotsToShow.map((id) => String(id)));
   const hasZoneColors = Object.keys(zoneColors).length > 0 && Object.keys(lotZones).length > 0;
 
-  const mapContent = (
-    <>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={PARK_MAP_IMAGE_PATH}
-          alt="Park map"
-          className="absolute inset-0 h-full w-full object-contain"
-          draggable={false}
+  const mapStage = (
+    <div className={MAP_STAGE_CLASS} style={MAP_STAGE_FIT_STYLE}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={PARK_MAP_IMAGE_PATH}
+        alt="Park map"
+        className="absolute inset-0 h-full w-full select-none"
+        draggable={false}
+      />
+      {zoneBlobs.length > 0 && (
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          {zoneBlobs.map((blob, i) => (
+            <polygon
+              key={i}
+              points={blob.points.map((p) => `${p.x},${p.y}`).join(" ")}
+              fill={blob.fill}
+              stroke="rgba(255,255,255,0.2)"
+              strokeWidth="0.5"
+            />
+          ))}
+        </svg>
+      )}
+      {showLots && allLotIds.map((lotId) => (
+        <LotMarker
+          key={`lot-${lotId}`}
+          lotId={lotId}
+          pos={lots[lotId]}
+          isHighlight={highlightLot != null && String(lotId) === String(highlightLot)}
+          isInSearch={highlightSet.has(String(lotId))}
+          lotClass={(() => {
+            const zones = lotZones[lotId] ?? [];
+            const zone = contextZones.length > 0
+              ? (contextZones.find((z) => zones.includes(z)) ?? zones[0])
+              : zones[0];
+            const colors = zone && zoneColors[zone];
+            const isHighlight = highlightLot != null && String(lotId) === String(highlightLot);
+            const isInSearch = highlightSet.has(String(lotId));
+            if (hasZoneColors && isInSearch && colors) {
+              return isHighlight ? colors.highlight : colors.base;
+            }
+            if (isHighlight) return "bg-blue-800 text-white ring-2 ring-white";
+            if (isInSearch) return "bg-amber-600/90 text-white";
+            return "bg-black/60 text-white";
+          })()}
+          onLotClick={onLotClick}
         />
-        {zoneBlobs.length > 0 && (
-          <svg
-            className="absolute inset-0 h-full w-full pointer-events-none"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            {zoneBlobs.map((blob, i) => (
-              <polygon
-                key={i}
-                points={blob.points.map((p) => `${p.x},${p.y}`).join(" ")}
-                fill={blob.fill}
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth="0.5"
-              />
-            ))}
-          </svg>
-        )}
-        {showLots && allLotIds.map((lotId) => (
-          <LotMarker
-            key={`lot-${lotId}`}
-            lotId={lotId}
-            pos={lots[lotId]}
-            isHighlight={highlightLot != null && String(lotId) === String(highlightLot)}
-            isInSearch={highlightSet.has(String(lotId))}
-            lotClass={(() => {
-              const zones = lotZones[lotId] ?? [];
-              const zone = contextZones.length > 0
-                ? (contextZones.find((z) => zones.includes(z)) ?? zones[0])
-                : zones[0];
-              const colors = zone && zoneColors[zone];
-              const isHighlight = highlightLot != null && String(lotId) === String(highlightLot);
-              const isInSearch = highlightSet.has(String(lotId));
-              if (hasZoneColors && isInSearch && colors) {
-                return isHighlight ? colors.highlight : colors.base;
-              }
-              if (isHighlight) return "bg-blue-800 text-white ring-2 ring-white";
-              if (isInSearch) return "bg-amber-600/90 text-white";
-              return "bg-black/60 text-white";
-            })()}
-            onLotClick={onLotClick}
+      ))}
+      {showPlaces && allPlaceNames.map((placeName) => {
+        const pos = places[placeName];
+        if (!pos) return null;
+        return (
+          <PlaceMarker
+            key={`place-${placeName}`}
+            placeName={placeName}
+            pos={pos}
+            isHighlight={
+              highlightPlace != null && placeName === highlightPlace
+            }
+            onPlaceClick={onPlaceClick}
           />
-        ))}
-        {showPlaces && allPlaceNames.map((placeName) => {
-          const pos = places[placeName];
-          if (!pos) return null;
-          return (
-            <PlaceMarker
-              key={`place-${placeName}`}
-              placeName={placeName}
-              pos={pos}
-              isHighlight={
-                highlightPlace != null && placeName === highlightPlace
-              }
-              onPlaceClick={onPlaceClick}
-            />
-          );
-        })}
-        {showValves && allValveIds.map((valveId) => {
-          const pos = valves[valveId];
-          if (!pos) return null;
-          return (
-            <ValveMarker
-              key={`valve-${valveId}`}
-              valveId={valveId}
-              pos={pos}
-              isHighlight={
-                highlightValve != null && String(valveId) === String(highlightValve)
-              }
-              onValveClick={onValveClick}
-            />
-          );
-        })}
-    </>
+        );
+      })}
+      {showValves && allValveIds.map((valveId) => {
+        const pos = valves[valveId];
+        if (!pos) return null;
+        return (
+          <ValveMarker
+            key={`valve-${valveId}`}
+            valveId={valveId}
+            pos={pos}
+            isHighlight={
+              highlightValve != null && String(valveId) === String(highlightValve)
+            }
+            onValveClick={onValveClick}
+          />
+        );
+      })}
+    </div>
   );
 
-  const surfaceClassName = fillHeight
-    ? "relative h-full w-full min-h-0 [container-type:size]"
-    : "relative aspect-[4/3] min-h-[55dvh] w-full sm:min-h-0 [container-type:size]";
+  const viewportClassName = fillHeight
+    ? `${MAP_VIEWPORT_CLASS} h-full min-h-0`
+    : `${MAP_VIEWPORT_CLASS} min-h-[55dvh] sm:min-h-0`;
+
+  const mapContent = mapStage;
 
   const hasContext = contextZone || contextLot || contextValve || contextValves.length > 0;
   const contextBadge = hasContext ? (
@@ -584,16 +591,16 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
               wrapperStyle={{ width: "100%", height: "100%", touchAction: "none" }}
               contentStyle={{ width: "100%", height: "100%" }}
             >
-              <div className={surfaceClassName}>{mapContent}</div>
+              <div className={viewportClassName}>{mapContent}</div>
             </TransformComponent>
           </>
         )}
       </TransformWrapper>
     </div>
   ) : (
-    <div className={surfaceClassName}>
+    <div className="relative h-full w-full min-h-0">
       {contextBadge}
-      {mapContent}
+      <div className={viewportClassName}>{mapContent}</div>
     </div>
   );
 

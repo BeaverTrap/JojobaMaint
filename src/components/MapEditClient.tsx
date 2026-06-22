@@ -5,6 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdPlumbing } from "react-icons/md";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
 import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
+import {
+  MAP_STAGE_CLASS,
+  MAP_STAGE_FIT_STYLE,
+  MAP_VIEWPORT_CLASS,
+} from "@/lib/map-stage";
 import type { MapPositions } from "@/lib/map-positions";
 import {
   isValidCoord,
@@ -384,22 +389,22 @@ export default function MapEditClient({
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div
-          className="relative flex-1 cursor-crosshair overflow-hidden rounded-xl border border-line bg-black"
-          style={{ aspectRatio: "4/3" }}
+          className={`${MAP_VIEWPORT_CLASS} min-h-[55dvh] flex-1 cursor-crosshair overflow-hidden rounded-xl border border-line bg-black`}
           onClick={handleMapClick}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           role="presentation"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            ref={imgRef}
-            src={PARK_MAP_IMAGE_PATH}
-            alt="Park map — click or drag markers"
-            className="pointer-events-none h-full w-full select-none object-contain"
-            draggable={false}
-          />
+          <div className={MAP_STAGE_CLASS} style={MAP_STAGE_FIT_STYLE}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              src={PARK_MAP_IMAGE_PATH}
+              alt="Park map — click or drag markers"
+              className="pointer-events-none absolute inset-0 h-full w-full select-none"
+              draggable={false}
+            />
           {lotIds.map((lotId) => {
             const pos = lots[lotId];
             if (!pos) return null;
@@ -481,6 +486,7 @@ export default function MapEditClient({
               </div>
             );
           })}
+          </div>
         </div>
 
         <div className="flex w-full flex-col gap-2 lg:w-80">
