@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import bundledPositions from "../../data/map-positions.json";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type MapPlacePosition = { x: number; y: number; icon?: string };
+export type MapPlacePosition = { x?: number; y?: number; icon?: string };
 
 export type MapPositions = {
   lots: Record<string, { x: number; y: number }>;

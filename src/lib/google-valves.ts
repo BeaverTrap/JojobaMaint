@@ -332,8 +332,8 @@ function ensureAmenityDraft(
       unit_id: null,
       has_cross_connection: null,
       sheet_notes: null,
-      map_x: pos.x,
-      map_y: pos.y,
+      map_x: pos.x ?? null,
+      map_y: pos.y ?? null,
       location_type: "amenity",
       place_icon: pos.icon ?? PLACE_ICON_DEFAULTS[name] ?? null,
     });

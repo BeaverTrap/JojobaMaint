@@ -69,6 +69,26 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 
 export const DEFAULT_PLACE_ICON = "MdPlace";
 
+export const PLACE_ICON_OPTIONS: { value: PlaceIconName; label: string }[] = [
+  { value: "MdPlace", label: "Generic place" },
+  { value: "FaTools", label: "Tools / shop" },
+  { value: "FaIndustry", label: "Metal / industry" },
+  { value: "MdLocalFlorist", label: "Garden" },
+  { value: "FaGolfBall", label: "Golf" },
+  { value: "MdScience", label: "Glass / science" },
+  { value: "MdPalette", label: "Art studio" },
+  { value: "FaFlask", label: "Pottery" },
+  { value: "MdWater", label: "Pond / water" },
+  { value: "MdDirectionsBoat", label: "Dock / boat" },
+  { value: "MdSportsTennis", label: "Courts" },
+  { value: "MdExitToApp", label: "Exit" },
+  { value: "FaBullseye", label: "Range" },
+  { value: "MdPets", label: "Dog run" },
+  { value: "MdDelete", label: "Dumpster" },
+  { value: "MdLocalLaundryService", label: "Laundry" },
+  { value: "GiWaterTank", label: "Water tank" },
+];
+
 export function getPlaceIcon(name: string) {
   return iconMap[name] ?? iconMap[DEFAULT_PLACE_ICON] ?? MdPlace;
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AdvancedMarkerAnchorPoint, useMap } from "@vis.gl/react-google-maps";
 import { mapPositionToLatLng } from "@/lib/map-coords";
+import { isValidCoord } from "@/lib/map-edit-validation";
 import type { MapLatLng, MapLatLngBounds } from "@/lib/map-geography";
 import { parkMapBoundsLiteral } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
@@ -19,13 +20,13 @@ export function collectMapLatLngs(
 ): MapLatLng[] {
   const out: MapLatLng[] = [];
   for (const pos of Object.values(lots)) {
-    if (pos) out.push(mapPositionToLatLng(pos));
+    if (pos && isValidCoord(pos)) out.push(mapPositionToLatLng(pos));
   }
   for (const pos of Object.values(places)) {
-    if (pos) out.push(mapPositionToLatLng(pos));
+    if (pos && isValidCoord(pos)) out.push(mapPositionToLatLng(pos));
   }
   for (const pos of Object.values(valves)) {
-    if (pos) out.push(mapPositionToLatLng(pos));
+    if (pos && isValidCoord(pos)) out.push(mapPositionToLatLng(pos));
   }
   return out;
 }

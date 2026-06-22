@@ -22,11 +22,17 @@ function formatCoordForMessage(pos: Coord): string {
 }
 
 /** Legacy schematic uses 0–100%; Google map edits store lng (x) and lat (y). */
-export function isValidCoord(pos: Coord | null | undefined): boolean {
+export function isValidCoord<T extends { x?: number; y?: number }>(
+  pos: T | null | undefined,
+): pos is T & { x: number; y: number } {
   if (!pos) return false;
-  if (!Number.isFinite(pos.x) || !Number.isFinite(pos.y)) return false;
-  if (isGeoCoords(pos)) return true;
-  return pos.x >= 0 && pos.x <= 100 && pos.y >= 0 && pos.y <= 100;
+  const x = pos.x;
+  const y = pos.y;
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  const nx = x as number;
+  const ny = y as number;
+  if (isGeoCoords({ x: nx, y: ny })) return true;
+  return nx >= 0 && nx <= 100 && ny >= 0 && ny <= 100;
 }
 
 function findDuplicateCoords(
@@ -125,14 +131,18 @@ export function validateMapPositions(input: {
   for (const placeName of Object.keys(places)) {
     const pos = places[placeName];
     if (!isValidCoord(pos)) {
+      const missingCoords =
+        !pos ||
+        !Number.isFinite(pos.x) ||
+        !Number.isFinite(pos.y);
       issues.push({
         id: `missing-place-${placeName}`,
         kind: "place",
         severity: "error",
-        code: pos ? "invalid" : "missing",
-        message: pos
-          ? `Place "${placeName}" has invalid coordinates.`
-          : `Place "${placeName}" has no map coordinates.`,
+        code: missingCoords ? "missing" : "invalid",
+        message: missingCoords
+          ? `Place "${placeName}" has no map coordinates — click the map to place it.`
+          : `Place "${placeName}" has invalid coordinates.`,
         label: placeName,
       });
     }

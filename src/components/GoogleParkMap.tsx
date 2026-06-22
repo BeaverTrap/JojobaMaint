@@ -16,6 +16,7 @@ import {
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
 import { mapPositionToLatLng } from "@/lib/map-coords";
+import { isValidCoord } from "@/lib/map-edit-validation";
 import {
   googleMapId,
   parkMapBoundsLiteral,
@@ -50,9 +51,9 @@ function MapFocusController({
   highlightLot: string | null | undefined;
   highlightPlace: string | null | undefined;
   highlightValve: string | null | undefined;
-  lots: Record<string, { x: number; y: number }>;
-  places: Record<string, { x: number; y: number }>;
-  valves: Record<string, { x: number; y: number }>;
+  lots: MapPositions["lots"];
+  places: MapPositions["places"];
+  valves: MapPositions["valves"];
   resetWhenHighlightClears: boolean;
 }) {
   const map = useMap();
@@ -61,17 +62,17 @@ function MapFocusController({
     if (!map || loading || !autoFocusHighlight) return;
 
     const timer = window.setTimeout(() => {
-      if (highlightLot && lots[highlightLot]) {
+      if (highlightLot && lots[highlightLot] && isValidCoord(lots[highlightLot])) {
         map.panTo(mapPositionToLatLng(lots[highlightLot]!));
         map.setZoom(FOCUS_ZOOM_DETAIL);
         return;
       }
-      if (highlightPlace && places[highlightPlace]) {
+      if (highlightPlace && places[highlightPlace] && isValidCoord(places[highlightPlace])) {
         map.panTo(mapPositionToLatLng(places[highlightPlace]!));
         map.setZoom(FOCUS_ZOOM_DETAIL);
         return;
       }
-      if (highlightValve && valves[highlightValve]) {
+      if (highlightValve && valves[highlightValve] && isValidCoord(valves[highlightValve])) {
         map.panTo(mapPositionToLatLng(valves[highlightValve]!));
         map.setZoom(FOCUS_ZOOM_SELECTION);
         return;
@@ -290,7 +291,7 @@ export function GoogleParkMap({
             {showLots &&
               allLotIds.map((lotId) => {
                 const pos = lots[lotId];
-                if (!pos) return null;
+                if (!pos || !isValidCoord(pos)) return null;
                 const zones = lotZones[lotId] ?? [];
                 const zone =
                   contextZones.length > 0
@@ -329,7 +330,7 @@ export function GoogleParkMap({
             {showPlaces &&
               allPlaceNames.map((placeName) => {
                 const pos = places[placeName];
-                if (!pos) return null;
+                if (!pos || !isValidCoord(pos)) return null;
                 const IconComponent = getPlaceIcon(pos.icon || "MdPlace");
                 const isHighlight =
                   highlightPlace != null && placeName === highlightPlace;
@@ -353,7 +354,7 @@ export function GoogleParkMap({
             {showValves &&
               allValveIds.map((valveId) => {
                 const pos = valves[valveId];
-                if (!pos) return null;
+                if (!pos || !isValidCoord(pos)) return null;
                 const isHighlight =
                   highlightValve != null &&
                   String(valveId) === String(highlightValve);

@@ -47,8 +47,8 @@ function buildAmenitySite(
     sheet_notes: null,
     staff_notes: null,
     place_icon: pos.icon ?? PLACE_ICON_DEFAULTS[name] ?? null,
-    map_x: pos.x,
-    map_y: pos.y,
+    map_x: pos.x ?? null,
+    map_y: pos.y ?? null,
     sheet_synced_at: null,
   };
 }

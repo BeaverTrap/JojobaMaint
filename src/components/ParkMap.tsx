@@ -14,7 +14,7 @@ import {
   MAP_STAGE_FIT_STYLE,
   MAP_VIEWPORT_CLASS,
 } from "@/lib/map-stage";
-import type { MapPositions } from "@/lib/map-positions";
+import type { MapPlacePosition, MapPositions } from "@/lib/map-positions";
 import {
   centerMapOnPercent,
   focusMapMarker,
@@ -26,10 +26,10 @@ import {
 import { useTapHandler } from "@/lib/map-tap";
 import { siteToSlug } from "@/lib/site-slug";
 import { getZoneFillColor, type ZoneColorMap } from "@/lib/zone-colors";
+import { isValidCoord } from "@/lib/map-edit-validation";
 
 type LotPositions = Record<string, { x: number; y: number }>;
-type PlacePosition = { x: number; y: number; icon?: string };
-type PlacePositions = Record<string, PlacePosition>;
+type PlacePositions = Record<string, MapPlacePosition>;
 type ValvePositions = Record<string, { x: number; y: number }>;
 
 export type ParkMapProps = {
@@ -139,7 +139,7 @@ function PlaceMarker({
   onPlaceClick,
 }: {
   placeName: string;
-  pos: { x: number; y: number; icon?: string };
+  pos: MapPlacePosition & { x: number; y: number };
   isHighlight?: boolean;
   onPlaceClick?: (placeName: string) => void;
 }) {
@@ -339,7 +339,7 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
           return;
         }
         const pos = places[highlightPlace];
-        if (pos) {
+        if (pos && isValidCoord(pos)) {
           centerMapOnPercent(ref, pos.x, pos.y, resolvedFocusScale);
         }
         return;
@@ -478,7 +478,7 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
       ))}
       {showPlaces && allPlaceNames.map((placeName) => {
         const pos = places[placeName];
-        if (!pos) return null;
+        if (!pos || !isValidCoord(pos)) return null;
         return (
           <PlaceMarker
             key={`place-${placeName}`}

@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdPlumbing } from "react-icons/md";
 import MapEditGoogleMap from "@/components/MapEditGoogleMap";
-import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
+import {
+  DEFAULT_PLACE_ICON,
+  getPlaceIcon,
+  getPlaceColor,
+  PLACE_ICON_OPTIONS,
+  type PlaceIconName,
+} from "@/lib/map-place-icons";
 import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
 import {
   MAP_STAGE_CLASS,
@@ -68,6 +74,11 @@ export default function MapEditClient({
   const [selectedValve, setSelectedValve] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [addedLotIds, setAddedLotIds] = useState<string[]>([]);
+  const [newLotId, setNewLotId] = useState("");
+  const [newPlaceName, setNewPlaceName] = useState("");
+  const [newPlaceIcon, setNewPlaceIcon] =
+    useState<PlaceIconName>(DEFAULT_PLACE_ICON);
 
   useEffect(() => {
     fetch("/api/valves")
@@ -102,14 +113,18 @@ export default function MapEditClient({
   }, []);
 
   const lotIds = useMemo(() => {
-    const merged = new Set([...Object.keys(lots), ...sheetLots]);
+    const merged = new Set([
+      ...Object.keys(lots),
+      ...sheetLots,
+      ...addedLotIds,
+    ]);
     return Array.from(merged).sort((a, b) => {
       const na = parseInt(a, 10);
       const nb = parseInt(b, 10);
       if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
       return a.localeCompare(b);
     });
-  }, [lots, sheetLots]);
+  }, [lots, sheetLots, addedLotIds]);
   const placeNames = Object.keys(places).sort((a, b) => a.localeCompare(b));
   const valveIdsOnMap = Object.keys(valves).sort(naturalSort);
 
@@ -157,7 +172,10 @@ export default function MapEditClient({
         const existing = places[selectedPlace];
         setPlaces((prev) => ({
           ...prev,
-          [selectedPlace]: { ...coords, icon: existing?.icon },
+          [selectedPlace]: {
+            ...coords,
+            icon: existing?.icon ?? DEFAULT_PLACE_ICON,
+          },
         }));
         setMessage(
           `Placed "${selectedPlace}" at ${formatMapPosition(coords)}`,
@@ -287,6 +305,94 @@ export default function MapEditClient({
     return issueByLabel.get(`${kind}:${label}`);
   }
 
+  const handleAddLot = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const id = newLotId.trim();
+      if (!id) return;
+      if (places[id]) {
+        setMessage(`"${id}" is already a place name — use a different lot id.`);
+        return;
+      }
+      setAddedLotIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      setNewLotId("");
+      selectMarker("lot", id);
+      setMessage(`Added lot "${id}" — click the map to place it.`);
+    },
+    [newLotId, places, selectMarker],
+  );
+
+  const handleRemoveLot = useCallback(
+    (lotId: string) => {
+      const onSheet = sheetLots.includes(lotId);
+      const prompt = onSheet
+        ? `Remove map position for lot "${lotId}"? It will stay on the valve sheet list until you place it again.`
+        : `Remove lot "${lotId}" from the map?`;
+      if (!window.confirm(prompt)) return;
+
+      setLots((prev) => {
+        const next = { ...prev };
+        delete next[lotId];
+        return next;
+      });
+      setAddedLotIds((prev) => prev.filter((id) => id !== lotId));
+      if (selectedLot === lotId) setSelectedLot(null);
+      setMessage(`Removed lot "${lotId}" from the map. Save to persist.`);
+    },
+    [sheetLots, selectedLot],
+  );
+
+  const handleAddPlace = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const name = newPlaceName.trim();
+      if (!name) return;
+      if (places[name]) {
+        setMessage(`Place "${name}" already exists.`);
+        return;
+      }
+      setPlaces((prev) => ({
+        ...prev,
+        [name]: { icon: newPlaceIcon },
+      }));
+      setNewPlaceName("");
+      setNewPlaceIcon(DEFAULT_PLACE_ICON);
+      selectMarker("place", name);
+      setMessage(`Added "${name}" — click the map to place it.`);
+    },
+    [newPlaceName, newPlaceIcon, places, selectMarker],
+  );
+
+  const handleRemovePlace = useCallback(
+    (placeName: string) => {
+      if (!window.confirm(`Remove "${placeName}" from the map?`)) return;
+
+      setPlaces((prev) => {
+        const next = { ...prev };
+        delete next[placeName];
+        return next;
+      });
+      if (selectedPlace === placeName) setSelectedPlace(null);
+      setMessage(`Removed "${placeName}". Save to persist.`);
+    },
+    [selectedPlace],
+  );
+
+  const handlePlaceIconChange = useCallback(
+    (placeName: string, icon: PlaceIconName) => {
+      setPlaces((prev) => {
+        const existing = prev[placeName];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [placeName]: { ...existing, icon },
+        };
+      });
+      setMessage(`Updated icon for "${placeName}".`);
+    },
+    [],
+  );
+
   const hasLots = lotIds.length > 0;
   const hasPlaces = placeNames.length > 0;
   const hasValves = valveIdsFromApi.length > 0;
@@ -319,7 +425,8 @@ export default function MapEditClient({
           </h1>
           <p className="mt-1 text-sm text-muted">
             Select a lot, place, or valve, then click the map to place
-            it — or drag an existing marker. Save when done.
+            it — or drag an existing marker. Add or delete lots and places
+            from the sidebar. Save when done.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -469,7 +576,7 @@ export default function MapEditClient({
           })}
           {placeNames.map((placeName) => {
             const pos = places[placeName];
-            if (!pos) return null;
+            if (!pos || !isValidCoord(pos)) return null;
             const IconComponent = getPlaceIcon(pos.icon ?? "MdPlace");
             const isSelected = mode === "places" && selectedPlace === placeName;
             return (
@@ -559,6 +666,69 @@ export default function MapEditClient({
             ))}
           </div>
           <div className="max-h-96 flex-1 overflow-y-auto rounded-xl border border-line bg-surface p-2">
+            {mode === "lots" && (
+              <form
+                onSubmit={handleAddLot}
+                className="mb-2 flex flex-col gap-2 border-b border-line pb-2"
+              >
+                <label className="text-xs font-medium text-muted">
+                  Add lot
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newLotId}
+                    onChange={(e) => setNewLotId(e.target.value)}
+                    placeholder="Lot number"
+                    className="min-w-0 flex-1 rounded-lg border border-line bg-page px-2 py-1.5 text-sm text-ink"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newLotId.trim()}
+                    className="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                  >
+                    Add
+                  </button>
+                </div>
+              </form>
+            )}
+            {mode === "places" && (
+              <form
+                onSubmit={handleAddPlace}
+                className="mb-2 flex flex-col gap-2 border-b border-line pb-2"
+              >
+                <label className="text-xs font-medium text-muted">
+                  Add place
+                </label>
+                <input
+                  type="text"
+                  value={newPlaceName}
+                  onChange={(e) => setNewPlaceName(e.target.value)}
+                  placeholder="Place name"
+                  className="w-full rounded-lg border border-line bg-page px-2 py-1.5 text-sm text-ink"
+                />
+                <select
+                  value={newPlaceIcon}
+                  onChange={(e) =>
+                    setNewPlaceIcon(e.target.value as PlaceIconName)
+                  }
+                  className="w-full rounded-lg border border-line bg-page px-2 py-1.5 text-sm text-ink"
+                >
+                  {PLACE_ICON_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={!newPlaceName.trim()}
+                  className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                >
+                  Add place
+                </button>
+              </form>
+            )}
             {mode === "lots" &&
               lotIds.map((lotId) => {
                 const pos = lots[lotId];
@@ -566,31 +736,49 @@ export default function MapEditClient({
                 const issue = getMarkerIssue("lot", lotId);
                 const hasCoords = isValidCoord(pos);
                 return (
-                  <button
+                  <div
                     key={lotId}
-                    type="button"
-                    onClick={() => selectMarker("lot", lotId)}
-                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
-                      isSelected
-                        ? "bg-brand-600 text-white"
-                        : issue?.severity === "error"
-                          ? "bg-red-50 text-red-900 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-100"
-                          : issue?.severity === "warning"
-                            ? "bg-amber-50 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-100"
-                            : "text-ink hover:bg-hover"
+                    className={`flex items-center gap-1 rounded-lg ${
+                      isSelected ? "bg-brand-600" : ""
                     }`}
                   >
-                    <span className="font-medium">{lotId}</span>
-                    {hasCoords ? (
-                      <span className="ml-auto shrink-0 text-xs opacity-70">
-                        {formatMapPosition(pos)}
-                      </span>
-                    ) : (
-                      <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
-                        No coords
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => selectMarker("lot", lotId)}
+                      className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                        isSelected
+                          ? "text-white"
+                          : issue?.severity === "error"
+                            ? "bg-red-50 text-red-900 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-100"
+                            : issue?.severity === "warning"
+                              ? "bg-amber-50 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-100"
+                              : "text-ink hover:bg-hover"
+                      }`}
+                    >
+                      <span className="font-medium">{lotId}</span>
+                      {hasCoords ? (
+                        <span className="ml-auto shrink-0 text-xs opacity-70">
+                          {formatMapPosition(pos)}
+                        </span>
+                      ) : (
+                        <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
+                          No coords
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      title={`Remove lot ${lotId}`}
+                      onClick={() => handleRemoveLot(lotId)}
+                      className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                        isSelected
+                          ? "text-white/90 hover:bg-white/20"
+                          : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                      }`}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 );
               })}
             {mode === "places" &&
@@ -601,30 +789,48 @@ export default function MapEditClient({
                 const issue = getMarkerIssue("place", placeName);
                 const hasCoords = isValidCoord(pos);
                 return (
-                  <button
+                  <div
                     key={placeName}
-                    type="button"
-                    onClick={() => selectMarker("place", placeName)}
-                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
-                      isSelected
-                        ? "bg-brand-600 text-white"
-                        : issue?.severity === "error"
-                          ? "bg-red-50 text-red-900 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-100"
-                          : "text-ink hover:bg-hover"
+                    className={`flex items-center gap-1 rounded-lg ${
+                      isSelected ? "bg-brand-600" : ""
                     }`}
                   >
-                    <IconComponent size={16} className="shrink-0" />
-                    <span className="truncate">{placeName}</span>
-                    {hasCoords ? (
-                      <span className="ml-auto shrink-0 text-xs opacity-70">
-                        {formatMapPosition(pos)}
-                      </span>
-                    ) : (
-                      <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
-                        No coords
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => selectMarker("place", placeName)}
+                      className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                        isSelected
+                          ? "text-white"
+                          : issue?.severity === "error"
+                            ? "bg-red-50 text-red-900 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-100"
+                            : "text-ink hover:bg-hover"
+                      }`}
+                    >
+                      <IconComponent size={16} className="shrink-0" />
+                      <span className="truncate">{placeName}</span>
+                      {hasCoords ? (
+                        <span className="ml-auto shrink-0 text-xs opacity-70">
+                          {formatMapPosition(pos)}
+                        </span>
+                      ) : (
+                        <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
+                          No coords
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      title={`Remove ${placeName}`}
+                      onClick={() => handleRemovePlace(placeName)}
+                      className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                        isSelected
+                          ? "text-white/90 hover:bg-white/20"
+                          : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                      }`}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 );
               })}
             {mode === "valves" &&
@@ -662,6 +868,27 @@ export default function MapEditClient({
                 );
               })}
           </div>
+          {selected && mode === "places" && selectedPlace && places[selectedPlace] && (
+            <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-2">
+              <label className="text-xs font-medium text-muted">Icon</label>
+              <select
+                value={places[selectedPlace]?.icon ?? DEFAULT_PLACE_ICON}
+                onChange={(e) =>
+                  handlePlaceIconChange(
+                    selectedPlace,
+                    e.target.value as PlaceIconName,
+                  )
+                }
+                className="w-full rounded-lg border border-line bg-page px-2 py-1.5 text-sm text-ink"
+              >
+                {PLACE_ICON_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           {selected && (
             <p className="text-xs text-muted">
               Selected: <strong>{selected}</strong> — click the map or drag its

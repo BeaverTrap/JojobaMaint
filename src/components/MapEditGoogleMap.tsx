@@ -11,6 +11,7 @@ import {
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
 import { GOOGLE_MAP_MARKER_ANCHOR, MapFitBounds } from "@/components/GoogleMapMarkers";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
+import { isValidCoord } from "@/lib/map-edit-validation";
 import {
   formatMapPosition,
   latLngToMapPosition,
@@ -78,13 +79,13 @@ function MapEditSelectionPan({
     let focusKey: string | null = null;
     let position: ReturnType<typeof mapPositionToLatLng> | null = null;
 
-    if (mode === "lots" && selectedLot && lots[selectedLot]) {
+    if (mode === "lots" && selectedLot && isValidCoord(lots[selectedLot])) {
       focusKey = `lot:${selectedLot}`;
       position = mapPositionToLatLng(lots[selectedLot]!);
-    } else if (mode === "places" && selectedPlace && places[selectedPlace]) {
+    } else if (mode === "places" && selectedPlace && isValidCoord(places[selectedPlace])) {
       focusKey = `place:${selectedPlace}`;
       position = mapPositionToLatLng(places[selectedPlace]!);
-    } else if (mode === "valves" && selectedValve && valves[selectedValve]) {
+    } else if (mode === "valves" && selectedValve && isValidCoord(valves[selectedValve])) {
       focusKey = `valve:${selectedValve}`;
       position = mapPositionToLatLng(valves[selectedValve]!);
     }
@@ -172,7 +173,7 @@ export default function MapEditGoogleMap({
         />
         {lotIds.map((lotId) => {
           const pos = lots[lotId];
-          if (!pos) return null;
+          if (!pos || !isValidCoord(pos)) return null;
           const isSelected = mode === "lots" && selectedLot === lotId;
           return (
             <AdvancedMarker
@@ -202,7 +203,7 @@ export default function MapEditGoogleMap({
 
         {placeNames.map((placeName) => {
           const pos = places[placeName];
-          if (!pos) return null;
+          if (!pos || !isValidCoord(pos)) return null;
           const IconComponent = getPlaceIcon(pos.icon ?? "MdPlace");
           const isSelected = mode === "places" && selectedPlace === placeName;
           return (
@@ -235,7 +236,7 @@ export default function MapEditGoogleMap({
 
         {valveIdsOnMap.map((valveId) => {
           const pos = valves[valveId];
-          if (!pos) return null;
+          if (!pos || !isValidCoord(pos)) return null;
           const isSelected = mode === "valves" && selectedValve === valveId;
           const displayId = /^\d+$/.test(valveId) ? `V${valveId}` : valveId;
           return (

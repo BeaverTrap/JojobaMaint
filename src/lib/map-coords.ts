@@ -13,11 +13,13 @@ export function isGeoCoords(pos: { x: number; y: number }): boolean {
   );
 }
 
-export function mapPositionToLatLng(pos: { x: number; y: number }): MapLatLng {
-  if (isGeoCoords(pos)) {
-    return { lat: pos.y, lng: pos.x };
+export function mapPositionToLatLng(pos: { x?: number; y?: number }): MapLatLng {
+  const x = pos.x ?? NaN;
+  const y = pos.y ?? NaN;
+  if (isGeoCoords({ x, y })) {
+    return { lat: y, lng: x };
   }
-  return percentToLatLng(pos.x, pos.y);
+  return percentToLatLng(x, y);
 }
 
 export function latLngToMapPosition(
