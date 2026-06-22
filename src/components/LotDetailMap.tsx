@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ParkMap } from "@/components/ParkMap";
+import { ParkMapView } from "@/components/ParkMapView";
 import { buildZoneColorMap } from "@/lib/zone-colors";
 
 export default function LotDetailMap({
@@ -22,7 +22,7 @@ export default function LotDetailMap({
   return (
     <section className="space-y-2">
       <h2 className="text-lg font-bold text-ink">On the map</h2>
-      <ParkMap
+      <ParkMapView
         lotsToShow={[lotNumber]}
         highlightLot={lotNumber}
         contextZones={zones}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import MapSyncButton from "@/components/MapSyncButton";
-import { ParkMap } from "@/components/ParkMap";
+import { ParkMapView } from "@/components/ParkMapView";
 import ValveLookupPanel, {
   type ValveLookupMapState,
 } from "@/components/ValveLookupPanel";
@@ -189,7 +189,7 @@ function MapPageContent({
   );
 
   const mapElement = (
-    <ParkMap
+    <ParkMapView
       fillHeight={isMobile && mobileView === "map"}
       zoomable
       initialMapData={mapData}

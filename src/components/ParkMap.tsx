@@ -32,7 +32,7 @@ type PlacePosition = { x: number; y: number; icon?: string };
 type PlacePositions = Record<string, PlacePosition>;
 type ValvePositions = Record<string, { x: number; y: number }>;
 
-type ParkMapProps = {
+export type ParkMapProps = {
   /** Lot IDs to highlight on the map (e.g. lots in selected zone); all lots are always shown */
   lotsToShow?: string[];
   /** Optional: extra highlight for this lot (e.g. selected lot) – same zone color but darker */

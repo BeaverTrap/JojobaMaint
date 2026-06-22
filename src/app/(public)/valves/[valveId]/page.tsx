@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import LocationPhotoGallery from "@/components/LocationPhotoGallery";
-import { ParkMap } from "@/components/ParkMap";
+import { ParkMapView } from "@/components/ParkMapView";
 import { getCurrentUser } from "@/lib/auth";
 import { getValveById } from "@/lib/google-valves";
 import { createClient } from "@/lib/supabase/server";
@@ -118,7 +118,7 @@ export default async function ValveDetailPage({
 
       <section className="space-y-2">
         <h2 className="text-lg font-bold text-ink">On the map</h2>
-        <ParkMap
+        <ParkMapView
           initialMapData={mapData}
           lotsToShow={valve.lots}
           highlightValve={valve.valveId}

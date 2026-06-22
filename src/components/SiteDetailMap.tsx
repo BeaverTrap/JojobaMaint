@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ParkMap } from "@/components/ParkMap";
+import { ParkMapView } from "@/components/ParkMapView";
 import { buildZoneColorMap } from "@/lib/zone-colors";
 import { MAP_FOCUS_SCALE_DETAIL } from "@/lib/map-viewport";
 import type { SiteRecord } from "@/lib/site-types";
@@ -24,7 +24,7 @@ export default function SiteDetailMap({ site }: { site: SiteRecord }) {
   return (
     <section className="space-y-2">
       <h2 className="text-lg font-bold text-ink">On the map</h2>
-      <ParkMap
+      <ParkMapView
         lotsToShow={lotsToShow}
         highlightLot={highlightLot}
         highlightPlace={
