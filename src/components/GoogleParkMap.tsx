@@ -14,7 +14,7 @@ import {
   fitMapToLatLngBounds,
 } from "@/components/GoogleMapMarkers";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
-import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
+import { getPlaceIcon, getPlaceMarkerClasses } from "@/lib/map-place-icons";
 import { mapPositionToLatLng } from "@/lib/map-coords";
 import { isValidCoord } from "@/lib/map-edit-validation";
 import {
@@ -343,7 +343,7 @@ export function GoogleParkMap({
                     onClick={() => onPlaceClick?.(placeName)}
                   >
                     <span
-                      className={`inline-flex h-[18px] w-[18px] cursor-pointer items-center justify-center rounded-full p-0.5 shadow-sm touch-manipulation sm:h-5 sm:w-5 ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white scale-110" : getPlaceColor(pos.icon ?? "MdPlace")}`}
+                      className={`inline-flex h-[18px] w-[18px] cursor-pointer items-center justify-center rounded-full p-0.5 shadow-sm touch-manipulation sm:h-5 sm:w-5 ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white scale-110" : getPlaceMarkerClasses(pos)}`}
                     >
                       <IconComponent className="h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3" />
                     </span>

@@ -10,7 +10,7 @@ import {
 } from "@vis.gl/react-google-maps";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
 import { GOOGLE_MAP_MARKER_ANCHOR, MapFitBounds } from "@/components/GoogleMapMarkers";
-import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
+import { getPlaceIcon, getPlaceMarkerClasses } from "@/lib/map-place-icons";
 import { isValidCoord } from "@/lib/map-edit-validation";
 import {
   formatMapPosition,
@@ -225,7 +225,7 @@ export default function MapEditGoogleMap({
                 className={`inline-flex h-5 w-5 cursor-grab items-center justify-center rounded-full p-0.5 shadow-sm active:cursor-grabbing ${
                   isSelected
                     ? "bg-blue-600 text-white ring-2 ring-white"
-                    : getPlaceColor(pos.icon ?? "MdPlace")
+                    : getPlaceMarkerClasses(pos)
                 }`}
               >
                 <IconComponent className="h-2.5 w-2.5 shrink-0" />

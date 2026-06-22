@@ -45,6 +45,20 @@ export type PlaceIconName =
   | "MdLocalLaundryService"
   | "GiWaterTank";
 
+export type PlaceMarkerColor =
+  | "gray"
+  | "slate"
+  | "amber"
+  | "orange"
+  | "green"
+  | "emerald"
+  | "cyan"
+  | "sky"
+  | "blue"
+  | "indigo"
+  | "pink"
+  | "red";
+
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FaTools,
   FaIndustry,
@@ -89,11 +103,30 @@ export const PLACE_ICON_OPTIONS: { value: PlaceIconName; label: string }[] = [
   { value: "GiWaterTank", label: "Water tank" },
 ];
 
+export const PLACE_COLOR_OPTIONS: {
+  value: PlaceMarkerColor;
+  label: string;
+  swatchClass: string;
+}[] = [
+  { value: "gray", label: "Gray", swatchClass: "bg-gray-600" },
+  { value: "slate", label: "Slate", swatchClass: "bg-slate-600" },
+  { value: "amber", label: "Amber", swatchClass: "bg-amber-600" },
+  { value: "orange", label: "Orange", swatchClass: "bg-orange-500" },
+  { value: "green", label: "Green", swatchClass: "bg-green-600" },
+  { value: "emerald", label: "Emerald", swatchClass: "bg-emerald-600" },
+  { value: "cyan", label: "Cyan", swatchClass: "bg-cyan-600" },
+  { value: "sky", label: "Sky", swatchClass: "bg-sky-600" },
+  { value: "blue", label: "Blue", swatchClass: "bg-blue-600" },
+  { value: "indigo", label: "Indigo", swatchClass: "bg-indigo-600" },
+  { value: "pink", label: "Pink", swatchClass: "bg-pink-600" },
+  { value: "red", label: "Red", swatchClass: "bg-red-600" },
+];
+
 export function getPlaceIcon(name: string) {
   return iconMap[name] ?? iconMap[DEFAULT_PLACE_ICON] ?? MdPlace;
 }
 
-/** Tailwind classes for place marker bg + text by icon (appropriate colors). */
+/** Tailwind classes for place marker bg + text by icon (default when no custom color). */
 const iconColorMap: Record<string, string> = {
   FaTools: "bg-amber-700 text-white",
   FaIndustry: "bg-slate-600 text-white",
@@ -114,8 +147,37 @@ const iconColorMap: Record<string, string> = {
   GiWaterTank: "bg-sky-600 text-white",
 };
 
+const placeColorClasses: Record<PlaceMarkerColor, string> = {
+  gray: "bg-gray-600 text-white",
+  slate: "bg-slate-600 text-white",
+  amber: "bg-amber-600 text-white",
+  orange: "bg-orange-500 text-white",
+  green: "bg-green-600 text-white",
+  emerald: "bg-emerald-600 text-white",
+  cyan: "bg-cyan-600 text-white",
+  sky: "bg-sky-600 text-white",
+  blue: "bg-blue-600 text-white",
+  indigo: "bg-indigo-600 text-white",
+  pink: "bg-pink-600 text-white",
+  red: "bg-red-600 text-white",
+};
+
 export function getPlaceColor(iconName: string): string {
   return iconColorMap[iconName ?? ""] ?? iconColorMap[DEFAULT_PLACE_ICON] ?? "bg-gray-600 text-white";
+}
+
+export function getPlaceMarkerClasses(place: {
+  icon?: string;
+  color?: PlaceMarkerColor;
+}): string {
+  if (place.color) {
+    return placeColorClasses[place.color];
+  }
+  return getPlaceColor(place.icon ?? DEFAULT_PLACE_ICON);
+}
+
+export function getPlaceColorSwatchClass(color: PlaceMarkerColor): string {
+  return PLACE_COLOR_OPTIONS.find((opt) => opt.value === color)?.swatchClass ?? "bg-gray-600";
 }
 
 /** Default icon for each place name (used when adding new places). */

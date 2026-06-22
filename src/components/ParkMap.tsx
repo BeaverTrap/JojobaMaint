@@ -7,7 +7,7 @@ import {
   TransformComponent,
   type ReactZoomPanPinchRef,
 } from "react-zoom-pan-pinch";
-import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
+import { getPlaceIcon, getPlaceMarkerClasses } from "@/lib/map-place-icons";
 import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
 import {
   MAP_STAGE_CLASS,
@@ -169,7 +169,7 @@ function PlaceMarker({
         }
         className={`
           map-marker-btn inline-flex h-[clamp(18px,4.5cqw,30px)] w-[clamp(18px,4.5cqw,30px)] items-center justify-center rounded-full p-[clamp(2px,0.8cqw,6px)] transition-colors duration-200
-          ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white" : getPlaceColor(pos.icon ?? "MdPlace")}
+          ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white" : getPlaceMarkerClasses(pos)}
           ${isHighlight ? "scale-110" : ""}
           ${isClickable ? "cursor-pointer touch-manipulation hover:opacity-90 hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
         `}

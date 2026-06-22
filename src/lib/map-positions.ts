@@ -3,8 +3,14 @@ import * as path from "path";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import bundledPositions from "../../data/map-positions.json";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { PlaceMarkerColor } from "@/lib/map-place-icons";
 
-export type MapPlacePosition = { x?: number; y?: number; icon?: string };
+export type MapPlacePosition = {
+  x?: number;
+  y?: number;
+  icon?: string;
+  color?: PlaceMarkerColor;
+};
 
 export type MapPositions = {
   lots: Record<string, { x: number; y: number }>;

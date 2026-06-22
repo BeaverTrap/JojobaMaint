@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdPlumbing } from "react-icons/md";
 import MapEditGoogleMap from "@/components/MapEditGoogleMap";
+import { PlaceStylePicker } from "@/components/PlaceStylePicker";
 import {
   DEFAULT_PLACE_ICON,
   getPlaceIcon,
-  getPlaceColor,
-  PLACE_ICON_OPTIONS,
+  getPlaceMarkerClasses,
   type PlaceIconName,
+  type PlaceMarkerColor,
 } from "@/lib/map-place-icons";
 import { PARK_MAP_IMAGE_PATH } from "@/lib/map-constants";
 import {
@@ -79,6 +80,9 @@ export default function MapEditClient({
   const [newPlaceName, setNewPlaceName] = useState("");
   const [newPlaceIcon, setNewPlaceIcon] =
     useState<PlaceIconName>(DEFAULT_PLACE_ICON);
+  const [newPlaceColor, setNewPlaceColor] = useState<
+    PlaceMarkerColor | undefined
+  >(undefined);
 
   useEffect(() => {
     fetch("/api/valves")
@@ -175,6 +179,7 @@ export default function MapEditClient({
           [selectedPlace]: {
             ...coords,
             icon: existing?.icon ?? DEFAULT_PLACE_ICON,
+            color: existing?.color,
           },
         }));
         setMessage(
@@ -243,7 +248,7 @@ export default function MapEditClient({
         const existing = prev[drag.id];
         return {
           ...prev,
-          [drag.id]: { ...coords, icon: existing?.icon },
+          [drag.id]: { ...coords, icon: existing?.icon, color: existing?.color },
         };
       });
     } else {
@@ -353,14 +358,15 @@ export default function MapEditClient({
       }
       setPlaces((prev) => ({
         ...prev,
-        [name]: { icon: newPlaceIcon },
+        [name]: { icon: newPlaceIcon, color: newPlaceColor },
       }));
       setNewPlaceName("");
       setNewPlaceIcon(DEFAULT_PLACE_ICON);
+      setNewPlaceColor(undefined);
       selectMarker("place", name);
       setMessage(`Added "${name}" — click the map to place it.`);
     },
-    [newPlaceName, newPlaceIcon, places, selectMarker],
+    [newPlaceName, newPlaceIcon, newPlaceColor, places, selectMarker],
   );
 
   const handleRemovePlace = useCallback(
@@ -389,6 +395,25 @@ export default function MapEditClient({
         };
       });
       setMessage(`Updated icon for "${placeName}".`);
+    },
+    [],
+  );
+
+  const handlePlaceColorChange = useCallback(
+    (placeName: string, color: PlaceMarkerColor | undefined) => {
+      setPlaces((prev) => {
+        const existing = prev[placeName];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [placeName]: { ...existing, color },
+        };
+      });
+      setMessage(
+        color
+          ? `Updated color for "${placeName}".`
+          : `Reset "${placeName}" to auto color from icon.`,
+      );
     },
     [],
   );
@@ -520,7 +545,11 @@ export default function MapEditClient({
                 const existing = prev[placeName];
                 return {
                   ...prev,
-                  [placeName]: { ...coords, icon: existing?.icon },
+                  [placeName]: {
+                    ...coords,
+                    icon: existing?.icon,
+                    color: existing?.color,
+                  },
                 };
               });
               setMessage(`Moved "${placeName}" to ${formatMapPosition(coords)}`);
@@ -591,7 +620,7 @@ export default function MapEditClient({
                   className={`inline-flex cursor-grab items-center justify-center rounded-full p-2 active:cursor-grabbing ${
                     isSelected
                       ? "bg-blue-600 text-white ring-2 ring-white"
-                      : getPlaceColor(pos.icon ?? "MdPlace")
+                      : getPlaceMarkerClasses(pos)
                   }`}
                 >
                   <IconComponent size={18} />
@@ -707,19 +736,12 @@ export default function MapEditClient({
                   placeholder="Place name"
                   className="w-full rounded-lg border border-line bg-page px-2 py-1.5 text-sm text-ink"
                 />
-                <select
-                  value={newPlaceIcon}
-                  onChange={(e) =>
-                    setNewPlaceIcon(e.target.value as PlaceIconName)
-                  }
-                  className="w-full rounded-lg border border-line bg-page px-2 py-1.5 text-sm text-ink"
-                >
-                  {PLACE_ICON_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <PlaceStylePicker
+                  icon={newPlaceIcon}
+                  color={newPlaceColor}
+                  onIconChange={setNewPlaceIcon}
+                  onColorChange={setNewPlaceColor}
+                />
                 <button
                   type="submit"
                   disabled={!newPlaceName.trim()}
@@ -869,24 +891,23 @@ export default function MapEditClient({
               })}
           </div>
           {selected && mode === "places" && selectedPlace && places[selectedPlace] && (
-            <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-2">
-              <label className="text-xs font-medium text-muted">Icon</label>
-              <select
-                value={places[selectedPlace]?.icon ?? DEFAULT_PLACE_ICON}
-                onChange={(e) =>
-                  handlePlaceIconChange(
-                    selectedPlace,
-                    e.target.value as PlaceIconName,
-                  )
+            <div className="rounded-xl border border-line bg-surface p-2">
+              <p className="mb-2 text-xs font-medium text-muted">
+                Style for {selectedPlace}
+              </p>
+              <PlaceStylePicker
+                icon={
+                  (places[selectedPlace]?.icon ??
+                    DEFAULT_PLACE_ICON) as PlaceIconName
                 }
-                className="w-full rounded-lg border border-line bg-page px-2 py-1.5 text-sm text-ink"
-              >
-                {PLACE_ICON_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                color={places[selectedPlace]?.color}
+                onIconChange={(icon) =>
+                  handlePlaceIconChange(selectedPlace, icon)
+                }
+                onColorChange={(color) =>
+                  handlePlaceColorChange(selectedPlace, color)
+                }
+              />
             </div>
           )}
           {selected && (
