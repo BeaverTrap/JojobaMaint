@@ -1,3 +1,4 @@
+import { isGeoCoords } from "@/lib/map-coords";
 import type { MapPositions } from "@/lib/map-positions";
 
 export type MapMarkerKind = "lot" | "place" | "valve";
@@ -13,30 +14,46 @@ export type MapEditIssue = {
 
 type Coord = { x: number; y: number };
 
+function formatCoordForMessage(pos: Coord): string {
+  if (isGeoCoords(pos)) {
+    return `${pos.y.toFixed(5)}, ${pos.x.toFixed(5)}`;
+  }
+  return `${pos.x.toFixed(1)}%, ${pos.y.toFixed(1)}%`;
+}
+
+/** Legacy schematic uses 0–100%; Google map edits store lng (x) and lat (y). */
 export function isValidCoord(pos: Coord | null | undefined): boolean {
   if (!pos) return false;
   if (!Number.isFinite(pos.x) || !Number.isFinite(pos.y)) return false;
+  if (isGeoCoords(pos)) return true;
   return pos.x >= 0 && pos.x <= 100 && pos.y >= 0 && pos.y <= 100;
 }
 
 function findDuplicateCoords(
   entries: { kind: MapMarkerKind; label: string; pos: Coord }[],
-  threshold = 0.6,
+  percentThreshold = 0.6,
+  geoThreshold = 0.00008,
 ): MapEditIssue[] {
   const issues: MapEditIssue[] = [];
   for (let i = 0; i < entries.length; i += 1) {
     for (let j = i + 1; j < entries.length; j += 1) {
       const a = entries[i];
       const b = entries[j];
+      const aGeo = isGeoCoords(a.pos);
+      const bGeo = isGeoCoords(b.pos);
+      if (aGeo !== bGeo) continue;
+
       const dx = a.pos.x - b.pos.x;
       const dy = a.pos.y - b.pos.y;
-      if (Math.hypot(dx, dy) <= threshold) {
+      const dist = Math.hypot(dx, dy);
+      const threshold = aGeo ? geoThreshold : percentThreshold;
+      if (dist <= threshold) {
         issues.push({
           id: `duplicate-${a.kind}-${a.label}-${b.kind}-${b.label}`,
           kind: a.kind,
           severity: "warning",
           code: "duplicate",
-          message: `${a.label} and ${b.label} are stacked at nearly the same spot (${a.pos.x.toFixed(1)}%, ${a.pos.y.toFixed(1)}%).`,
+          message: `${a.label} and ${b.label} are stacked at nearly the same spot (${formatCoordForMessage(a.pos)}).`,
           label: a.label,
         });
       }
@@ -76,7 +93,7 @@ export function validateMapPositions(input: {
         kind: "lot",
         severity: "error",
         code: "invalid",
-        message: `Lot ${lot} has invalid coordinates (${pos.x}, ${pos.y}) — must be 0–100%.`,
+        message: `Lot ${lot} has invalid coordinates (${formatCoordForMessage(pos)}) — use 0–100% on schematic or lat/lng on Google Maps.`,
         label: lot,
       });
     }
