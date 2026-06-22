@@ -172,8 +172,8 @@ export default function ParkWeatherPanel({ open, onClose }: ParkWeatherPanelProp
               </div>
 
               <p className="text-xs text-muted">
-                Tap the sun marker on the map anytime to reopen. Position it in{" "}
-                <strong>Map → Edit positions</strong> if you want it elsewhere.
+                Conditions refresh about every 15 minutes from Open-Meteo for
+                the resort area.
               </p>
             </div>
           )}

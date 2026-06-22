@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       lots: body.lots ?? existing.lots,
       places: body.places ?? existing.places,
       valves: body.valves ?? existing.valves,
+      hiddenLots: body.hiddenLots ?? existing.hiddenLots ?? [],
     };
     await saveMapPositions(positions);
     return NextResponse.json({ ok: true });

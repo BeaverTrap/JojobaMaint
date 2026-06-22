@@ -1314,13 +1314,8 @@
       "x": 4.8,
       "y": 6.1,
       "icon": "GiWaterTank"
-    },
-    "Park Weather": {
-      "x": 50,
-      "y": 48,
-      "icon": "MdWbSunny",
-      "color": "sky"
     }
   },
-  "valves": {}
+  "valves": {},
+  "hiddenLots": []
 }

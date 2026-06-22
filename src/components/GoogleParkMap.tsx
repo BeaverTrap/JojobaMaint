@@ -135,12 +135,16 @@ export function GoogleParkMap({
   contextValve = null,
   contextValves = [],
   initialMapData,
+  hiddenLots: hiddenLotsProp,
   autoFocusHighlight = false,
   resetWhenHighlightClears = false,
 }: ParkMapProps) {
   const [lots, setLots] = useState(initialMapData?.lots ?? {});
   const [places, setPlaces] = useState(initialMapData?.places ?? {});
   const [valves, setValves] = useState(initialMapData?.valves ?? {});
+  const [hiddenLots, setHiddenLots] = useState<string[]>(
+    hiddenLotsProp ?? initialMapData?.hiddenLots ?? [],
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!initialMapData);
 
@@ -155,6 +159,7 @@ export function GoogleParkMap({
         setLots(data.lots || {});
         setPlaces(data.places || {});
         setValves(data.valves || {});
+        setHiddenLots(data.hiddenLots || []);
         setLoading(false);
       })
       .catch((err: Error) => {
@@ -180,7 +185,15 @@ export function GoogleParkMap({
     [lotsToShow, lots, lotZones, contextZones, contextZone, zoneColors],
   );
 
-  const allLotIds = Object.keys(lots);
+  const hiddenLotSet = useMemo(
+    () => new Set(hiddenLotsProp ?? hiddenLots),
+    [hiddenLotsProp, hiddenLots],
+  );
+
+  const allLotIds = useMemo(
+    () => Object.keys(lots).filter((id) => !hiddenLotSet.has(id)),
+    [lots, hiddenLotSet],
+  );
   const allPlaceNames = Object.keys(places);
   const allValveIds = Object.keys(valves);
   const hasMarkers =

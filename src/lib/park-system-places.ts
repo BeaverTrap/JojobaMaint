@@ -1,35 +1,17 @@
-import type { MapPlacePosition, MapPositions } from "@/lib/map-positions";
+import type { MapPositions } from "@/lib/map-positions";
 
-/** Reserved map marker — tap to open live weather & area conditions. */
-export const PARK_WEATHER_PLACE_NAME = "Park Weather";
+/** Legacy map marker — weather now lives in the site header bar. */
+export const LEGACY_PARK_WEATHER_PLACE_NAME = "Park Weather";
 
-const SYSTEM_PLACE_NAMES = new Set([PARK_WEATHER_PLACE_NAME]);
+const EXCLUDED_MAP_PLACE_NAMES = new Set([LEGACY_PARK_WEATHER_PLACE_NAME]);
 
-/** Default position near park center (editable in /map/edit). */
-export const DEFAULT_PARK_WEATHER_PLACE: MapPlacePosition = {
-  x: 50,
-  y: 48,
-  icon: "MdWbSunny",
-  color: "sky",
-};
-
-export function isSystemMapPlace(name: string): boolean {
-  return SYSTEM_PLACE_NAMES.has(name);
-}
-
-export function isParkWeatherPlace(name: string): boolean {
-  return name === PARK_WEATHER_PLACE_NAME;
-}
-
-/** Ensures built-in informational markers exist without overwriting saved positions. */
-export function mergeSystemMapPlaces(
+/** Strip built-in / legacy places that should not appear on the map. */
+export function filterMapPlacesForDisplay(
   places: MapPositions["places"],
 ): MapPositions["places"] {
-  if (places[PARK_WEATHER_PLACE_NAME]) {
-    return places;
+  const filtered = { ...places };
+  for (const name of EXCLUDED_MAP_PLACE_NAMES) {
+    delete filtered[name];
   }
-  return {
-    ...places,
-    [PARK_WEATHER_PLACE_NAME]: DEFAULT_PARK_WEATHER_PLACE,
-  };
+  return filtered;
 }

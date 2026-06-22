@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Logo } from "@/components/Brand";
 import ThemeToggle from "@/components/ThemeToggle";
+import ParkWeatherBar from "@/components/ParkWeatherBar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import MobileMenu from "@/components/MobileMenu";
 import type { Profile } from "@/lib/database.types";
@@ -107,6 +108,7 @@ export default function Navbar({
             />
           </div>
         </nav>
+        <ParkWeatherBar />
       </header>
 
       <MobileBottomNav />

@@ -33,13 +33,17 @@ type MapEditGoogleMapProps = {
   valveIdsOnMap: string[];
   mode: "lots" | "places" | "valves";
   selectedLot: string | null;
+  selectedLotIds?: ReadonlySet<string>;
   selectedPlace: string | null;
   selectedValve: string | null;
   onPlaceCoords: (coords: { x: number; y: number }) => void;
   onMoveLot: (lotId: string, coords: { x: number; y: number }) => void;
   onMovePlace: (placeName: string, coords: { x: number; y: number }) => void;
   onMoveValve: (valveId: string, coords: { x: number; y: number }) => void;
-  onSelectLot: (lotId: string) => void;
+  onSelectLot: (
+    lotId: string,
+    modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => void;
   onSelectPlace: (placeName: string) => void;
   onSelectValve: (valveId: string) => void;
 };
@@ -116,6 +120,7 @@ export default function MapEditGoogleMap({
   valveIdsOnMap,
   mode,
   selectedLot,
+  selectedLotIds,
   selectedPlace,
   selectedValve,
   onPlaceCoords,
@@ -174,7 +179,9 @@ export default function MapEditGoogleMap({
         {lotIds.map((lotId) => {
           const pos = lots[lotId];
           if (!pos || !isValidCoord(pos)) return null;
-          const isSelected = mode === "lots" && selectedLot === lotId;
+          const isSelected =
+            mode === "lots" &&
+            (selectedLot === lotId || selectedLotIds?.has(lotId));
           return (
             <AdvancedMarker
               key={`edit-lot-${lotId}`}
@@ -184,7 +191,12 @@ export default function MapEditGoogleMap({
               draggable
               onClick={(e) => {
                 e.domEvent?.stopPropagation();
-                onSelectLot(lotId);
+                const dom = e.domEvent;
+                onSelectLot(lotId, {
+                  shiftKey: dom instanceof MouseEvent ? dom.shiftKey : false,
+                  ctrlKey: dom instanceof MouseEvent ? dom.ctrlKey : false,
+                  metaKey: dom instanceof MouseEvent ? dom.metaKey : false,
+                });
               }}
               onDragEnd={(e) => handleDragEnd(e, (coords) => onMoveLot(lotId, coords))}
             >

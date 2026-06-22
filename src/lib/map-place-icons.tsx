@@ -218,5 +218,4 @@ export const PLACE_ICON_DEFAULTS: Record<string, PlaceIconName> = {
   "Two Tanks": "GiWaterTank",
   "Water Tank 3": "GiWaterTank",
   "Oak Grove": "GiWaterTank",
-  "Park Weather": "MdWbSunny",
 };

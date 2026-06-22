@@ -69,6 +69,8 @@ export type ParkMapProps = {
   contextValves?: string[];
   /** Skip client fetch when positions are loaded on the server */
   initialMapData?: MapPositions;
+  /** Lot IDs omitted from the map (coords kept in storage). */
+  hiddenLots?: string[];
   /** Pan/zoom to highlighted lot or place when it changes */
   autoFocusHighlight?: boolean;
   /** Target zoom when focusing a marker (default depends on autoFocusHighlight) */
@@ -274,11 +276,14 @@ function convexHull(points: { x: number; y: number }[]): { x: number; y: number 
   return out;
 }
 
-export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [], lotZones = {}, zoneColors = {}, highlightValve = null, highlightPlace = null, onLotClick, onPlaceClick, onValveClick, showLots = true, showPlaces = true, showValves = true, fillHeight = false, zoomable = true, contextZone = null, contextLot = null, contextValve = null, contextValves = [], initialMapData, autoFocusHighlight = false, focusScale, resetWhenHighlightClears = false }: ParkMapProps) {
+export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [], lotZones = {}, zoneColors = {}, highlightValve = null, highlightPlace = null, onLotClick, onPlaceClick, onValveClick, showLots = true, showPlaces = true, showValves = true, fillHeight = false, zoomable = true, contextZone = null, contextLot = null, contextValve = null, contextValves = [], initialMapData, hiddenLots: hiddenLotsProp, autoFocusHighlight = false, focusScale, resetWhenHighlightClears = false }: ParkMapProps) {
   const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
   const [lots, setLots] = useState<LotPositions>(initialMapData?.lots ?? {});
   const [places, setPlaces] = useState<PlacePositions>(initialMapData?.places ?? {});
   const [valves, setValves] = useState<ValvePositions>(initialMapData?.valves ?? {});
+  const [hiddenLots, setHiddenLots] = useState<string[]>(
+    hiddenLotsProp ?? initialMapData?.hiddenLots ?? [],
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!initialMapData);
 
@@ -294,6 +299,7 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
         setLots(data.lots || {});
         setPlaces(data.places || {});
         setValves(data.valves || {});
+        setHiddenLots(data.hiddenLots || []);
         setLoading(false);
       })
       .catch((err: Error) => {
@@ -413,7 +419,15 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
     );
   }
 
-  const allLotIds = Object.keys(lots);
+  const hiddenLotSet = useMemo(
+    () => new Set(hiddenLotsProp ?? hiddenLots),
+    [hiddenLotsProp, hiddenLots],
+  );
+
+  const allLotIds = useMemo(
+    () => Object.keys(lots).filter((id) => !hiddenLotSet.has(id)),
+    [lots, hiddenLotSet],
+  );
   const allPlaceNames = Object.keys(places);
   const allValveIds = Object.keys(valves);
   const hasMarkers =
