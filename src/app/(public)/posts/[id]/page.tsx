@@ -9,6 +9,7 @@ import PostCard from "@/components/PostCard";
 import PostPostHeader from "@/components/PostPostHeader";
 import PrintReportHeader from "@/components/PrintReportHeader";
 import PrintReportToolbar from "@/components/PrintReportToolbar";
+import ArticleBody from "@/components/ArticleBody";
 import {
   postBody,
   postLocationLabel,
@@ -118,9 +119,9 @@ export default async function PostDetailPage({
             ))}
           </div>
           {postBody(p) && (
-            <p className="mt-3 text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
-              {postBody(p)}
-            </p>
+            <div className="mt-3">
+              <ArticleBody body={postBody(p)} />
+            </div>
           )}
         </div>
 

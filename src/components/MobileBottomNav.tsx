@@ -12,6 +12,10 @@ import {
 export default function MobileBottomNav() {
   const pathname = usePathname();
 
+  if (pathname === "/map" || pathname.startsWith("/map/")) {
+    return null;
+  }
+
   return (
     <nav
       className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur md:hidden dark:bg-black/95"

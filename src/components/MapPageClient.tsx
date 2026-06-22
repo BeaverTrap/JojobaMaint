@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import MapSyncButton from "@/components/MapSyncButton";
 import { ParkMap } from "@/components/ParkMap";
 import ValveLookupPanel, {
@@ -61,29 +61,18 @@ function MapPageContent({
     null,
   );
   const [layersOpen, setLayersOpen] = useState(false);
-  const didDefaultLotsOff = useRef(false);
 
   useEffect(() => {
     setLookupQuery(initialLookupQuery(searchParams));
   }, [searchParams]);
 
   useEffect(() => {
-    const m = window.matchMedia("(max-width: 411px)");
-    const update = () => {
-      setIsMobile(m.matches);
-      if (!m.matches) didDefaultLotsOff.current = false;
-    };
+    const m = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(m.matches);
     update();
     m.addEventListener("change", update);
     return () => m.removeEventListener("change", update);
   }, []);
-
-  useEffect(() => {
-    if (isMobile && !didDefaultLotsOff.current) {
-      setShowLots(false);
-      didDefaultLotsOff.current = true;
-    }
-  }, [isMobile]);
 
   const syncUrl = useCallback(
     (query: string) => {
@@ -227,8 +216,8 @@ function MapPageContent({
 
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-30 flex flex-col bg-canvas md:relative md:z-auto">
-        <div className="safe-area-inset-top flex shrink-0 items-center justify-between gap-2 border-b border-line bg-surface/95 px-3 py-2">
+      <div className="fixed inset-0 z-50 flex flex-col bg-canvas md:relative md:z-auto">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line bg-surface/95 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
           <div className="flex gap-1">
             <button
               type="button"
@@ -279,10 +268,12 @@ function MapPageContent({
           )}
         </div>
 
-        <div className="shrink-0 px-3 py-2">{wipBanner}</div>
+        {mobileView === "lookup" && (
+          <div className="shrink-0 px-3 py-2">{wipBanner}</div>
+        )}
 
         {mobileView === "lookup" ? (
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 pb-[env(safe-area-inset-bottom)]">
             <ValveLookupPanel
               initialQuery={lookupQuery}
               onQueryChange={handleQueryChange}
@@ -291,7 +282,9 @@ function MapPageContent({
             />
           </div>
         ) : (
-          <div className="relative min-h-0 flex-1">{mapElement}</div>
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+            {mapElement}
+          </div>
         )}
 
         {mobileView === "map" &&

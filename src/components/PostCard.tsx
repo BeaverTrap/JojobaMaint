@@ -8,6 +8,7 @@ import {
 import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
 import ShareButtons from "@/components/ShareButtons";
 import PostPostHeader from "@/components/PostPostHeader";
+import ArticleBody from "@/components/ArticleBody";
 
 export default function PostCard({
   post,
@@ -51,9 +52,9 @@ export default function PostCard({
           <p className="mt-1 text-xs font-medium text-brand-700">{location}</p>
         )}
         {details && (
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted whitespace-pre-wrap">
-            {details}
-          </p>
+          <div className="mt-2 max-h-[4.5rem] overflow-hidden text-sm [&_.article-prose]:text-sm [&_.article-prose]:leading-relaxed">
+            <ArticleBody body={details} />
+          </div>
         )}
       </Link>
 

@@ -114,7 +114,7 @@ function LotMarker({
             : undefined
         }
         className={`
-          map-marker-btn inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded px-2 py-1.5 text-[11px] font-bold transition-colors duration-200 sm:min-h-0 sm:min-w-0 sm:px-1.5 sm:py-0.5 sm:text-xs
+          map-marker-btn inline-flex min-h-[clamp(28px,4.5cqw,40px)] min-w-[clamp(28px,4.5cqw,40px)] items-center justify-center rounded px-[clamp(4px,1cqw,8px)] py-[clamp(4px,1cqw,8px)] text-[clamp(9px,2cqw,12px)] font-bold transition-colors duration-200
           ${onLotClick ? "cursor-pointer touch-manipulation hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
           ${isHighlight ? "scale-110 ring-2 ring-white" : ""}
           ${lotClass}
@@ -163,14 +163,14 @@ function PlaceMarker({
             : undefined
         }
         className={`
-          map-marker-btn inline-flex h-11 w-11 items-center justify-center rounded-full p-2.5 transition-colors duration-200 sm:h-9 sm:w-9 sm:p-1.5
+          map-marker-btn inline-flex h-[clamp(28px,5cqw,40px)] w-[clamp(28px,5cqw,40px)] items-center justify-center rounded-full p-[clamp(4px,1cqw,10px)] transition-colors duration-200
           ${isHighlight ? "bg-blue-700 text-white ring-2 ring-white" : getPlaceColor(pos.icon ?? "MdPlace")}
           ${isHighlight ? "scale-110" : ""}
           ${isClickable ? "cursor-pointer touch-manipulation hover:opacity-90 hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
         `}
         {...(isClickable ? tap : {})}
       >
-        <IconComponent className="h-5 w-5 shrink-0 sm:h-[18px] sm:w-[18px]" size={20} />
+        <IconComponent className="h-[clamp(14px,2.8cqw,20px)] w-[clamp(14px,2.8cqw,20px)] shrink-0" />
       </span>
       <span className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white shadow-lg group-hover:visible">
         {placeName}
@@ -219,22 +219,22 @@ function ValveMarker({
             : undefined
         }
         className={`
-          inline-flex flex-col items-center transition-colors duration-200
+          map-marker-btn inline-flex flex-col items-center transition-colors duration-200
           ${isClickable ? "cursor-pointer touch-manipulation rounded hover:opacity-90 hover:ring-2 hover:ring-white/80 active:scale-95" : ""}
         `}
         {...(isClickable ? tap : {})}
       >
         <span
           className={`
-            inline-flex h-11 w-11 items-center justify-center rounded-full p-2.5 sm:h-9 sm:w-9 sm:p-1.5
+            inline-flex h-[clamp(28px,5cqw,40px)] w-[clamp(28px,5cqw,40px)] items-center justify-center rounded-full p-[clamp(4px,1cqw,10px)]
             ${isHighlight ? "bg-slate-700 text-white ring-2 ring-white" : "bg-slate-600 text-white"}
           `}
         >
-          <MdPlumbing className="h-5 w-5 shrink-0 sm:h-[18px] sm:w-[18px]" size={20} />
+          <MdPlumbing className="h-[clamp(14px,2.8cqw,20px)] w-[clamp(14px,2.8cqw,20px)] shrink-0" />
         </span>
         <span
           className={`
-            mt-1 min-w-[2rem] rounded px-2 py-0.5 text-center text-[11px] font-bold sm:mt-0.5 sm:min-w-[1.75rem] sm:px-1.5 sm:py-0.5 sm:text-[10px]
+            mt-1 min-w-[clamp(1.75rem,4cqw,2rem)] rounded px-[clamp(4px,1cqw,8px)] py-0.5 text-center text-[clamp(9px,2cqw,11px)] font-bold
             ${isHighlight ? "bg-slate-700 text-white ring-1 ring-white/50" : "bg-slate-700/90 text-white"}
           `}
         >
@@ -505,8 +505,8 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
   );
 
   const surfaceClassName = fillHeight
-    ? "relative aspect-[4/3] min-h-[55dvh] w-full max-h-[80dvh]"
-    : "relative aspect-[4/3] min-h-[55dvh] w-full sm:min-h-0";
+    ? "relative h-full w-full min-h-0 [container-type:size]"
+    : "relative aspect-[4/3] min-h-[55dvh] w-full sm:min-h-0 [container-type:size]";
 
   const hasContext = contextZone || contextLot || contextValve || contextValves.length > 0;
   const contextBadge = hasContext ? (
@@ -529,7 +529,13 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
   ) : null;
 
   const mapInner = zoomable ? (
-    <div className="relative h-full min-h-[55dvh] w-full">
+    <div
+      className={
+        fillHeight
+          ? "relative h-full min-h-0 w-full touch-none"
+          : "relative h-full min-h-[55dvh] w-full touch-none"
+      }
+    >
       <TransformWrapper
         ref={transformRef}
         initialScale={1}
@@ -547,7 +553,7 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
             {contextBadge}
-            <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1.5 rounded-lg border border-gray-600 bg-gray-800/95 p-1.5 shadow-lg">
+            <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1.5 rounded-lg border border-gray-600 bg-gray-800/95 p-1.5 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
               <button
                 type="button"
                 onClick={() => zoomIn(0.2, 180, "easeOut")}
@@ -575,7 +581,7 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
               </button>
             </div>
             <TransformComponent
-              wrapperStyle={{ width: "100%", height: "100%" }}
+              wrapperStyle={{ width: "100%", height: "100%", touchAction: "none" }}
               contentStyle={{ width: "100%", height: "100%" }}
             >
               <div className={surfaceClassName}>{mapContent}</div>
@@ -593,12 +599,12 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
 
   return (
     <div
-      className={`w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900 ${fillHeight ? "flex min-h-[55dvh] flex-1 flex-col" : ""}`}
+      className={`w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900 ${fillHeight ? "flex min-h-0 flex-1 flex-col" : ""}`}
     >
       <div
         className={
           fillHeight
-            ? "relative min-h-[55dvh] w-full flex-1"
+            ? "relative min-h-0 w-full flex-1"
             : "relative w-full"
         }
       >

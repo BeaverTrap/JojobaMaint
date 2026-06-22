@@ -9,6 +9,7 @@ export function useTapHandler(onTap: () => void) {
 
   return {
     onPointerDown(e: ReactPointerEvent) {
+      e.stopPropagation();
       start.current = { x: e.clientX, y: e.clientY };
       moved.current = false;
     },
