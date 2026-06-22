@@ -9,9 +9,9 @@ import {
   useMap,
 } from "@vis.gl/react-google-maps";
 import {
-  collectMapLatLngs,
   GOOGLE_MAP_MARKER_ANCHOR,
   MapFitBounds,
+  fitMapToLatLngBounds,
 } from "@/components/GoogleMapMarkers";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
@@ -44,7 +44,6 @@ function MapFocusController({
   places,
   valves,
   resetWhenHighlightClears,
-  overviewPositions,
 }: {
   loading: boolean;
   autoFocusHighlight: boolean;
@@ -55,7 +54,6 @@ function MapFocusController({
   places: Record<string, { x: number; y: number }>;
   valves: Record<string, { x: number; y: number }>;
   resetWhenHighlightClears: boolean;
-  overviewPositions: { lat: number; lng: number }[];
 }) {
   const map = useMap();
 
@@ -78,17 +76,10 @@ function MapFocusController({
         map.setZoom(FOCUS_ZOOM_SELECTION);
         return;
       }
-      if (resetWhenHighlightClears && overviewPositions.length > 0) {
-        const bounds = new google.maps.LatLngBounds();
-        for (const p of overviewPositions) {
-          bounds.extend(p);
-        }
-        map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
-        google.maps.event.addListenerOnce(map, "idle", () => {
-          const zoom = map.getZoom();
-          if (zoom != null && zoom > OVERVIEW_MAX_ZOOM) {
-            map.setZoom(OVERVIEW_MAX_ZOOM);
-          }
+      if (resetWhenHighlightClears) {
+        fitMapToLatLngBounds(map, parkMapBoundsLiteral(), {
+          maxZoom: OVERVIEW_MAX_ZOOM,
+          minZoom: 16,
         });
       }
     }, 50);
@@ -105,7 +96,6 @@ function MapFocusController({
     places,
     valves,
     resetWhenHighlightClears,
-    overviewPositions,
   ]);
 
   return null;
@@ -197,14 +187,6 @@ export function GoogleParkMap({
     allPlaceNames.length > 0 ||
     allValveIds.length > 0;
 
-  const overviewPositions = useMemo(
-    () => collectMapLatLngs(lots, places, valves),
-    [lots, places, valves],
-  );
-
-  const hasActiveHighlight =
-    highlightLot != null || highlightPlace != null || highlightValve != null;
-
   const hasContext =
     contextZone || contextLot || contextValve || contextValves.length > 0;
   const colorScheme = useGoogleMapColorScheme();
@@ -273,8 +255,9 @@ export function GoogleParkMap({
             }}
           >
             <MapFitBounds
-              positions={overviewPositions}
-              enabled={!loading && overviewPositions.length > 0 && !hasActiveHighlight}
+              once
+              enabled={!loading}
+              minZoom={16}
               maxZoom={OVERVIEW_MAX_ZOOM}
             />
             <MapFocusController
@@ -287,7 +270,6 @@ export function GoogleParkMap({
               places={places}
               valves={valves}
               resetWhenHighlightClears={resetWhenHighlightClears}
-              overviewPositions={overviewPositions}
             />
 
             {zoneBlobs.map((blob, i) => {

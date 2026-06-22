@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import { AdvancedMarkerAnchorPoint, useMap } from "@vis.gl/react-google-maps";
 import { mapPositionToLatLng } from "@/lib/map-coords";
-import type { MapLatLng } from "@/lib/map-geography";
+import type { MapLatLng, MapLatLngBounds } from "@/lib/map-geography";
+import { parkMapBoundsLiteral } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
 
 /** Match schematic PNG map: marker center sits on the coordinate. */
 export const GOOGLE_MAP_MARKER_ANCHOR = AdvancedMarkerAnchorPoint.CENTER;
 
-const FIT_PADDING = { top: 40, right: 40, bottom: 40, left: 40 } as const;
+const DEFAULT_FIT_PADDING = { top: 40, right: 40, bottom: 40, left: 40 } as const;
 
 export function collectMapLatLngs(
   lots: MapPositions["lots"],
@@ -29,49 +30,71 @@ export function collectMapLatLngs(
   return out;
 }
 
-export function MapFitBounds({
-  positions,
-  enabled,
-  maxZoom = 18,
-}: {
-  positions: MapLatLng[];
-  enabled: boolean;
-  maxZoom?: number;
-}) {
-  const map = useMap();
-  const key = useMemo(
-    () =>
-      positions
-        .map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`)
-        .join("|"),
-    [positions],
+function toGoogleBounds(
+  bounds: MapLatLngBounds,
+): google.maps.LatLngBounds {
+  return new google.maps.LatLngBounds(
+    { lat: bounds.south, lng: bounds.west },
+    { lat: bounds.north, lng: bounds.east },
   );
+}
+
+export function fitMapToLatLngBounds(
+  map: google.maps.Map,
+  bounds: MapLatLngBounds,
+  options?: {
+    padding?: number | google.maps.Padding;
+    maxZoom?: number;
+    minZoom?: number;
+  },
+): void {
+  const padding = options?.padding ?? DEFAULT_FIT_PADDING;
+  map.fitBounds(toGoogleBounds(bounds), padding);
+
+  google.maps.event.addListenerOnce(map, "idle", () => {
+    const zoom = map.getZoom();
+    if (zoom == null) return;
+    if (options?.maxZoom != null && zoom > options.maxZoom) {
+      map.setZoom(options.maxZoom);
+    }
+    if (options?.minZoom != null && zoom < options.minZoom) {
+      map.setZoom(options.minZoom);
+    }
+  });
+}
+
+type MapFitBoundsProps = {
+  /** Geographic rectangle to frame (default: park bounds). */
+  bounds?: MapLatLngBounds;
+  /** When true, only fit once on load — map won't reset while editing markers. */
+  once?: boolean;
+  enabled?: boolean;
+  maxZoom?: number;
+  minZoom?: number;
+};
+
+/** Frames the map to a fixed geographic area. Does not track marker positions. */
+export function MapFitBounds({
+  bounds = parkMapBoundsLiteral(),
+  once = false,
+  enabled = true,
+  maxZoom,
+  minZoom,
+}: MapFitBoundsProps) {
+  const map = useMap();
+  const hasFittedRef = useRef(false);
 
   useEffect(() => {
-    if (!map || !enabled || positions.length === 0) return;
+    if (!map || !enabled) return;
+    if (once && hasFittedRef.current) return;
 
-    let listener: google.maps.MapsEventListener | null = null;
     const timer = window.setTimeout(() => {
-      const bounds = new google.maps.LatLngBounds();
-      for (const p of positions) {
-        bounds.extend(p);
-      }
-      map.fitBounds(bounds, FIT_PADDING);
-      listener = google.maps.event.addListenerOnce(map, "idle", () => {
-        const zoom = map.getZoom();
-        if (zoom != null && zoom > maxZoom) {
-          map.setZoom(maxZoom);
-        }
-      });
+      fitMapToLatLngBounds(map, bounds, { maxZoom, minZoom });
+      hasFittedRef.current = true;
     }, 80);
 
-    return () => {
-      window.clearTimeout(timer);
-      if (listener) {
-        google.maps.event.removeListener(listener);
-      }
-    };
-  }, [map, enabled, key, positions, maxZoom]);
+    return () => window.clearTimeout(timer);
+  }, [map, enabled, once, bounds, maxZoom, minZoom]);
 
   return null;
 }

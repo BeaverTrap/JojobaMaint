@@ -1,17 +1,15 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { MdPlumbing } from "react-icons/md";
 import {
   AdvancedMarker,
   Map,
   type MapMouseEvent,
+  useMap,
 } from "@vis.gl/react-google-maps";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
-import {
-  collectMapLatLngs,
-  GOOGLE_MAP_MARKER_ANCHOR,
-  MapFitBounds,
-} from "@/components/GoogleMapMarkers";
+import { GOOGLE_MAP_MARKER_ANCHOR, MapFitBounds } from "@/components/GoogleMapMarkers";
 import { getPlaceIcon, getPlaceColor } from "@/lib/map-place-icons";
 import {
   formatMapPosition,
@@ -53,6 +51,61 @@ function coordsFromMapEvent(
   return latLngToMapPosition(latLng.lat, latLng.lng);
 }
 
+/** Pan to a selected marker without changing zoom (e.g. issue list pick). */
+function MapEditSelectionPan({
+  mode,
+  selectedLot,
+  selectedPlace,
+  selectedValve,
+  lots,
+  places,
+  valves,
+}: {
+  mode: "lots" | "places" | "valves";
+  selectedLot: string | null;
+  selectedPlace: string | null;
+  selectedValve: string | null;
+  lots: MapPositions["lots"];
+  places: MapPositions["places"];
+  valves: MapPositions["valves"];
+}) {
+  const map = useMap();
+  const lastFocusKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    let focusKey: string | null = null;
+    let position: ReturnType<typeof mapPositionToLatLng> | null = null;
+
+    if (mode === "lots" && selectedLot && lots[selectedLot]) {
+      focusKey = `lot:${selectedLot}`;
+      position = mapPositionToLatLng(lots[selectedLot]!);
+    } else if (mode === "places" && selectedPlace && places[selectedPlace]) {
+      focusKey = `place:${selectedPlace}`;
+      position = mapPositionToLatLng(places[selectedPlace]!);
+    } else if (mode === "valves" && selectedValve && valves[selectedValve]) {
+      focusKey = `valve:${selectedValve}`;
+      position = mapPositionToLatLng(valves[selectedValve]!);
+    }
+
+    if (!focusKey || !position || focusKey === lastFocusKey.current) return;
+    lastFocusKey.current = focusKey;
+    map.panTo(position);
+  }, [
+    map,
+    mode,
+    selectedLot,
+    selectedPlace,
+    selectedValve,
+    lots,
+    places,
+    valves,
+  ]);
+
+  return null;
+}
+
 export default function MapEditGoogleMap({
   lots,
   places,
@@ -73,7 +126,6 @@ export default function MapEditGoogleMap({
   onSelectValve,
 }: MapEditGoogleMapProps) {
   const colorScheme = useGoogleMapColorScheme();
-  const overviewPositions = collectMapLatLngs(lots, places, valves);
 
   function handleMapClick(event: MapMouseEvent) {
     const coords = coordsFromMapEvent(event);
@@ -95,7 +147,7 @@ export default function MapEditGoogleMap({
       <Map
         mapId={googleMapId()}
         defaultCenter={parkMapCenter()}
-        defaultZoom={17}
+        defaultZoom={18}
         gestureHandling="greedy"
         mapTypeId="roadmap"
         colorScheme={colorScheme}
@@ -108,10 +160,15 @@ export default function MapEditGoogleMap({
           strictBounds: false,
         }}
       >
-        <MapFitBounds
-          positions={overviewPositions}
-          enabled={overviewPositions.length > 0}
-          maxZoom={18}
+        <MapFitBounds once minZoom={17} maxZoom={19} />
+        <MapEditSelectionPan
+          mode={mode}
+          selectedLot={selectedLot}
+          selectedPlace={selectedPlace}
+          selectedValve={selectedValve}
+          lots={lots}
+          places={places}
+          valves={valves}
         />
         {lotIds.map((lotId) => {
           const pos = lots[lotId];
