@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdPlumbing } from "react-icons/md";
 import MapEditGoogleMap from "@/components/MapEditGoogleMap";
+import {
+  MapEditSelectionToolbar,
+  type MapListFilter,
+} from "@/components/MapEditSelectionToolbar";
 import { PlaceStylePicker } from "@/components/PlaceStylePicker";
 import {
   DEFAULT_PLACE_ICON,
@@ -20,7 +24,7 @@ import {
 } from "@/lib/map-stage";
 import { formatMapPosition } from "@/lib/map-coords";
 import { isGoogleMapsEnabled } from "@/lib/map-geography";
-import { applyLotListSelection } from "@/lib/map-lot-selection";
+import { applyListSelection } from "@/lib/map-lot-selection";
 import { initialMapEditSnapshot } from "@/lib/map-edit-history";
 import type { MapPositions } from "@/lib/map-positions";
 import { useMapEditHistory } from "@/hooks/use-map-edit-history";
@@ -32,7 +36,22 @@ import {
   type MapMarkerKind,
 } from "@/lib/map-edit-validation";
 
-type LotListFilter = "all" | "on-map" | "unplaced";
+
+function selectionMessage(
+  kind: "lot" | "place" | "valve",
+  count: number,
+  id: string,
+  isPlaced: boolean,
+): string {
+  const label = kind === "lot" ? "lots" : kind === "place" ? "places" : "valves";
+  if (count > 1) {
+    return `${count} ${label} selected — Reset to pull off the map, or drag markers.`;
+  }
+  if (isPlaced) {
+    return `Selected ${id} — drag to move or Reset to pull off the map.`;
+  }
+  return `Selected ${id} — pan here and click the map to place it.`;
+}
 
 function naturalSort(a: string, b: string): number {
   const na = parseInt(a.replace(/\D/g, "") || "0", 10);
@@ -60,6 +79,8 @@ export default function MapEditClient({
 }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const lastLotClickIndex = useRef<number | null>(null);
+  const lastPlaceClickIndex = useRef<number | null>(null);
+  const lastValveClickIndex = useRef<number | null>(null);
   const dragRef = useRef<{
     kind: "lots" | "places" | "valves";
     id: string;
@@ -80,7 +101,15 @@ export default function MapEditClient({
   const [selectedLotIds, setSelectedLotIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const [lotListFilter, setLotListFilter] = useState<LotListFilter>("all");
+  const [selectedPlaceIds, setSelectedPlaceIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [selectedValveIds, setSelectedValveIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [lotListFilter, setLotListFilter] = useState<MapListFilter>("all");
+  const [placeListFilter, setPlaceListFilter] = useState<MapListFilter>("all");
+  const [valveListFilter, setValveListFilter] = useState<MapListFilter>("all");
   const [valveIdsFromApi, setValveIdsFromApi] = useState<string[]>([]);
   const [sheetLots, setSheetLots] = useState<string[]>([]);
   const [sheetLoadError, setSheetLoadError] = useState<string | null>(null);
@@ -161,8 +190,41 @@ export default function MapEditClient({
     return lotIds;
   }, [lotIds, lotListFilter, lots]);
 
-  const placeNames = Object.keys(places).sort((a, b) => a.localeCompare(b));
-  const valveIdsOnMap = Object.keys(valves).sort(naturalSort);
+  const placeNames = useMemo(
+    () => Object.keys(places).sort((a, b) => a.localeCompare(b)),
+    [places],
+  );
+  const placedPlaceNames = useMemo(
+    () => placeNames.filter((name) => isValidCoord(places[name])),
+    [placeNames, places],
+  );
+  const filteredPlaceNames = useMemo(() => {
+    if (placeListFilter === "on-map") {
+      return placeNames.filter((name) => isValidCoord(places[name]));
+    }
+    if (placeListFilter === "unplaced") {
+      return placeNames.filter((name) => !isValidCoord(places[name]));
+    }
+    return placeNames;
+  }, [placeNames, placeListFilter, places]);
+
+  const valveIds = useMemo(() => {
+    const merged = new Set([...Object.keys(valves), ...valveIdsFromApi]);
+    return Array.from(merged).sort(naturalSort);
+  }, [valves, valveIdsFromApi]);
+  const placedValveIds = useMemo(
+    () => valveIds.filter((id) => isValidCoord(valves[id])),
+    [valveIds, valves],
+  );
+  const filteredValveIds = useMemo(() => {
+    if (valveListFilter === "on-map") {
+      return valveIds.filter((id) => isValidCoord(valves[id]));
+    }
+    if (valveListFilter === "unplaced") {
+      return valveIds.filter((id) => !isValidCoord(valves[id]));
+    }
+    return valveIds;
+  }, [valveIds, valveListFilter, valves]);
 
   const issues = useMemo(
     () =>
@@ -184,28 +246,48 @@ export default function MapEditClient({
       setSelectedLotIds(new Set([label]));
       lastLotClickIndex.current = lotIds.indexOf(label);
       setSelectedPlace(null);
+      setSelectedPlaceIds(new Set());
       setSelectedValve(null);
+      setSelectedValveIds(new Set());
+      setMessage(
+        !isValidCoord(lots[label])
+          ? `Selected ${label} — pan to the right area and click the map to place.`
+          : `Selected ${label} — click the map or drag its marker to fix.`,
+      );
     } else if (kind === "place") {
       setMode("places");
       setSelectedPlace(label);
+      setSelectedPlaceIds(new Set([label]));
+      lastPlaceClickIndex.current = placeNames.indexOf(label);
       setSelectedLot(null);
+      setSelectedLotIds(new Set());
       setSelectedValve(null);
+      setSelectedValveIds(new Set());
+      setMessage(
+        !isValidCoord(places[label])
+          ? `Selected ${label} — pan to the right area and click the map to place.`
+          : `Selected ${label} — click the map or drag its marker to fix.`,
+      );
     } else {
       setMode("valves");
       setSelectedValve(label);
+      setSelectedValveIds(new Set([label]));
+      lastValveClickIndex.current = valveIds.indexOf(label);
       setSelectedLot(null);
+      setSelectedLotIds(new Set());
       setSelectedPlace(null);
+      setSelectedPlaceIds(new Set());
+      setMessage(
+        !isValidCoord(valves[label])
+          ? `Selected ${label} — pan to the right area and click the map to place.`
+          : `Selected ${label} — click the map or drag its marker to fix.`,
+      );
     }
-    setMessage(
-      kind === "lot" && !isValidCoord(lots[label])
-        ? `Selected ${label} — pan to the right area and click the map to place.`
-        : `Selected ${label} — click the map or drag its marker to fix.`,
-    );
-  }, [lotIds, lots]);
+  }, [lotIds, lots, placeNames, places, valveIds, valves]);
 
   const handleLotSidebarClick = useCallback(
     (lotId: string, event: React.MouseEvent) => {
-      const { selected, lastIndex } = applyLotListSelection(
+      const { selected, lastIndex } = applyListSelection(
         lotIds,
         lotId,
         selectedLotIds,
@@ -217,17 +299,72 @@ export default function MapEditClient({
       setMode("lots");
       setSelectedLot(lotId);
       setSelectedPlace(null);
+      setSelectedPlaceIds(new Set());
       setSelectedValve(null);
-      const count = selected.size;
+      setSelectedValveIds(new Set());
       setMessage(
-        count > 1
-          ? `${count} lots selected — Reset to pull off the map, then click to place.`
-          : isValidCoord(lots[lotId])
-            ? `Selected ${lotId} — drag to move or Reset to pull off the map.`
-            : `Selected ${lotId} — pan here and click the map to place it.`,
+        selectionMessage("lot", selected.size, lotId, isValidCoord(lots[lotId])),
       );
     },
     [lotIds, selectedLotIds, lots],
+  );
+
+  const handlePlaceSidebarClick = useCallback(
+    (placeName: string, event: React.MouseEvent) => {
+      const { selected, lastIndex } = applyListSelection(
+        placeNames,
+        placeName,
+        selectedPlaceIds,
+        lastPlaceClickIndex.current,
+        event,
+      );
+      setSelectedPlaceIds(selected);
+      lastPlaceClickIndex.current = lastIndex;
+      setMode("places");
+      setSelectedPlace(placeName);
+      setSelectedLot(null);
+      setSelectedLotIds(new Set());
+      setSelectedValve(null);
+      setSelectedValveIds(new Set());
+      setMessage(
+        selectionMessage(
+          "place",
+          selected.size,
+          placeName,
+          isValidCoord(places[placeName]),
+        ),
+      );
+    },
+    [placeNames, places, selectedPlaceIds],
+  );
+
+  const handleValveSidebarClick = useCallback(
+    (valveId: string, event: React.MouseEvent) => {
+      const { selected, lastIndex } = applyListSelection(
+        valveIds,
+        valveId,
+        selectedValveIds,
+        lastValveClickIndex.current,
+        event,
+      );
+      setSelectedValveIds(selected);
+      lastValveClickIndex.current = lastIndex;
+      setMode("valves");
+      setSelectedValve(valveId);
+      setSelectedLot(null);
+      setSelectedLotIds(new Set());
+      setSelectedPlace(null);
+      setSelectedPlaceIds(new Set());
+      setMessage(
+        selectionMessage(
+          "valve",
+          selected.size,
+          valveId,
+          isValidCoord(valves[valveId]),
+        ),
+      );
+    },
+    [valveIds, valves, selectedValveIds],
   );
 
   const handleLotMapClick = useCallback(
@@ -235,7 +372,7 @@ export default function MapEditClient({
       lotId: string,
       modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
     ) => {
-      const { selected, lastIndex } = applyLotListSelection(
+      const { selected, lastIndex } = applyListSelection(
         lotIds,
         lotId,
         selectedLotIds,
@@ -247,17 +384,78 @@ export default function MapEditClient({
       setMode("lots");
       setSelectedLot(lotId);
       setSelectedPlace(null);
+      setSelectedPlaceIds(new Set());
       setSelectedValve(null);
-      const count = selected.size;
+      setSelectedValveIds(new Set());
       setMessage(
-        count > 1
-          ? `${count} lots selected — Reset to pull off the map, or drag markers.`
-          : isValidCoord(lots[lotId])
-            ? `Selected ${lotId} — drag to move or Reset to pull off the map.`
-            : `Selected ${lotId} — click the map to place it here.`,
+        selectionMessage("lot", selected.size, lotId, isValidCoord(lots[lotId])),
       );
     },
     [lotIds, selectedLotIds, lots],
+  );
+
+  const handlePlaceMapClick = useCallback(
+    (
+      placeName: string,
+      modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+    ) => {
+      const { selected, lastIndex } = applyListSelection(
+        placeNames,
+        placeName,
+        selectedPlaceIds,
+        lastPlaceClickIndex.current,
+        modifiers,
+      );
+      setSelectedPlaceIds(selected);
+      lastPlaceClickIndex.current = lastIndex;
+      setMode("places");
+      setSelectedPlace(placeName);
+      setSelectedLot(null);
+      setSelectedLotIds(new Set());
+      setSelectedValve(null);
+      setSelectedValveIds(new Set());
+      setMessage(
+        selectionMessage(
+          "place",
+          selected.size,
+          placeName,
+          isValidCoord(places[placeName]),
+        ),
+      );
+    },
+    [placeNames, places, selectedPlaceIds],
+  );
+
+  const handleValveMapClick = useCallback(
+    (
+      valveId: string,
+      modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+    ) => {
+      const { selected, lastIndex } = applyListSelection(
+        valveIds,
+        valveId,
+        selectedValveIds,
+        lastValveClickIndex.current,
+        modifiers,
+      );
+      setSelectedValveIds(selected);
+      lastValveClickIndex.current = lastIndex;
+      setMode("valves");
+      setSelectedValve(valveId);
+      setSelectedLot(null);
+      setSelectedLotIds(new Set());
+      setSelectedPlace(null);
+      setSelectedPlaceIds(new Set());
+      setMessage(
+        selectionMessage(
+          "valve",
+          selected.size,
+          valveId,
+          isValidCoord(valves[valveId]),
+        ),
+      );
+    },
+    [valveIds, valves, selectedValveIds],
   );
 
   const resetLotPositions = useCallback(
@@ -328,6 +526,147 @@ export default function MapEditClient({
     );
   }, [lotIds, lots, resetLotPositions]);
 
+  const resetPlacePositions = useCallback(
+    (ids: Iterable<string>) => {
+      const idList = Array.from(ids);
+      if (idList.length === 0) return;
+      mutate((prev) => {
+        const nextPlaces = { ...prev.places };
+        for (const id of idList) {
+          const existing = nextPlaces[id];
+          if (!existing) continue;
+          nextPlaces[id] = {
+            icon: existing.icon ?? DEFAULT_PLACE_ICON,
+            color: existing.color,
+          };
+        }
+        return { ...prev, places: nextPlaces };
+      });
+    },
+    [mutate],
+  );
+
+  const resetValvePositions = useCallback(
+    (ids: Iterable<string>) => {
+      const idList = Array.from(ids);
+      if (idList.length === 0) return;
+      mutate((prev) => {
+        const nextValves = { ...prev.valves };
+        for (const id of idList) {
+          delete nextValves[id];
+        }
+        return { ...prev, valves: nextValves };
+      });
+    },
+    [mutate],
+  );
+
+  const handleResetSelectedPlaces = useCallback(() => {
+    if (selectedPlaceIds.size === 0) return;
+    const ids = Array.from(selectedPlaceIds);
+    const placedCount = ids.filter((id) => isValidCoord(places[id])).length;
+    resetPlacePositions(ids);
+    setMessage(
+      placedCount > 0
+        ? `Pulled ${placedCount} place(s) off the map (${ids.length} selected) — click the map to place again.`
+        : `${ids.length} selected place(s) are already unplaced.`,
+    );
+  }, [places, resetPlacePositions, selectedPlaceIds]);
+
+  const resetPlacesWithSelection = useCallback(
+    (placeName: string) => {
+      const ids =
+        selectedPlaceIds.size > 1 && selectedPlaceIds.has(placeName)
+          ? Array.from(selectedPlaceIds)
+          : [placeName];
+      const placedCount = ids.filter((id) => isValidCoord(places[id])).length;
+      resetPlacePositions(ids);
+      if (ids.length > 1) {
+        setMessage(
+          placedCount > 0
+            ? `Pulled ${placedCount} selected place(s) off the map — click the map to place again.`
+            : `${ids.length} selected places are already unplaced.`,
+        );
+      } else {
+        selectMarker("place", placeName);
+        setMessage(
+          `Reset "${placeName}" — pan to the right spot and click the map.`,
+        );
+      }
+    },
+    [places, resetPlacePositions, selectMarker, selectedPlaceIds],
+  );
+
+  const handleResetAllPlacedPlaces = useCallback(() => {
+    const placed = placeNames.filter((name) => isValidCoord(places[name]));
+    if (placed.length === 0) return;
+    if (
+      !window.confirm(
+        `Pull all ${placed.length} placed locations off the map? Coordinates will be cleared until you place them again.`,
+      )
+    ) {
+      return;
+    }
+    resetPlacePositions(placed);
+    setPlaceListFilter("unplaced");
+    setMessage(
+      `Pulled ${placed.length} places off the map. Filter set to Unplaced.`,
+    );
+  }, [placeNames, places, resetPlacePositions]);
+
+  const handleResetSelectedValves = useCallback(() => {
+    if (selectedValveIds.size === 0) return;
+    const ids = Array.from(selectedValveIds);
+    const placedCount = ids.filter((id) => isValidCoord(valves[id])).length;
+    resetValvePositions(ids);
+    setMessage(
+      placedCount > 0
+        ? `Pulled ${placedCount} valve(s) off the map (${ids.length} selected) — click the map to place again.`
+        : `${ids.length} selected valve(s) are already unplaced.`,
+    );
+  }, [resetValvePositions, selectedValveIds, valves]);
+
+  const resetValvesWithSelection = useCallback(
+    (valveId: string) => {
+      const ids =
+        selectedValveIds.size > 1 && selectedValveIds.has(valveId)
+          ? Array.from(selectedValveIds)
+          : [valveId];
+      const placedCount = ids.filter((id) => isValidCoord(valves[id])).length;
+      resetValvePositions(ids);
+      if (ids.length > 1) {
+        setMessage(
+          placedCount > 0
+            ? `Pulled ${placedCount} selected valve(s) off the map — click the map to place again.`
+            : `${ids.length} selected valves are already unplaced.`,
+        );
+      } else {
+        selectMarker("valve", valveId);
+        setMessage(
+          `Reset valve "${valveId}" — pan to the right spot and click the map.`,
+        );
+      }
+    },
+    [resetValvePositions, selectMarker, selectedValveIds, valves],
+  );
+
+  const handleResetAllPlacedValves = useCallback(() => {
+    const placed = valveIds.filter((id) => isValidCoord(valves[id]));
+    if (placed.length === 0) return;
+    if (
+      !window.confirm(
+        `Pull all ${placed.length} placed valves off the map? Coordinates will be cleared until you place them again.`,
+      )
+    ) {
+      return;
+    }
+    resetValvePositions(placed);
+    setValveListFilter("unplaced");
+    setMessage(
+      `Pulled ${placed.length} valves off the map. Filter set to Unplaced.`,
+    );
+  }, [resetValvePositions, valveIds, valves]);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target;
@@ -356,18 +695,32 @@ export default function MapEditClient({
         return;
       }
 
-      if (
-        mode === "lots" &&
-        (event.key === "Delete" || event.key === "Backspace") &&
-        selectedLotIds.size > 0
-      ) {
-        event.preventDefault();
-        handleResetSelectedLots();
+      if (event.key === "Delete" || event.key === "Backspace") {
+        if (mode === "lots" && selectedLotIds.size > 0) {
+          event.preventDefault();
+          handleResetSelectedLots();
+        } else if (mode === "places" && selectedPlaceIds.size > 0) {
+          event.preventDefault();
+          handleResetSelectedPlaces();
+        } else if (mode === "valves" && selectedValveIds.size > 0) {
+          event.preventDefault();
+          handleResetSelectedValves();
+        }
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [undo, redo, mode, selectedLotIds, handleResetSelectedLots]);
+  }, [
+    undo,
+    redo,
+    mode,
+    selectedLotIds,
+    selectedPlaceIds,
+    selectedValveIds,
+    handleResetSelectedLots,
+    handleResetSelectedPlaces,
+    handleResetSelectedValves,
+  ]);
 
   const placeMarker = useCallback(
     (coords: { x: number; y: number }) => {
@@ -520,18 +873,50 @@ export default function MapEditClient({
         setSelectedPlace(null);
         setSelectedValve(null);
       } else if (kind === "places") {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+          handlePlaceMapClick(id, {
+            shiftKey: e.shiftKey,
+            ctrlKey: e.ctrlKey,
+            metaKey: e.metaKey,
+          });
+          return;
+        }
         setMode("places");
         setSelectedPlace(id);
+        setSelectedPlaceIds(new Set([id]));
+        lastPlaceClickIndex.current = placeNames.indexOf(id);
         setSelectedLot(null);
+        setSelectedLotIds(new Set());
         setSelectedValve(null);
+        setSelectedValveIds(new Set());
       } else {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+          handleValveMapClick(id, {
+            shiftKey: e.shiftKey,
+            ctrlKey: e.ctrlKey,
+            metaKey: e.metaKey,
+          });
+          return;
+        }
         setMode("valves");
         setSelectedValve(id);
+        setSelectedValveIds(new Set([id]));
+        lastValveClickIndex.current = valveIds.indexOf(id);
         setSelectedLot(null);
+        setSelectedLotIds(new Set());
         setSelectedPlace(null);
+        setSelectedPlaceIds(new Set());
       }
     },
-    [handleLotMapClick, lotIds, record],
+    [
+      handleLotMapClick,
+      handlePlaceMapClick,
+      handleValveMapClick,
+      lotIds,
+      placeNames,
+      valveIds,
+      record,
+    ],
   );
 
   const issueByLabel = useMemo(() => {
@@ -627,6 +1012,11 @@ export default function MapEditClient({
         return { ...prev, places: nextPlaces };
       });
       if (selectedPlace === placeName) setSelectedPlace(null);
+      setSelectedPlaceIds((prev) => {
+        const next = new Set(prev);
+        next.delete(placeName);
+        return next;
+      });
       setMessage(`Removed "${placeName}". Save to persist.`);
     },
     [selectedPlace, mutate],
@@ -703,10 +1093,10 @@ export default function MapEditClient({
             Map position editor
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Pull misplaced lots off the map (Reset), pan to the right area,
-            select a lot, and click to place. Shift+click to select a range,
-            then Reset all selected or press Delete. Ctrl+Z / Ctrl+Y undo/redo.
-            Save when done.
+            Pull misplaced lots, places, or valves off the map (Reset), pan to
+            the right area, select an item, and click to place. Shift+click to
+            select a range, then Reset all selected or press Delete. Ctrl+Z /
+            Ctrl+Y undo/redo. Save when done.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -802,13 +1192,15 @@ export default function MapEditClient({
             places={places}
             valves={valves}
             lotIds={placedLotIds}
-            placeNames={placeNames}
-            valveIdsOnMap={valveIdsOnMap}
+            placeNames={placedPlaceNames}
+            valveIdsOnMap={placedValveIds}
             mode={mode}
             selectedLot={selectedLot}
             selectedLotIds={selectedLotIds}
             selectedPlace={selectedPlace}
+            selectedPlaceIds={selectedPlaceIds}
             selectedValve={selectedValve}
+            selectedValveIds={selectedValveIds}
             onPlaceCoords={placeMarker}
             onMoveLot={(lotId, coords) => {
               mutate((prev) => ({
@@ -842,8 +1234,8 @@ export default function MapEditClient({
               setMessage(`Moved valve "${valveId}" to ${formatMapPosition(coords)}`);
             }}
             onSelectLot={handleLotMapClick}
-            onSelectPlace={(placeName) => selectMarker("place", placeName)}
-            onSelectValve={(valveId) => selectMarker("valve", valveId)}
+            onSelectPlace={handlePlaceMapClick}
+            onSelectValve={handleValveMapClick}
           />
         ) : (
         <div
@@ -888,11 +1280,13 @@ export default function MapEditClient({
               </div>
             );
           })}
-          {placeNames.map((placeName) => {
+          {placedPlaceNames.map((placeName) => {
             const pos = places[placeName];
             if (!pos || !isValidCoord(pos)) return null;
             const IconComponent = getPlaceIcon(pos.icon ?? "MdPlace");
-            const isSelected = mode === "places" && selectedPlace === placeName;
+            const isSelected =
+              mode === "places" &&
+              (selectedPlace === placeName || selectedPlaceIds.has(placeName));
             return (
               <div
                 key={`place-${placeName}`}
@@ -913,10 +1307,12 @@ export default function MapEditClient({
               </div>
             );
           })}
-          {valveIdsOnMap.map((valveId) => {
+          {placedValveIds.map((valveId) => {
             const pos = valves[valveId];
-            if (!pos) return null;
-            const isSelected = mode === "valves" && selectedValve === valveId;
+            if (!pos || !isValidCoord(pos)) return null;
+            const isSelected =
+              mode === "valves" &&
+              (selectedValve === valveId || selectedValveIds.has(valveId));
             const displayId = /^\d+$/.test(valveId) ? `V${valveId}` : valveId;
             return (
               <div
@@ -1007,68 +1403,20 @@ export default function MapEditClient({
               </form>
             )}
             {mode === "lots" && (
-              <div className="mb-2 flex flex-col gap-2 border-b border-line pb-2">
-                <p className="text-[11px] leading-snug text-muted">
-                  Shift+click range · Ctrl+click toggle · Delete resets all
-                  selected ·{" "}
-                  {unplacedLotCount > 0
-                    ? `${unplacedLotCount} ready to place · ${placedLotIds.length} on map`
-                    : `${placedLotIds.length} on map`}
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {(
-                    [
-                      ["all", "All"],
-                      ["on-map", "On map"],
-                      ["unplaced", "Unplaced"],
-                    ] as const
-                  ).map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setLotListFilter(value)}
-                      className={`rounded-lg px-2 py-1 text-[11px] font-medium ${
-                        lotListFilter === value
-                          ? "bg-brand-600 text-white"
-                          : "border border-line text-ink hover:bg-hover"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    disabled={selectedLotIds.size === 0}
-                    onClick={handleResetSelectedLots}
-                    className="rounded-lg border border-brand-300 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-900 hover:bg-brand-100 disabled:opacity-50 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-100 dark:hover:bg-brand-950/60"
-                  >
-                    Reset all selected
-                    {selectedLotIds.size > 0 ? ` (${selectedLotIds.size})` : ""}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={placedLotIds.length === 0}
-                    onClick={handleResetAllPlacedLots}
-                    className="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-medium text-amber-950 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-950/40"
-                  >
-                    Reset all on map
-                  </button>
-                  {selectedLotIds.size > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedLotIds(new Set());
-                        setSelectedLot(null);
-                      }}
-                      className="rounded-lg px-2.5 py-1 text-xs font-medium text-muted hover:bg-hover"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </div>
+              <MapEditSelectionToolbar
+                itemLabel="lots"
+                filter={lotListFilter}
+                onFilterChange={setLotListFilter}
+                placedCount={placedLotIds.length}
+                unplacedCount={unplacedLotCount}
+                selectedCount={selectedLotIds.size}
+                onResetSelected={handleResetSelectedLots}
+                onResetAllOnMap={handleResetAllPlacedLots}
+                onClearSelection={() => {
+                  setSelectedLotIds(new Set());
+                  setSelectedLot(null);
+                }}
+              />
             )}
             {mode === "places" && (
               <form
@@ -1099,6 +1447,38 @@ export default function MapEditClient({
                   Add place
                 </button>
               </form>
+            )}
+            {mode === "places" && (
+              <MapEditSelectionToolbar
+                itemLabel="places"
+                filter={placeListFilter}
+                onFilterChange={setPlaceListFilter}
+                placedCount={placedPlaceNames.length}
+                unplacedCount={placeNames.length - placedPlaceNames.length}
+                selectedCount={selectedPlaceIds.size}
+                onResetSelected={handleResetSelectedPlaces}
+                onResetAllOnMap={handleResetAllPlacedPlaces}
+                onClearSelection={() => {
+                  setSelectedPlaceIds(new Set());
+                  setSelectedPlace(null);
+                }}
+              />
+            )}
+            {mode === "valves" && (
+              <MapEditSelectionToolbar
+                itemLabel="valves"
+                filter={valveListFilter}
+                onFilterChange={setValveListFilter}
+                placedCount={placedValveIds.length}
+                unplacedCount={valveIds.length - placedValveIds.length}
+                selectedCount={selectedValveIds.size}
+                onResetSelected={handleResetSelectedValves}
+                onResetAllOnMap={handleResetAllPlacedValves}
+                onClearSelection={() => {
+                  setSelectedValveIds(new Set());
+                  setSelectedValve(null);
+                }}
+              />
             )}
             {mode === "lots" &&
               filteredLotIds.map((lotId) => {
@@ -1214,24 +1594,26 @@ export default function MapEditClient({
                 );
               })}
             {mode === "places" &&
-              placeNames.map((placeName) => {
+              filteredPlaceNames.map((placeName) => {
                 const pos = places[placeName];
-                const isSelected = selectedPlace === placeName;
+                const isMultiSelected = selectedPlaceIds.has(placeName);
+                const isPlaced = isValidCoord(pos);
                 const IconComponent = getPlaceIcon(pos?.icon ?? "MdPlace");
                 const issue = getMarkerIssue("place", placeName);
-                const hasCoords = isValidCoord(pos);
+                const isReadyToPlace =
+                  isMultiSelected && selectedPlace === placeName && !isPlaced;
                 return (
                   <div
                     key={placeName}
                     className={`flex items-center gap-1 rounded-lg ${
-                      isSelected ? "bg-brand-600" : ""
-                    }`}
+                      isMultiSelected ? "bg-brand-600" : ""
+                    } ${!isPlaced && !isMultiSelected ? "opacity-80" : ""}`}
                   >
                     <button
                       type="button"
-                      onClick={() => selectMarker("place", placeName)}
+                      onClick={(e) => handlePlaceSidebarClick(placeName, e)}
                       className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
-                        isSelected
+                        isMultiSelected
                           ? "text-white"
                           : issue?.severity === "error"
                             ? "bg-red-50 text-red-900 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-100"
@@ -1240,7 +1622,29 @@ export default function MapEditClient({
                     >
                       <IconComponent size={16} className="shrink-0" />
                       <span className="truncate">{placeName}</span>
-                      {hasCoords ? (
+                      {isReadyToPlace && (
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                            isMultiSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-200"
+                          }`}
+                        >
+                          Click map
+                        </span>
+                      )}
+                      {!isPlaced && !isReadyToPlace && (
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                            isMultiSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                          }`}
+                        >
+                          Unplaced
+                        </span>
+                      )}
+                      {isPlaced ? (
                         <span className="ml-auto shrink-0 text-xs opacity-70">
                           {formatMapPosition(pos)}
                         </span>
@@ -1250,12 +1654,45 @@ export default function MapEditClient({
                         </span>
                       )}
                     </button>
+                    {isPlaced ? (
+                      <button
+                        type="button"
+                        title={
+                          selectedPlaceIds.size > 1 && isMultiSelected
+                            ? `Reset all ${selectedPlaceIds.size} selected places`
+                            : `Reset ${placeName}`
+                        }
+                        onClick={() => resetPlacesWithSelection(placeName)}
+                        className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                          isMultiSelected
+                            ? "text-white/90 hover:bg-white/20"
+                            : "text-muted hover:bg-hover"
+                        }`}
+                      >
+                        {selectedPlaceIds.size > 1 && isMultiSelected
+                          ? `Reset (${selectedPlaceIds.size})`
+                          : "Reset"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        title={`Select ${placeName} to place on map`}
+                        onClick={() => selectMarker("place", placeName)}
+                        className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                          isMultiSelected
+                            ? "text-white/90 hover:bg-white/20"
+                            : "text-brand-700 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-950/40"
+                        }`}
+                      >
+                        Place
+                      </button>
+                    )}
                     <button
                       type="button"
-                      title={`Remove ${placeName}`}
+                      title={`Delete ${placeName}`}
                       onClick={() => handleRemovePlace(placeName)}
                       className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
-                        isSelected
+                        isMultiSelected
                           ? "text-white/90 hover:bg-white/20"
                           : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
                       }`}
@@ -1266,37 +1703,101 @@ export default function MapEditClient({
                 );
               })}
             {mode === "valves" &&
-              valveIdsFromApi.map((valveId) => {
+              filteredValveIds.map((valveId) => {
                 const pos = valves[valveId];
-                const isSelected = selectedValve === valveId;
+                const isMultiSelected = selectedValveIds.has(valveId);
+                const isPlaced = isValidCoord(pos);
                 const displayId = /^\d+$/.test(valveId) ? `V${valveId}` : valveId;
                 const issue = getMarkerIssue("valve", valveId);
-                const hasCoords = isValidCoord(pos);
+                const isReadyToPlace =
+                  isMultiSelected && selectedValve === valveId && !isPlaced;
                 return (
-                  <button
+                  <div
                     key={valveId}
-                    type="button"
-                    onClick={() => selectMarker("valve", valveId)}
-                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
-                      isSelected
-                        ? "bg-brand-600 text-white"
-                        : issue?.severity === "warning" || issue?.severity === "error"
-                          ? "bg-amber-50 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-100"
-                          : "text-ink hover:bg-hover"
-                    }`}
+                    className={`flex items-center gap-1 rounded-lg ${
+                      isMultiSelected ? "bg-brand-600" : ""
+                    } ${!isPlaced && !isMultiSelected ? "opacity-80" : ""}`}
                   >
-                    <MdPlumbing size={16} className="shrink-0" />
-                    <span className="font-medium">{displayId}</span>
-                    {hasCoords ? (
-                      <span className="ml-auto shrink-0 text-xs opacity-70">
-                        {formatMapPosition(pos)}
-                      </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleValveSidebarClick(valveId, e)}
+                      className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                        isMultiSelected
+                          ? "text-white"
+                          : issue?.severity === "warning" ||
+                              issue?.severity === "error"
+                            ? "bg-amber-50 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-100"
+                            : "text-ink hover:bg-hover"
+                      }`}
+                    >
+                      <MdPlumbing size={16} className="shrink-0" />
+                      <span className="font-medium">{displayId}</span>
+                      {isReadyToPlace && (
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                            isMultiSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-200"
+                          }`}
+                        >
+                          Click map
+                        </span>
+                      )}
+                      {!isPlaced && !isReadyToPlace && (
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                            isMultiSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                          }`}
+                        >
+                          Unplaced
+                        </span>
+                      )}
+                      {isPlaced ? (
+                        <span className="ml-auto shrink-0 text-xs opacity-70">
+                          {formatMapPosition(pos)}
+                        </span>
+                      ) : (
+                        <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
+                          No pin
+                        </span>
+                      )}
+                    </button>
+                    {isPlaced ? (
+                      <button
+                        type="button"
+                        title={
+                          selectedValveIds.size > 1 && isMultiSelected
+                            ? `Reset all ${selectedValveIds.size} selected valves`
+                            : `Reset valve ${displayId}`
+                        }
+                        onClick={() => resetValvesWithSelection(valveId)}
+                        className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                          isMultiSelected
+                            ? "text-white/90 hover:bg-white/20"
+                            : "text-muted hover:bg-hover"
+                        }`}
+                      >
+                        {selectedValveIds.size > 1 && isMultiSelected
+                          ? `Reset (${selectedValveIds.size})`
+                          : "Reset"}
+                      </button>
                     ) : (
-                      <span className="ml-auto shrink-0 text-xs font-medium opacity-80">
-                        No pin
-                      </span>
+                      <button
+                        type="button"
+                        title={`Select valve ${displayId} to place on map`}
+                        onClick={() => selectMarker("valve", valveId)}
+                        className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                          isMultiSelected
+                            ? "text-white/90 hover:bg-white/20"
+                            : "text-brand-700 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-950/40"
+                        }`}
+                      >
+                        Place
+                      </button>
                     )}
-                  </button>
+                  </div>
                 );
               })}
           </div>
@@ -1323,9 +1824,19 @@ export default function MapEditClient({
           {selected && (
             <p className="text-xs text-muted">
               Selected: <strong>{selected}</strong>
-              {mode === "lots" && selectedLot && !isValidCoord(lots[selectedLot])
+              {mode === "lots" &&
+              selectedLot &&
+              !isValidCoord(lots[selectedLot])
                 ? " — pan to the correct area and click the map to place."
-                : " — click the map or drag its marker."}
+                : mode === "places" &&
+                    selectedPlace &&
+                    !isValidCoord(places[selectedPlace])
+                  ? " — pan to the correct area and click the map to place."
+                  : mode === "valves" &&
+                      selectedValve &&
+                      !isValidCoord(valves[selectedValve])
+                    ? " — pan to the correct area and click the map to place."
+                    : " — click the map or drag its marker."}
             </p>
           )}
           {message && (

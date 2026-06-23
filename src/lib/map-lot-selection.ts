@@ -1,12 +1,12 @@
-/** Shift/Ctrl multi-select for the map editor lot list. */
-export function applyLotListSelection(
-  lotIds: string[],
-  lotId: string,
+/** Shift/Ctrl multi-select for map editor sidebar and marker lists. */
+export function applyListSelection(
+  ids: string[],
+  id: string,
   prevSelected: ReadonlySet<string>,
   lastIndex: number | null,
   modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
 ): { selected: Set<string>; lastIndex: number | null } {
-  const index = lotIds.indexOf(lotId);
+  const index = ids.indexOf(id);
   if (index < 0) {
     return { selected: new Set(prevSelected), lastIndex };
   }
@@ -16,23 +16,26 @@ export function applyLotListSelection(
     const end = Math.max(lastIndex, index);
     const next = new Set(prevSelected);
     for (let i = start; i <= end; i += 1) {
-      next.add(lotIds[i]!);
+      next.add(ids[i]!);
     }
     return { selected: next, lastIndex: index };
   }
 
   if (modifiers.ctrlKey || modifiers.metaKey) {
     const next = new Set(prevSelected);
-    if (next.has(lotId)) {
-      next.delete(lotId);
+    if (next.has(id)) {
+      next.delete(id);
     } else {
-      next.add(lotId);
+      next.add(id);
     }
     return { selected: next, lastIndex: index };
   }
 
-  return { selected: new Set([lotId]), lastIndex: index };
+  return { selected: new Set([id]), lastIndex: index };
 }
+
+/** @deprecated Use applyListSelection */
+export const applyLotListSelection = applyListSelection;
 
 export function sortLotIds(ids: Iterable<string>): string[] {
   return Array.from(ids).sort((a, b) => {

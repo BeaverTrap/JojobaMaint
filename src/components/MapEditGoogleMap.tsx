@@ -35,7 +35,9 @@ type MapEditGoogleMapProps = {
   selectedLot: string | null;
   selectedLotIds?: ReadonlySet<string>;
   selectedPlace: string | null;
+  selectedPlaceIds?: ReadonlySet<string>;
   selectedValve: string | null;
+  selectedValveIds?: ReadonlySet<string>;
   onPlaceCoords: (coords: { x: number; y: number }) => void;
   onMoveLot: (lotId: string, coords: { x: number; y: number }) => void;
   onMovePlace: (placeName: string, coords: { x: number; y: number }) => void;
@@ -44,8 +46,14 @@ type MapEditGoogleMapProps = {
     lotId: string,
     modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
   ) => void;
-  onSelectPlace: (placeName: string) => void;
-  onSelectValve: (valveId: string) => void;
+  onSelectPlace: (
+    placeName: string,
+    modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => void;
+  onSelectValve: (
+    valveId: string,
+    modifiers: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean },
+  ) => void;
 };
 
 function coordsFromMapEvent(
@@ -122,7 +130,9 @@ export default function MapEditGoogleMap({
   selectedLot,
   selectedLotIds,
   selectedPlace,
+  selectedPlaceIds,
   selectedValve,
+  selectedValveIds,
   onPlaceCoords,
   onMoveLot,
   onMovePlace,
@@ -217,7 +227,9 @@ export default function MapEditGoogleMap({
           const pos = places[placeName];
           if (!pos || !isValidCoord(pos)) return null;
           const IconComponent = getPlaceIcon(pos.icon ?? "MdPlace");
-          const isSelected = mode === "places" && selectedPlace === placeName;
+          const isSelected =
+            mode === "places" &&
+            (selectedPlace === placeName || selectedPlaceIds?.has(placeName));
           return (
             <AdvancedMarker
               key={`edit-place-${placeName}`}
@@ -227,7 +239,12 @@ export default function MapEditGoogleMap({
               draggable
               onClick={(e) => {
                 e.domEvent?.stopPropagation();
-                onSelectPlace(placeName);
+                const dom = e.domEvent;
+                onSelectPlace(placeName, {
+                  shiftKey: dom instanceof MouseEvent ? dom.shiftKey : false,
+                  ctrlKey: dom instanceof MouseEvent ? dom.ctrlKey : false,
+                  metaKey: dom instanceof MouseEvent ? dom.metaKey : false,
+                });
               }}
               onDragEnd={(e) =>
                 handleDragEnd(e, (coords) => onMovePlace(placeName, coords))
@@ -249,7 +266,9 @@ export default function MapEditGoogleMap({
         {valveIdsOnMap.map((valveId) => {
           const pos = valves[valveId];
           if (!pos || !isValidCoord(pos)) return null;
-          const isSelected = mode === "valves" && selectedValve === valveId;
+          const isSelected =
+            mode === "valves" &&
+            (selectedValve === valveId || selectedValveIds?.has(valveId));
           const displayId = /^\d+$/.test(valveId) ? `V${valveId}` : valveId;
           return (
             <AdvancedMarker
@@ -260,7 +279,12 @@ export default function MapEditGoogleMap({
               draggable
               onClick={(e) => {
                 e.domEvent?.stopPropagation();
-                onSelectValve(valveId);
+                const dom = e.domEvent;
+                onSelectValve(valveId, {
+                  shiftKey: dom instanceof MouseEvent ? dom.shiftKey : false,
+                  ctrlKey: dom instanceof MouseEvent ? dom.ctrlKey : false,
+                  metaKey: dom instanceof MouseEvent ? dom.metaKey : false,
+                });
               }}
               onDragEnd={(e) =>
                 handleDragEnd(e, (coords) => onMoveValve(valveId, coords))
