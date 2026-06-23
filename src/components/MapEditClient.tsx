@@ -20,8 +20,10 @@ import {
 } from "@/lib/map-stage";
 import { formatMapPosition } from "@/lib/map-coords";
 import { isGoogleMapsEnabled } from "@/lib/map-geography";
-import { applyLotListSelection, sortLotIds } from "@/lib/map-lot-selection";
+import { applyLotListSelection } from "@/lib/map-lot-selection";
+import { initialMapEditSnapshot } from "@/lib/map-edit-history";
 import type { MapPositions } from "@/lib/map-positions";
+import { useMapEditHistory } from "@/hooks/use-map-edit-history";
 import {
   isValidCoord,
   summarizeMapEditIssues,
@@ -30,9 +32,7 @@ import {
   type MapMarkerKind,
 } from "@/lib/map-edit-validation";
 
-type LotPositions = MapPositions["lots"];
-type PlacePositions = MapPositions["places"];
-type ValvePositions = MapPositions["valves"];
+type LotListFilter = "all" | "on-map" | "unplaced";
 
 function naturalSort(a: string, b: string): number {
   const na = parseInt(a.replace(/\D/g, "") || "0", 10);
@@ -65,15 +65,22 @@ export default function MapEditClient({
     id: string;
   } | null>(null);
 
-  const [lots, setLots] = useState<LotPositions>(initialData.lots);
-  const [places, setPlaces] = useState<PlacePositions>(initialData.places);
-  const [valves, setValves] = useState<ValvePositions>(initialData.valves);
-  const [hiddenLotIds, setHiddenLotIds] = useState<Set<string>>(
-    () => new Set(initialData.hiddenLots ?? []),
-  );
+  const {
+    lots,
+    places,
+    valves,
+    mutate,
+    patch,
+    record,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useMapEditHistory(initialMapEditSnapshot(initialData));
   const [selectedLotIds, setSelectedLotIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [lotListFilter, setLotListFilter] = useState<LotListFilter>("all");
   const [valveIdsFromApi, setValveIdsFromApi] = useState<string[]>([]);
   const [sheetLots, setSheetLots] = useState<string[]>([]);
   const [sheetLoadError, setSheetLoadError] = useState<string | null>(null);
@@ -138,12 +145,41 @@ export default function MapEditClient({
     });
   }, [lots, sheetLots, addedLotIds]);
 
-  const visibleLotIds = useMemo(
-    () => lotIds.filter((id) => !hiddenLotIds.has(id)),
-    [lotIds, hiddenLotIds],
+  const placedLotIds = useMemo(
+    () => lotIds.filter((id) => isValidCoord(lots[id])),
+    [lotIds, lots],
   );
 
-  const hiddenLotCount = hiddenLotIds.size;
+  const unplacedLotCount = lotIds.length - placedLotIds.length;
+  const filteredLotIds = useMemo(() => {
+    if (lotListFilter === "on-map") {
+      return lotIds.filter((id) => isValidCoord(lots[id]));
+    }
+    if (lotListFilter === "unplaced") {
+      return lotIds.filter((id) => !isValidCoord(lots[id]));
+    }
+    return lotIds;
+  }, [lotIds, lotListFilter, lots]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const mod = event.ctrlKey || event.metaKey;
+      if (!mod) return;
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+        setMessage("Undid last change.");
+      } else if (key === "y" || (key === "z" && event.shiftKey)) {
+        event.preventDefault();
+        redo();
+        setMessage("Redid change.");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [undo, redo]);
+
   const placeNames = Object.keys(places).sort((a, b) => a.localeCompare(b));
   const valveIdsOnMap = Object.keys(valves).sort(naturalSort);
 
@@ -179,8 +215,12 @@ export default function MapEditClient({
       setSelectedLot(null);
       setSelectedPlace(null);
     }
-    setMessage(`Selected ${label} — click the map or drag its marker to fix.`);
-  }, [lotIds]);
+    setMessage(
+      kind === "lot" && !isValidCoord(lots[label])
+        ? `Selected ${label} — pan to the right area and click the map to place.`
+        : `Selected ${label} — click the map or drag its marker to fix.`,
+    );
+  }, [lotIds, lots]);
 
   const handleLotSidebarClick = useCallback(
     (lotId: string, event: React.MouseEvent) => {
@@ -200,11 +240,13 @@ export default function MapEditClient({
       const count = selected.size;
       setMessage(
         count > 1
-          ? `${count} lots selected — use Hide/Show, or click the map to place "${lotId}".`
-          : `Selected ${lotId} — click the map or drag its marker.`,
+          ? `${count} lots selected — Reset to pull off the map, then click to place.`
+          : isValidCoord(lots[lotId])
+            ? `Selected ${lotId} — drag to move or Reset to pull off the map.`
+            : `Selected ${lotId} — pan here and click the map to place it.`,
       );
     },
-    [lotIds, selectedLotIds],
+    [lotIds, selectedLotIds, lots],
   );
 
   const handleLotMapClick = useCallback(
@@ -228,83 +270,94 @@ export default function MapEditClient({
       const count = selected.size;
       setMessage(
         count > 1
-          ? `${count} lots selected — Hide/Show from toolbar, or drag markers.`
-          : `Selected ${lotId} — click the map or drag its marker.`,
+          ? `${count} lots selected — Reset to pull off the map, or drag markers.`
+          : isValidCoord(lots[lotId])
+            ? `Selected ${lotId} — drag to move or Reset to pull off the map.`
+            : `Selected ${lotId} — click the map to place it here.`,
       );
     },
-    [lotIds, selectedLotIds],
+    [lotIds, selectedLotIds, lots],
   );
 
-  const hideLotsFromMap = useCallback((ids: Iterable<string>) => {
-    setHiddenLotIds((prev) => {
-      const next = new Set(prev);
-      for (const id of ids) {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
+  const resetLotPositions = useCallback(
+    (ids: Iterable<string>) => {
+      const idList = Array.from(ids);
+      if (idList.length === 0) return;
+      mutate((prev) => {
+        const nextLots = { ...prev.lots };
+        for (const id of idList) {
+          delete nextLots[id];
+        }
+        return { ...prev, lots: nextLots };
+      });
+    },
+    [mutate],
+  );
 
-  const showLotsOnMap = useCallback((ids: Iterable<string>) => {
-    setHiddenLotIds((prev) => {
-      const next = new Set(prev);
-      for (const id of ids) {
-        next.delete(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleHideSelectedLots = useCallback(() => {
+  const handleResetSelectedLots = useCallback(() => {
     if (selectedLotIds.size === 0) return;
-    hideLotsFromMap(selectedLotIds);
+    resetLotPositions(selectedLotIds);
     setMessage(
-      `Hid ${selectedLotIds.size} lot(s) from the map — coords kept. Save to persist.`,
+      `Pulled ${selectedLotIds.size} lot(s) off the map — select one and click where it should go.`,
     );
-  }, [hideLotsFromMap, selectedLotIds]);
+  }, [resetLotPositions, selectedLotIds]);
 
-  const handleShowSelectedLots = useCallback(() => {
-    if (selectedLotIds.size === 0) return;
-    showLotsOnMap(selectedLotIds);
+  const handleResetAllPlacedLots = useCallback(() => {
+    const placed = lotIds.filter((id) => isValidCoord(lots[id]));
+    if (placed.length === 0) return;
+    if (
+      !window.confirm(
+        `Pull all ${placed.length} placed lots off the map? Coordinates will be cleared until you place them again.`,
+      )
+    ) {
+      return;
+    }
+    resetLotPositions(placed);
+    setLotListFilter("unplaced");
     setMessage(
-      `Showing ${selectedLotIds.size} lot(s) on the map again. Save to persist.`,
+      `Pulled ${placed.length} lots off the map. Filter set to Unplaced — place them one area at a time.`,
     );
-  }, [showLotsOnMap, selectedLotIds]);
+  }, [lotIds, lots, resetLotPositions]);
 
   const placeMarker = useCallback(
     (coords: { x: number; y: number }) => {
       if (mode === "lots" && selectedLot) {
-        setLots((prev) => ({ ...prev, [selectedLot]: coords }));
-        setHiddenLotIds((prev) => {
-          if (!prev.has(selectedLot)) return prev;
-          const next = new Set(prev);
-          next.delete(selectedLot);
-          return next;
-        });
+        mutate((prev) => ({
+          ...prev,
+          lots: { ...prev.lots, [selectedLot]: coords },
+        }));
         setMessage(
           `Placed lot "${selectedLot}" at ${formatMapPosition(coords)}`,
         );
       } else if (mode === "places" && selectedPlace) {
-        const existing = places[selectedPlace];
-        setPlaces((prev) => ({
-          ...prev,
-          [selectedPlace]: {
-            ...coords,
-            icon: existing?.icon ?? DEFAULT_PLACE_ICON,
-            color: existing?.color,
-          },
-        }));
+        mutate((prev) => {
+          const existing = prev.places[selectedPlace];
+          return {
+            ...prev,
+            places: {
+              ...prev.places,
+              [selectedPlace]: {
+                ...coords,
+                icon: existing?.icon ?? DEFAULT_PLACE_ICON,
+                color: existing?.color,
+              },
+            },
+          };
+        });
         setMessage(
           `Placed "${selectedPlace}" at ${formatMapPosition(coords)}`,
         );
       } else if (mode === "valves" && selectedValve) {
-        setValves((prev) => ({ ...prev, [selectedValve]: coords }));
+        mutate((prev) => ({
+          ...prev,
+          valves: { ...prev.valves, [selectedValve]: coords },
+        }));
         setMessage(
           `Placed valve "${selectedValve}" at ${formatMapPosition(coords)}`,
         );
       }
     },
-    [mode, selectedLot, selectedPlace, selectedValve, places],
+    [mode, selectedLot, selectedPlace, selectedValve, mutate],
   );
 
   const handleSave = useCallback(async () => {
@@ -325,7 +378,7 @@ export default function MapEditClient({
           lots,
           places,
           valves,
-          hiddenLots: sortLotIds(hiddenLotIds),
+          hiddenLots: [],
         }),
       });
       const data = (await res.json()) as { error?: string };
@@ -338,7 +391,7 @@ export default function MapEditClient({
     } finally {
       setSaving(false);
     }
-  }, [lots, places, valves, hiddenLotIds, issueSummary.errors]);
+  }, [lots, places, valves, issueSummary.errors]);
 
   const handleMapClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -359,19 +412,28 @@ export default function MapEditClient({
     if (!coords) return;
 
     if (drag.kind === "lots") {
-      setLots((prev) => ({ ...prev, [drag.id]: coords }));
+      patch((prev) => ({
+        ...prev,
+        lots: { ...prev.lots, [drag.id]: coords },
+      }));
     } else if (drag.kind === "places") {
-      setPlaces((prev) => {
-        const existing = prev[drag.id];
+      patch((prev) => {
+        const existing = prev.places[drag.id];
         return {
           ...prev,
-          [drag.id]: { ...coords, icon: existing?.icon, color: existing?.color },
+          places: {
+            ...prev.places,
+            [drag.id]: { ...coords, icon: existing?.icon, color: existing?.color },
+          },
         };
       });
     } else {
-      setValves((prev) => ({ ...prev, [drag.id]: coords }));
+      patch((prev) => ({
+        ...prev,
+        valves: { ...prev.valves, [drag.id]: coords },
+      }));
     }
-  }, []);
+  }, [patch]);
 
   const endDrag = useCallback(() => {
     const drag = dragRef.current;
@@ -390,6 +452,7 @@ export default function MapEditClient({
       e.stopPropagation();
       e.preventDefault();
       dragRef.current = { kind, id };
+      record();
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
       if (kind === "lots") {
         if (e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -418,7 +481,7 @@ export default function MapEditClient({
         setSelectedPlace(null);
       }
     },
-    [handleLotMapClick, lotIds],
+    [handleLotMapClick, lotIds, record],
   );
 
   const issueByLabel = useMemo(() => {
@@ -462,17 +525,12 @@ export default function MapEditClient({
         : `Remove lot "${lotId}" from the map?`;
       if (!window.confirm(prompt)) return;
 
-      setLots((prev) => {
-        const next = { ...prev };
-        delete next[lotId];
-        return next;
+      mutate((prev) => {
+        const nextLots = { ...prev.lots };
+        delete nextLots[lotId];
+        return { ...prev, lots: nextLots };
       });
       setAddedLotIds((prev) => prev.filter((id) => id !== lotId));
-      setHiddenLotIds((prev) => {
-        const next = new Set(prev);
-        next.delete(lotId);
-        return next;
-      });
       if (selectedLot === lotId) setSelectedLot(null);
       setSelectedLotIds((prev) => {
         const next = new Set(prev);
@@ -481,7 +539,7 @@ export default function MapEditClient({
       });
       setMessage(`Removed lot "${lotId}" from the map. Save to persist.`);
     },
-    [sheetLots, selectedLot],
+    [sheetLots, selectedLot, mutate],
   );
 
   const handleAddPlace = useCallback(
@@ -493,9 +551,12 @@ export default function MapEditClient({
         setMessage(`Place "${name}" already exists.`);
         return;
       }
-      setPlaces((prev) => ({
+      mutate((prev) => ({
         ...prev,
-        [name]: { icon: newPlaceIcon, color: newPlaceColor },
+        places: {
+          ...prev.places,
+          [name]: { icon: newPlaceIcon, color: newPlaceColor },
+        },
       }));
       setNewPlaceName("");
       setNewPlaceIcon(DEFAULT_PLACE_ICON);
@@ -503,47 +564,53 @@ export default function MapEditClient({
       selectMarker("place", name);
       setMessage(`Added "${name}" — click the map to place it.`);
     },
-    [newPlaceName, newPlaceIcon, newPlaceColor, places, selectMarker],
+    [newPlaceName, newPlaceIcon, newPlaceColor, places, selectMarker, mutate],
   );
 
   const handleRemovePlace = useCallback(
     (placeName: string) => {
       if (!window.confirm(`Remove "${placeName}" from the map?`)) return;
 
-      setPlaces((prev) => {
-        const next = { ...prev };
-        delete next[placeName];
-        return next;
+      mutate((prev) => {
+        const nextPlaces = { ...prev.places };
+        delete nextPlaces[placeName];
+        return { ...prev, places: nextPlaces };
       });
       if (selectedPlace === placeName) setSelectedPlace(null);
       setMessage(`Removed "${placeName}". Save to persist.`);
     },
-    [selectedPlace],
+    [selectedPlace, mutate],
   );
 
   const handlePlaceIconChange = useCallback(
     (placeName: string, icon: PlaceIconName) => {
-      setPlaces((prev) => {
-        const existing = prev[placeName];
+      mutate((prev) => {
+        const existing = prev.places[placeName];
         if (!existing) return prev;
         return {
           ...prev,
-          [placeName]: { ...existing, icon },
+          places: {
+            ...prev.places,
+            [placeName]: { ...existing, icon },
+          },
         };
       });
       setMessage(`Updated icon for "${placeName}".`);
     },
-    [],
+    [mutate],
   );
 
   const handlePlaceColorChange = useCallback(
     (placeName: string, color: PlaceMarkerColor | undefined) => {
-      setPlaces((prev) => {
-        const existing = prev[placeName];
+      mutate((prev) => {
+        const existing = prev.places[placeName];
         if (!existing) return prev;
         return {
           ...prev,
-          [placeName]: { ...existing, color },
+          places: {
+            ...prev.places,
+            [placeName]: { ...existing, color },
+          },
         };
       });
       setMessage(
@@ -552,7 +619,7 @@ export default function MapEditClient({
           : `Reset "${placeName}" to auto color from icon.`,
       );
     },
-    [],
+    [mutate],
   );
 
   const hasLots = lotIds.length > 0;
@@ -586,13 +653,30 @@ export default function MapEditClient({
             Map position editor
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Select a lot, place, or valve, then click the map to place
-            it — or drag an existing marker. For lots: Shift+click a range,
-            Ctrl+click to toggle, then Hide/Show to declutter the map. Save when
-            done.
+            Pull misplaced lots off the map (Reset), pan to the right area,
+            select a lot, and click to place. Shift+click to multi-select.
+            Ctrl+Z / Ctrl+Y to undo and redo. Save when done.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+            className="rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-40"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Y)"
+            className="rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-40"
+          >
+            Redo
+          </button>
           <Link
             href="/map"
             className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
@@ -666,7 +750,7 @@ export default function MapEditClient({
             lots={lots}
             places={places}
             valves={valves}
-            lotIds={visibleLotIds}
+            lotIds={placedLotIds}
             placeNames={placeNames}
             valveIdsOnMap={valveIdsOnMap}
             mode={mode}
@@ -676,31 +760,34 @@ export default function MapEditClient({
             selectedValve={selectedValve}
             onPlaceCoords={placeMarker}
             onMoveLot={(lotId, coords) => {
-              setLots((prev) => ({ ...prev, [lotId]: coords }));
-              setHiddenLotIds((prev) => {
-                if (!prev.has(lotId)) return prev;
-                const next = new Set(prev);
-                next.delete(lotId);
-                return next;
-              });
+              mutate((prev) => ({
+                ...prev,
+                lots: { ...prev.lots, [lotId]: coords },
+              }));
               setMessage(`Moved lot "${lotId}" to ${formatMapPosition(coords)}`);
             }}
             onMovePlace={(placeName, coords) => {
-              setPlaces((prev) => {
-                const existing = prev[placeName];
+              mutate((prev) => {
+                const existing = prev.places[placeName];
                 return {
                   ...prev,
-                  [placeName]: {
-                    ...coords,
-                    icon: existing?.icon,
-                    color: existing?.color,
+                  places: {
+                    ...prev.places,
+                    [placeName]: {
+                      ...coords,
+                      icon: existing?.icon,
+                      color: existing?.color,
+                    },
                   },
                 };
               });
               setMessage(`Moved "${placeName}" to ${formatMapPosition(coords)}`);
             }}
             onMoveValve={(valveId, coords) => {
-              setValves((prev) => ({ ...prev, [valveId]: coords }));
+              mutate((prev) => ({
+                ...prev,
+                valves: { ...prev.valves, [valveId]: coords },
+              }));
               setMessage(`Moved valve "${valveId}" to ${formatMapPosition(coords)}`);
             }}
             onSelectLot={handleLotMapClick}
@@ -725,7 +812,7 @@ export default function MapEditClient({
               className="pointer-events-none absolute inset-0 h-full w-full select-none"
               draggable={false}
             />
-          {visibleLotIds.map((lotId) => {
+          {placedLotIds.map((lotId) => {
             const pos = lots[lotId];
             if (!pos || !isValidCoord(pos)) return null;
             const isSelected =
@@ -872,28 +959,49 @@ export default function MapEditClient({
               <div className="mb-2 flex flex-col gap-2 border-b border-line pb-2">
                 <p className="text-[11px] leading-snug text-muted">
                   Shift+click range · Ctrl+click toggle ·{" "}
-                  {hiddenLotCount > 0
-                    ? `${hiddenLotCount} hidden from map`
-                    : "Hide lots to reduce clutter"}
+                  {unplacedLotCount > 0
+                    ? `${unplacedLotCount} ready to place · ${placedLotIds.length} on map`
+                    : `${placedLotIds.length} on map`}
                 </p>
+                <div className="flex flex-wrap gap-1">
+                  {(
+                    [
+                      ["all", "All"],
+                      ["on-map", "On map"],
+                      ["unplaced", "Unplaced"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setLotListFilter(value)}
+                      className={`rounded-lg px-2 py-1 text-[11px] font-medium ${
+                        lotListFilter === value
+                          ? "bg-brand-600 text-white"
+                          : "border border-line text-ink hover:bg-hover"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
                     disabled={selectedLotIds.size === 0}
-                    onClick={handleHideSelectedLots}
+                    onClick={handleResetSelectedLots}
                     className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-hover disabled:opacity-50"
                   >
-                    Hide from map
+                    Reset selected
                     {selectedLotIds.size > 0 ? ` (${selectedLotIds.size})` : ""}
                   </button>
                   <button
                     type="button"
-                    disabled={selectedLotIds.size === 0}
-                    onClick={handleShowSelectedLots}
-                    className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-hover disabled:opacity-50"
+                    disabled={placedLotIds.length === 0}
+                    onClick={handleResetAllPlacedLots}
+                    className="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-medium text-amber-950 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-950/40"
                   >
-                    Show on map
-                    {selectedLotIds.size > 0 ? ` (${selectedLotIds.size})` : ""}
+                    Reset all on map
                   </button>
                   {selectedLotIds.size > 0 && (
                     <button
@@ -941,19 +1049,21 @@ export default function MapEditClient({
               </form>
             )}
             {mode === "lots" &&
-              lotIds.map((lotId) => {
+              filteredLotIds.map((lotId) => {
                 const pos = lots[lotId];
                 const isMultiSelected = selectedLotIds.has(lotId);
-                const isHidden = hiddenLotIds.has(lotId);
+                const isPlaced = isValidCoord(pos);
                 const issue = getMarkerIssue("lot", lotId);
-                const hasCoords = isValidCoord(pos);
+                const hasCoords = isPlaced;
                 const isUserAdded = addedLotIds.includes(lotId);
+                const isReadyToPlace =
+                  isMultiSelected && selectedLot === lotId && !isPlaced;
                 return (
                   <div
                     key={lotId}
                     className={`flex items-center gap-1 rounded-lg ${
                       isMultiSelected ? "bg-brand-600" : ""
-                    } ${isHidden && !isMultiSelected ? "opacity-55" : ""}`}
+                    } ${!isPlaced && !isMultiSelected ? "opacity-80" : ""}`}
                   >
                     <button
                       type="button"
@@ -969,7 +1079,18 @@ export default function MapEditClient({
                       }`}
                     >
                       <span className="font-medium">{lotId}</span>
-                      {isHidden && (
+                      {isReadyToPlace && (
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                            isMultiSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-200"
+                          }`}
+                        >
+                          Click map
+                        </span>
+                      )}
+                      {!isPlaced && !isReadyToPlace && (
                         <span
                           className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
                             isMultiSelected
@@ -977,7 +1098,7 @@ export default function MapEditClient({
                               : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                           }`}
                         >
-                          Hidden
+                          Unplaced
                         </span>
                       )}
                       {hasCoords ? (
@@ -990,29 +1111,16 @@ export default function MapEditClient({
                         </span>
                       )}
                     </button>
-                    {isHidden ? (
+                    {isPlaced ? (
                       <button
                         type="button"
-                        title={`Show lot ${lotId} on map`}
+                        title={`Reset lot ${lotId} — pull off map to place again`}
                         onClick={() => {
-                          showLotsOnMap([lotId]);
-                          setMessage(`Showing lot "${lotId}" on the map.`);
-                        }}
-                        className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
-                          isMultiSelected
-                            ? "text-white/90 hover:bg-white/20"
-                            : "text-brand-700 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-950/40"
-                        }`}
-                      >
-                        Show
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        title={`Hide lot ${lotId} from map`}
-                        onClick={() => {
-                          hideLotsFromMap([lotId]);
-                          setMessage(`Hid lot "${lotId}" from the map.`);
+                          resetLotPositions([lotId]);
+                          selectMarker("lot", lotId);
+                          setMessage(
+                            `Reset lot "${lotId}" — pan to the right spot and click the map.`,
+                          );
                         }}
                         className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
                           isMultiSelected
@@ -1020,7 +1128,20 @@ export default function MapEditClient({
                             : "text-muted hover:bg-hover"
                         }`}
                       >
-                        Hide
+                        Reset
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        title={`Select lot ${lotId} to place on map`}
+                        onClick={() => selectMarker("lot", lotId)}
+                        className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                          isMultiSelected
+                            ? "text-white/90 hover:bg-white/20"
+                            : "text-brand-700 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-950/40"
+                        }`}
+                      >
+                        Place
                       </button>
                     )}
                     {isUserAdded && !sheetLots.includes(lotId) && (
@@ -1149,8 +1270,10 @@ export default function MapEditClient({
           )}
           {selected && (
             <p className="text-xs text-muted">
-              Selected: <strong>{selected}</strong> — click the map or drag its
-              marker.
+              Selected: <strong>{selected}</strong>
+              {mode === "lots" && selectedLot && !isValidCoord(lots[selectedLot])
+                ? " — pan to the correct area and click the map to place."
+                : " — click the map or drag its marker."}
             </p>
           )}
           {message && (
