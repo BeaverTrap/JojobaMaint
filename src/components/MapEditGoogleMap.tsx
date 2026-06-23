@@ -173,7 +173,7 @@ export default function MapEditGoogleMap({
         style={{ width: "100%", height: "100%" }}
         restriction={{
           latLngBounds: parkMapBoundsLiteral(),
-          strictBounds: false,
+          strictBounds: true,
         }}
       >
         <MapFitBounds once minZoom={17} maxZoom={19} />

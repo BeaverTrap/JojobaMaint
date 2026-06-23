@@ -11,7 +11,7 @@ import type { MapPositions } from "@/lib/map-positions";
 /** Match schematic PNG map: marker center sits on the coordinate. */
 export const GOOGLE_MAP_MARKER_ANCHOR = AdvancedMarkerAnchorPoint.CENTER;
 
-const DEFAULT_FIT_PADDING = { top: 40, right: 40, bottom: 40, left: 40 } as const;
+const DEFAULT_FIT_PADDING = { top: 24, right: 24, bottom: 24, left: 24 } as const;
 
 export function collectMapLatLngs(
   lots: MapPositions["lots"],

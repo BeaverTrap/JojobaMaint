@@ -28,7 +28,8 @@ import type { ParkMapProps } from "@/components/ParkMap";
 
 const FOCUS_ZOOM_DETAIL = 18;
 const FOCUS_ZOOM_SELECTION = 17;
-const OVERVIEW_MAX_ZOOM = 18;
+const OVERVIEW_MAX_ZOOM = 19;
+const OVERVIEW_MIN_ZOOM = 17;
 
 function formatValveDisplay(id: string): string {
   if (!id) return "V?";
@@ -80,7 +81,7 @@ function MapFocusController({
       if (resetWhenHighlightClears) {
         fitMapToLatLngBounds(map, parkMapBoundsLiteral(), {
           maxZoom: OVERVIEW_MAX_ZOOM,
-          minZoom: 16,
+          minZoom: OVERVIEW_MIN_ZOOM,
         });
       }
     }, 50);
@@ -265,13 +266,13 @@ export function GoogleParkMap({
             style={{ width: "100%", height: "100%" }}
             restriction={{
               latLngBounds: parkMapBoundsLiteral(),
-              strictBounds: false,
+              strictBounds: true,
             }}
           >
             <MapFitBounds
               once
               enabled={!loading}
-              minZoom={16}
+              minZoom={OVERVIEW_MIN_ZOOM}
               maxZoom={OVERVIEW_MAX_ZOOM}
             />
             <MapFocusController
