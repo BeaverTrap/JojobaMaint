@@ -15,28 +15,43 @@ export type MapLatLngBounds = {
 };
 
 /**
- * Full Jojoba Hills SKP Resort — lots, clubhouse, east amenities (Air Gun Range,
- * Dog Run 2), north dog run / tanks, and west Oak Grove. Trims only open land
- * beyond the park. Override with NEXT_PUBLIC_PARK_MAP_BOUNDS=north,south,east,west.
+ * Schematic / percent-coordinate alignment box. Changing this shifts legacy %-based
+ * markers on the roadmap — tune only when calibrating the schematic.
+ * Override with NEXT_PUBLIC_PARK_MAP_BOUNDS=north,south,east,west.
  */
 const DEFAULT_PARK_MAP_BOUNDS: ParkMapBounds = {
   north: 33.456,
   south: 33.441,
-  east: -116.863,
+  east: -116.865,
   west: -116.881,
 };
 
-function parseBoundsFromEnv(): ParkMapBounds | null {
-  const raw = process.env.NEXT_PUBLIC_PARK_MAP_BOUNDS?.trim();
-  if (!raw) return null;
-  const parts = raw.split(",").map((p) => Number(p.trim()));
+/** Extra east longitude (degrees) for pan/zoom — covers east amenities (shooting range, dog runs, aviation). */
+const DEFAULT_VIEW_EAST_EXTENSION = 0.022;
+
+function parseBoundsFromEnv(raw: string | undefined): ParkMapBounds | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(",").map((p) => Number(p.trim()));
   if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return null;
   const [north, south, east, west] = parts;
   return { north, south, east, west };
 }
 
 export function getParkMapBounds(): ParkMapBounds {
-  return parseBoundsFromEnv() ?? DEFAULT_PARK_MAP_BOUNDS;
+  return parseBoundsFromEnv(process.env.NEXT_PUBLIC_PARK_MAP_BOUNDS) ?? DEFAULT_PARK_MAP_BOUNDS;
+}
+
+/** Wider box for map framing and pan limits — extends east beyond the schematic box. */
+export function getParkViewBounds(): ParkMapBounds {
+  const viewOverride = parseBoundsFromEnv(process.env.NEXT_PUBLIC_PARK_VIEW_BOUNDS);
+  if (viewOverride) return viewOverride;
+
+  const coord = getParkMapBounds();
+  return {
+    ...coord,
+    east: coord.east + DEFAULT_VIEW_EAST_EXTENSION,
+  };
 }
 
 export function parkMapBoundsLiteral(): MapLatLngBounds {
@@ -44,8 +59,13 @@ export function parkMapBoundsLiteral(): MapLatLngBounds {
   return { north: b.north, south: b.south, east: b.east, west: b.west };
 }
 
+export function parkViewBoundsLiteral(): MapLatLngBounds {
+  const b = getParkViewBounds();
+  return { north: b.north, south: b.south, east: b.east, west: b.west };
+}
+
 export function parkMapCenter(): MapLatLng {
-  const b = getParkMapBounds();
+  const b = getParkViewBounds();
   return {
     lat: (b.north + b.south) / 2,
     lng: (b.east + b.west) / 2,

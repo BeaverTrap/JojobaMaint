@@ -19,7 +19,7 @@ import {
 } from "@/lib/map-coords";
 import {
   googleMapId,
-  parkMapBoundsLiteral,
+  parkViewBoundsLiteral,
   parkMapCenter,
 } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
@@ -172,7 +172,7 @@ export default function MapEditGoogleMap({
         className="h-full w-full"
         style={{ width: "100%", height: "100%" }}
         restriction={{
-          latLngBounds: parkMapBoundsLiteral(),
+          latLngBounds: parkViewBoundsLiteral(),
           strictBounds: false,
         }}
       >

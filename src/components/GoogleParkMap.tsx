@@ -19,7 +19,7 @@ import { mapPositionToLatLng } from "@/lib/map-coords";
 import { isValidCoord } from "@/lib/map-edit-validation";
 import {
   googleMapId,
-  parkMapBoundsLiteral,
+  parkViewBoundsLiteral,
   parkMapCenter,
 } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
@@ -79,7 +79,7 @@ function MapFocusController({
         return;
       }
       if (resetWhenHighlightClears) {
-        fitMapToLatLngBounds(map, parkMapBoundsLiteral(), {
+        fitMapToLatLngBounds(map, parkViewBoundsLiteral(), {
           maxZoom: OVERVIEW_MAX_ZOOM,
           minZoom: OVERVIEW_MIN_ZOOM,
         });
@@ -265,7 +265,7 @@ export function GoogleParkMap({
             className="h-full w-full"
             style={{ width: "100%", height: "100%" }}
             restriction={{
-              latLngBounds: parkMapBoundsLiteral(),
+              latLngBounds: parkViewBoundsLiteral(),
               strictBounds: false,
             }}
           >
