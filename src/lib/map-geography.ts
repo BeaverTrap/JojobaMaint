@@ -15,15 +15,15 @@ export type MapLatLngBounds = {
 };
 
 /**
- * Visible footprint of Jojoba Hills SKP Resort (lots, clubhouse, loops).
- * Framed to the developed park — not the wider Hwy 79 / hillside context.
- * Override with NEXT_PUBLIC_PARK_MAP_BOUNDS=north,south,east,west if needed.
+ * Full Jojoba Hills SKP Resort — lots, clubhouse, east amenities (Air Gun Range,
+ * Dog Run 2), north dog run / tanks, and west Oak Grove. Trims only open land
+ * beyond the park. Override with NEXT_PUBLIC_PARK_MAP_BOUNDS=north,south,east,west.
  */
 const DEFAULT_PARK_MAP_BOUNDS: ParkMapBounds = {
-  north: 33.454,
-  south: 33.443,
-  east: -116.864,
-  west: -116.879,
+  north: 33.456,
+  south: 33.441,
+  east: -116.863,
+  west: -116.881,
 };
 
 function parseBoundsFromEnv(): ParkMapBounds | null {
