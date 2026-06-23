@@ -42,7 +42,7 @@ export function getParkMapBounds(): ParkMapBounds {
   return parseBoundsFromEnv(process.env.NEXT_PUBLIC_PARK_MAP_BOUNDS) ?? DEFAULT_PARK_MAP_BOUNDS;
 }
 
-/** Wider box for map framing and pan limits — extends east beyond the schematic box. */
+/** Wider box for pan limits only — extends east beyond the schematic box. */
 export function getParkViewBounds(): ParkMapBounds {
   const viewOverride = parseBoundsFromEnv(process.env.NEXT_PUBLIC_PARK_VIEW_BOUNDS);
   if (viewOverride) return viewOverride;
@@ -65,7 +65,7 @@ export function parkViewBoundsLiteral(): MapLatLngBounds {
 }
 
 export function parkMapCenter(): MapLatLng {
-  const b = getParkViewBounds();
+  const b = getParkMapBounds();
   return {
     lat: (b.north + b.south) / 2,
     lng: (b.east + b.west) / 2,

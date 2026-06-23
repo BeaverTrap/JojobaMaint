@@ -5,7 +5,7 @@ import { AdvancedMarkerAnchorPoint, useMap } from "@vis.gl/react-google-maps";
 import { mapPositionToLatLng } from "@/lib/map-coords";
 import { isValidCoord } from "@/lib/map-edit-validation";
 import type { MapLatLng, MapLatLngBounds } from "@/lib/map-geography";
-import { parkViewBoundsLiteral } from "@/lib/map-geography";
+import { parkMapBoundsLiteral, parkViewBoundsLiteral } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
 
 /** Match schematic PNG map: marker center sits on the coordinate. */
@@ -76,7 +76,7 @@ type MapFitBoundsProps = {
 
 /** Frames the map to a fixed geographic area. Does not track marker positions. */
 export function MapFitBounds({
-  bounds = parkViewBoundsLiteral(),
+  bounds = parkMapBoundsLiteral(),
   once = false,
   enabled = true,
   maxZoom,

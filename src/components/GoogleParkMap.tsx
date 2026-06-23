@@ -19,6 +19,7 @@ import { mapPositionToLatLng } from "@/lib/map-coords";
 import { isValidCoord } from "@/lib/map-edit-validation";
 import {
   googleMapId,
+  parkMapBoundsLiteral,
   parkViewBoundsLiteral,
   parkMapCenter,
 } from "@/lib/map-geography";
@@ -79,7 +80,7 @@ function MapFocusController({
         return;
       }
       if (resetWhenHighlightClears) {
-        fitMapToLatLngBounds(map, parkViewBoundsLiteral(), {
+        fitMapToLatLngBounds(map, parkMapBoundsLiteral(), {
           maxZoom: OVERVIEW_MAX_ZOOM,
           minZoom: OVERVIEW_MIN_ZOOM,
         });
