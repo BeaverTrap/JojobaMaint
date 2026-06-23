@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { MdPlumbing } from "react-icons/md";
 import {
   AdvancedMarker,
@@ -9,7 +9,7 @@ import {
   useMap,
 } from "@vis.gl/react-google-maps";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
-import { GOOGLE_MAP_MARKER_ANCHOR, MapFitBounds } from "@/components/GoogleMapMarkers";
+import { GOOGLE_MAP_MARKER_ANCHOR, MapFitBounds, computeLotFocusBounds } from "@/components/GoogleMapMarkers";
 import { getPlaceIcon, getPlaceMarkerClasses } from "@/lib/map-place-icons";
 import { isValidCoord } from "@/lib/map-edit-validation";
 import {
@@ -19,7 +19,7 @@ import {
 } from "@/lib/map-coords";
 import {
   googleMapId,
-  parkViewBoundsLiteral,
+  parkFocusBoundsLiteral,
   parkMapCenter,
 } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
@@ -143,6 +143,11 @@ export default function MapEditGoogleMap({
 }: MapEditGoogleMapProps) {
   const colorScheme = useGoogleMapColorScheme();
 
+  const startupBounds = useMemo(
+    () => computeLotFocusBounds(lots) ?? parkFocusBoundsLiteral(),
+    [lots],
+  );
+
   function handleMapClick(event: MapMouseEvent) {
     const coords = coordsFromMapEvent(event);
     if (!coords) return;
@@ -171,12 +176,8 @@ export default function MapEditGoogleMap({
         onClick={handleMapClick}
         className="h-full w-full"
         style={{ width: "100%", height: "100%" }}
-        restriction={{
-          latLngBounds: parkViewBoundsLiteral(),
-          strictBounds: false,
-        }}
       >
-        <MapFitBounds once minZoom={17} maxZoom={19} />
+        <MapFitBounds once bounds={startupBounds} minZoom={17} maxZoom={19} />
         <MapEditSelectionPan
           mode={mode}
           selectedLot={selectedLot}

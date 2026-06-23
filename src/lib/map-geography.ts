@@ -29,6 +29,26 @@ const DEFAULT_PARK_MAP_BOUNDS: ParkMapBounds = {
 /** Extra east longitude (degrees) for pan/zoom — covers east amenities (shooting range, dog runs, aviation). */
 const DEFAULT_VIEW_EAST_EXTENSION = 0.022;
 
+/**
+ * Main resort center (clubhouse / Hwy 79 frontage). Startup view targets this —
+ * not the schematic box center, which sits east of the developed loops.
+ */
+const DEFAULT_RESORT_CENTER: MapLatLng = {
+  lat: 33.4482,
+  lng: -116.8715,
+};
+
+/**
+ * Tight frame for the developed resort (lots + clubhouse). Excludes far-east
+ * amenities so the map opens on Jojoba Hills, not across the street.
+ */
+const DEFAULT_PARK_FOCUS_BOUNDS: ParkMapBounds = {
+  north: 33.454,
+  south: 33.443,
+  east: -116.864,
+  west: -116.879,
+};
+
 function parseBoundsFromEnv(raw: string | undefined): ParkMapBounds | null {
   const trimmed = raw?.trim();
   if (!trimmed) return null;
@@ -38,8 +58,25 @@ function parseBoundsFromEnv(raw: string | undefined): ParkMapBounds | null {
   return { north, south, east, west };
 }
 
+function parseCenterFromEnv(raw: string | undefined): MapLatLng | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(",").map((p) => Number(p.trim()));
+  if (parts.length !== 2 || parts.some((n) => !Number.isFinite(n))) return null;
+  const [lat, lng] = parts;
+  return { lat, lng };
+}
+
 export function getParkMapBounds(): ParkMapBounds {
   return parseBoundsFromEnv(process.env.NEXT_PUBLIC_PARK_MAP_BOUNDS) ?? DEFAULT_PARK_MAP_BOUNDS;
+}
+
+/** Startup / reset frame — main resort only, not the full schematic extent. */
+export function getParkFocusBounds(): ParkMapBounds {
+  return (
+    parseBoundsFromEnv(process.env.NEXT_PUBLIC_PARK_FOCUS_BOUNDS) ??
+    DEFAULT_PARK_FOCUS_BOUNDS
+  );
 }
 
 /** Wider box for pan limits only — extends east beyond the schematic box. */
@@ -59,17 +96,21 @@ export function parkMapBoundsLiteral(): MapLatLngBounds {
   return { north: b.north, south: b.south, east: b.east, west: b.west };
 }
 
+export function parkFocusBoundsLiteral(): MapLatLngBounds {
+  const b = getParkFocusBounds();
+  return { north: b.north, south: b.south, east: b.east, west: b.west };
+}
+
 export function parkViewBoundsLiteral(): MapLatLngBounds {
   const b = getParkViewBounds();
   return { north: b.north, south: b.south, east: b.east, west: b.west };
 }
 
 export function parkMapCenter(): MapLatLng {
-  const b = getParkMapBounds();
-  return {
-    lat: (b.north + b.south) / 2,
-    lng: (b.east + b.west) / 2,
-  };
+  return (
+    parseCenterFromEnv(process.env.NEXT_PUBLIC_PARK_FOCUS_CENTER) ??
+    DEFAULT_RESORT_CENTER
+  );
 }
 
 /** Image coords: x = west→east, y = top→bottom (north→south). */

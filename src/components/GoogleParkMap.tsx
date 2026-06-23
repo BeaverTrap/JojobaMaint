@@ -11,6 +11,7 @@ import {
 import {
   GOOGLE_MAP_MARKER_ANCHOR,
   MapFitBounds,
+  computeLotFocusBounds,
   fitMapToLatLngBounds,
 } from "@/components/GoogleMapMarkers";
 import { GoogleMapFrame, useGoogleMapColorScheme } from "@/components/GoogleMapFrame";
@@ -19,8 +20,7 @@ import { mapPositionToLatLng } from "@/lib/map-coords";
 import { isValidCoord } from "@/lib/map-edit-validation";
 import {
   googleMapId,
-  parkMapBoundsLiteral,
-  parkViewBoundsLiteral,
+  parkFocusBoundsLiteral,
   parkMapCenter,
 } from "@/lib/map-geography";
 import type { MapPositions } from "@/lib/map-positions";
@@ -80,7 +80,9 @@ function MapFocusController({
         return;
       }
       if (resetWhenHighlightClears) {
-        fitMapToLatLngBounds(map, parkMapBoundsLiteral(), {
+        const focusBounds =
+          computeLotFocusBounds(lots) ?? parkFocusBoundsLiteral();
+        fitMapToLatLngBounds(map, focusBounds, {
           maxZoom: OVERVIEW_MAX_ZOOM,
           minZoom: OVERVIEW_MIN_ZOOM,
         });
@@ -207,6 +209,11 @@ export function GoogleParkMap({
     contextZone || contextLot || contextValve || contextValves.length > 0;
   const colorScheme = useGoogleMapColorScheme();
 
+  const startupBounds = useMemo(
+    () => computeLotFocusBounds(lots) ?? parkFocusBoundsLiteral(),
+    [lots],
+  );
+
   if (loading) {
     return (
       <div className="flex min-h-[360px] items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8">
@@ -265,14 +272,11 @@ export function GoogleParkMap({
             disableDefaultUI={false}
             className="h-full w-full"
             style={{ width: "100%", height: "100%" }}
-            restriction={{
-              latLngBounds: parkViewBoundsLiteral(),
-              strictBounds: false,
-            }}
           >
             <MapFitBounds
               once
               enabled={!loading}
+              bounds={startupBounds}
               minZoom={OVERVIEW_MIN_ZOOM}
               maxZoom={OVERVIEW_MAX_ZOOM}
             />
