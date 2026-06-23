@@ -161,25 +161,6 @@ export default function MapEditClient({
     return lotIds;
   }, [lotIds, lotListFilter, lots]);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      const mod = event.ctrlKey || event.metaKey;
-      if (!mod) return;
-      const key = event.key.toLowerCase();
-      if (key === "z" && !event.shiftKey) {
-        event.preventDefault();
-        undo();
-        setMessage("Undid last change.");
-      } else if (key === "y" || (key === "z" && event.shiftKey)) {
-        event.preventDefault();
-        redo();
-        setMessage("Redid change.");
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [undo, redo]);
-
   const placeNames = Object.keys(places).sort((a, b) => a.localeCompare(b));
   const valveIdsOnMap = Object.keys(valves).sort(naturalSort);
 
@@ -296,11 +277,39 @@ export default function MapEditClient({
 
   const handleResetSelectedLots = useCallback(() => {
     if (selectedLotIds.size === 0) return;
-    resetLotPositions(selectedLotIds);
+    const ids = Array.from(selectedLotIds);
+    const placedCount = ids.filter((id) => isValidCoord(lots[id])).length;
+    resetLotPositions(ids);
     setMessage(
-      `Pulled ${selectedLotIds.size} lot(s) off the map — select one and click where it should go.`,
+      placedCount > 0
+        ? `Pulled ${placedCount} lot(s) off the map (${ids.length} selected) — click the map to place again.`
+        : `${ids.length} selected lot(s) are already unplaced.`,
     );
-  }, [resetLotPositions, selectedLotIds]);
+  }, [resetLotPositions, selectedLotIds, lots]);
+
+  const resetLotsWithSelection = useCallback(
+    (lotId: string) => {
+      const ids =
+        selectedLotIds.size > 1 && selectedLotIds.has(lotId)
+          ? Array.from(selectedLotIds)
+          : [lotId];
+      const placedCount = ids.filter((id) => isValidCoord(lots[id])).length;
+      resetLotPositions(ids);
+      if (ids.length > 1) {
+        setMessage(
+          placedCount > 0
+            ? `Pulled ${placedCount} selected lot(s) off the map — click the map to place again.`
+            : `${ids.length} selected lots are already unplaced.`,
+        );
+      } else {
+        selectMarker("lot", lotId);
+        setMessage(
+          `Reset lot "${lotId}" — pan to the right spot and click the map.`,
+        );
+      }
+    },
+    [lots, resetLotPositions, selectMarker, selectedLotIds],
+  );
 
   const handleResetAllPlacedLots = useCallback(() => {
     const placed = lotIds.filter((id) => isValidCoord(lots[id]));
@@ -318,6 +327,47 @@ export default function MapEditClient({
       `Pulled ${placed.length} lots off the map. Filter set to Unplaced — place them one area at a time.`,
     );
   }, [lotIds, lots, resetLotPositions]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+
+      if (mod) {
+        if (key === "z" && !event.shiftKey) {
+          event.preventDefault();
+          undo();
+          setMessage("Undid last change.");
+        } else if (key === "y" || (key === "z" && event.shiftKey)) {
+          event.preventDefault();
+          redo();
+          setMessage("Redid change.");
+        }
+        return;
+      }
+
+      if (
+        mode === "lots" &&
+        (event.key === "Delete" || event.key === "Backspace") &&
+        selectedLotIds.size > 0
+      ) {
+        event.preventDefault();
+        handleResetSelectedLots();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [undo, redo, mode, selectedLotIds, handleResetSelectedLots]);
 
   const placeMarker = useCallback(
     (coords: { x: number; y: number }) => {
@@ -654,8 +704,9 @@ export default function MapEditClient({
           </h1>
           <p className="mt-1 text-sm text-muted">
             Pull misplaced lots off the map (Reset), pan to the right area,
-            select a lot, and click to place. Shift+click to multi-select.
-            Ctrl+Z / Ctrl+Y to undo and redo. Save when done.
+            select a lot, and click to place. Shift+click to select a range,
+            then Reset all selected or press Delete. Ctrl+Z / Ctrl+Y undo/redo.
+            Save when done.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -958,7 +1009,8 @@ export default function MapEditClient({
             {mode === "lots" && (
               <div className="mb-2 flex flex-col gap-2 border-b border-line pb-2">
                 <p className="text-[11px] leading-snug text-muted">
-                  Shift+click range · Ctrl+click toggle ·{" "}
+                  Shift+click range · Ctrl+click toggle · Delete resets all
+                  selected ·{" "}
                   {unplacedLotCount > 0
                     ? `${unplacedLotCount} ready to place · ${placedLotIds.length} on map`
                     : `${placedLotIds.length} on map`}
@@ -990,9 +1042,9 @@ export default function MapEditClient({
                     type="button"
                     disabled={selectedLotIds.size === 0}
                     onClick={handleResetSelectedLots}
-                    className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-hover disabled:opacity-50"
+                    className="rounded-lg border border-brand-300 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-900 hover:bg-brand-100 disabled:opacity-50 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-100 dark:hover:bg-brand-950/60"
                   >
-                    Reset selected
+                    Reset all selected
                     {selectedLotIds.size > 0 ? ` (${selectedLotIds.size})` : ""}
                   </button>
                   <button
@@ -1114,21 +1166,21 @@ export default function MapEditClient({
                     {isPlaced ? (
                       <button
                         type="button"
-                        title={`Reset lot ${lotId} — pull off map to place again`}
-                        onClick={() => {
-                          resetLotPositions([lotId]);
-                          selectMarker("lot", lotId);
-                          setMessage(
-                            `Reset lot "${lotId}" — pan to the right spot and click the map.`,
-                          );
-                        }}
+                        title={
+                          selectedLotIds.size > 1 && isMultiSelected
+                            ? `Reset all ${selectedLotIds.size} selected lots`
+                            : `Reset lot ${lotId} — pull off map to place again`
+                        }
+                        onClick={() => resetLotsWithSelection(lotId)}
                         className={`shrink-0 rounded-lg px-2 py-1.5 text-xs font-medium ${
                           isMultiSelected
                             ? "text-white/90 hover:bg-white/20"
                             : "text-muted hover:bg-hover"
                         }`}
                       >
-                        Reset
+                        {selectedLotIds.size > 1 && isMultiSelected
+                          ? `Reset (${selectedLotIds.size})`
+                          : "Reset"}
                       </button>
                     ) : (
                       <button
