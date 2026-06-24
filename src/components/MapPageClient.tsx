@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import MapPageMobile from "@/components/MapPageMobile";
 import MapSyncButton from "@/components/MapSyncButton";
 import PageMascotHeading from "@/components/PageMascotHeading";
 import { ParkMapView } from "@/components/ParkMapView";
@@ -11,8 +12,6 @@ import ValveLookupPanel, {
 } from "@/components/ValveLookupPanel";
 import { siteHref } from "@/lib/site-slug";
 import type { MapPositions } from "@/lib/map-positions";
-
-type SelectedMarker = { type: "valve"; id: string };
 
 const EMPTY_MAP_STATE: ValveLookupMapState = {
   lotsToShow: [],
@@ -28,9 +27,7 @@ const EMPTY_MAP_STATE: ValveLookupMapState = {
   autoFocusHighlight: false,
 };
 
-function initialLookupQuery(
-  searchParams: URLSearchParams,
-): string {
+function initialLookupQuery(searchParams: URLSearchParams): string {
   return (
     searchParams.get("search") ||
     searchParams.get("lot") ||
@@ -56,12 +53,7 @@ function MapPageContent({
   const [showLots, setShowLots] = useState(true);
   const [showPlaces, setShowPlaces] = useState(true);
   const [showValves, setShowValves] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobileView, setMobileView] = useState<"map" | "lookup">("map");
-  const [selectedMarker, setSelectedMarker] = useState<SelectedMarker | null>(
-    null,
-  );
-  const [layersOpen, setLayersOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   useEffect(() => {
     setLookupQuery(initialLookupQuery(searchParams));
@@ -101,9 +93,8 @@ function MapPageContent({
     (query: string) => {
       setLookupQuery(query);
       syncUrl(query);
-      if (isMobile && query.trim()) setMobileView("map");
     },
-    [syncUrl, isMobile],
+    [syncUrl],
   );
 
   const handleMapStateChange = useCallback((state: ValveLookupMapState) => {
@@ -117,11 +108,10 @@ function MapPageContent({
     return [];
   }, [mapState.lotsToShow, searchParams]);
 
-  const highlightLot =
-    mapState.highlightLot ?? searchParams.get("lot");
-  const highlightValve =
-    mapState.highlightValve ?? searchParams.get("valve");
-  const autoFocus = mapState.autoFocusHighlight || !!(highlightLot || highlightValve);
+  const highlightLot = mapState.highlightLot ?? searchParams.get("lot");
+  const highlightValve = mapState.highlightValve ?? searchParams.get("valve");
+  const autoFocus =
+    mapState.autoFocusHighlight || !!(highlightLot || highlightValve);
 
   function handleLotClick(lotId: string) {
     router.push(siteHref(lotId));
@@ -132,17 +122,7 @@ function MapPageContent({
   }
 
   function handleValveClick(valveId: string) {
-    if (isMobile && mobileView === "map") {
-      setSelectedMarker({ type: "valve", id: valveId });
-      return;
-    }
     handleQueryChange(valveId);
-  }
-
-  function handleSearchThis() {
-    if (!selectedMarker) return;
-    handleQueryChange(selectedMarker.id);
-    setSelectedMarker(null);
   }
 
   const layerControls = (
@@ -177,21 +157,9 @@ function MapPageContent({
     </>
   );
 
-  const wipBanner = (
-    <div
-      role="status"
-      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100"
-    >
-      <span className="font-semibold">Work in progress</span>
-      {" — "}
-      Park map and lookup are still being built out. Features and layout may
-      change.
-    </div>
-  );
-
   const mapElement = (
     <ParkMapView
-      fillHeight={isMobile && mobileView === "map"}
+      fillHeight
       zoomable
       initialMapData={mapData}
       lotsToShow={lotsToShow}
@@ -215,150 +183,64 @@ function MapPageContent({
     />
   );
 
-  if (isMobile) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-canvas md:relative md:z-auto">
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line bg-surface/95 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => setMobileView("lookup")}
-              className={`inline-flex min-h-[44px] items-center rounded-xl px-3 py-2 text-sm font-medium ${
-                mobileView === "lookup"
-                  ? "bg-brand-600 text-white"
-                  : "border border-line text-ink hover:bg-hover"
-              }`}
-            >
-              Lookup
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileView("map")}
-              className={`inline-flex min-h-[44px] items-center rounded-xl px-3 py-2 text-sm font-medium ${
-                mobileView === "map"
-                  ? "bg-brand-600 text-white"
-                  : "border border-line text-ink hover:bg-hover"
-              }`}
-            >
-              Map
-            </button>
-          </div>
-          {mobileView === "map" && (
-            <div className="flex items-center gap-2">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setLayersOpen((open) => !open)}
-                className="inline-flex min-h-[44px] items-center rounded-xl border border-line bg-surface px-3 py-2 text-sm font-medium text-ink hover:bg-hover"
-              >
-                Layers
-              </button>
-              {layersOpen && (
-                <>
-                  <button
-                    type="button"
-                    className="fixed inset-0 z-40"
-                    aria-label="Close layers menu"
-                    onClick={() => setLayersOpen(false)}
-                  />
-                  <div className="absolute right-0 top-full z-50 mt-1 min-w-[10rem] rounded-xl border border-line bg-surface py-2 shadow-lg">
-                    <div className="flex flex-col gap-2 px-3">{layerControls}</div>
-                  </div>
-                </>
-              )}
-            </div>
-            </div>
-          )}
-        </div>
-
-        {mobileView === "lookup" && (
-          <div className="shrink-0 px-3 py-2">{wipBanner}</div>
-        )}
-
-        {mobileView === "lookup" ? (
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 pb-[env(safe-area-inset-bottom)]">
-            <ValveLookupPanel
-              initialQuery={lookupQuery}
-              onQueryChange={handleQueryChange}
-              onMapStateChange={handleMapStateChange}
-              compact
-              canRefreshFromSheet={isAuthorized}
-            />
-          </div>
-        ) : (
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-            {mapElement}
-          </div>
-        )}
-
-        {mobileView === "map" &&
-          selectedMarker?.type === "valve" &&
-          selectedMarker && (
-          <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t border-line bg-surface/95 px-3 py-2 pb-[env(safe-area-inset-bottom)]">
-            <button
-              type="button"
-              onClick={() => setSelectedMarker(null)}
-              className="p-1 text-xl leading-none text-muted hover:text-ink"
-              aria-label="Close"
-            >
-              ×
-            </button>
-            <span className="min-w-0 flex-1 truncate text-xs uppercase text-muted">
-              Valve {selectedMarker.id}
-            </span>
-            <button
-              type="button"
-              onClick={handleSearchThis}
-              className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              Look up
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-[70dvh] flex-col gap-4">
-      <PageMascotHeading
-        scene="map"
-        title="Park map & lookup"
-        description="Find valves, zones, and lots — then see them on the map. Click places for site profiles, or use lookup for valve shutoff details. Live weather is in the bar below the navigation menu."
-      >
-        {isAuthorized ? (
-          <>
-            <Link
-              href="/map/edit"
-              className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
-            >
-              Edit positions
-            </Link>
-            <MapSyncButton />
-          </>
-        ) : null}
-        <Link
-          href="/sites"
-          className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+    <>
+      {isMobile === null ? (
+        <p className="text-sm text-muted">Loading map…</p>
+      ) : isMobile ? (
+        <MapPageMobile
+          isAuthorized={isAuthorized}
+          lookupQuery={lookupQuery}
+          onQueryChange={handleQueryChange}
+          onMapStateChange={handleMapStateChange}
+          mapSlot={mapElement}
+          showLots={showLots}
+          showPlaces={showPlaces}
+          showValves={showValves}
+          onShowLots={setShowLots}
+          onShowPlaces={setShowPlaces}
+          onShowValves={setShowValves}
+        />
+      ) : (
+      <div className="flex min-h-[70dvh] flex-col gap-4">
+        <PageMascotHeading
+          scene="map"
+          title="Park map & lookup"
+          description="Find valves, zones, and lots — then see them on the map. Click places for site profiles, or use lookup for valve shutoff details. Live weather is in the bar below the navigation menu."
         >
-          Browse all sites
-        </Link>
-      </PageMascotHeading>
+          {isAuthorized ? (
+            <>
+              <Link
+                href="/map/edit"
+                className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+              >
+                Edit positions
+              </Link>
+              <MapSyncButton />
+            </>
+          ) : null}
+          <Link
+            href="/sites"
+            className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+          >
+            Browse all sites
+          </Link>
+        </PageMascotHeading>
 
-      {wipBanner}
+        <ValveLookupPanel
+          initialQuery={lookupQuery}
+          onQueryChange={handleQueryChange}
+          onMapStateChange={handleMapStateChange}
+          compact
+          canRefreshFromSheet={isAuthorized}
+        />
 
-      <ValveLookupPanel
-        initialQuery={lookupQuery}
-        onQueryChange={handleQueryChange}
-        onMapStateChange={handleMapStateChange}
-        compact
-        canRefreshFromSheet={isAuthorized}
-      />
+        <div className="flex flex-wrap items-center gap-4">{layerControls}</div>
 
-      <div className="flex flex-wrap items-center gap-4">{layerControls}</div>
-
-      <div className="min-h-[55dvh] flex-1">{mapElement}</div>
-    </div>
+        <div className="min-h-[55dvh] flex-1">{mapElement}</div>
+      </div>
+      )}
+    </>
   );
 }
 

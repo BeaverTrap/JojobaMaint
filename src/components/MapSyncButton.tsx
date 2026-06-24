@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function MapSyncButton() {
+export default function MapSyncButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -44,17 +44,35 @@ export default function MapSyncButton() {
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-1">
+    <div
+      className={
+        compact
+          ? "inline-flex flex-col items-start gap-1"
+          : "flex shrink-0 flex-col items-end gap-1"
+      }
+    >
       <button
         type="button"
         onClick={handleSync}
         disabled={loading}
-        className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
+        className={
+          compact
+            ? "rounded-full bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
+            : "rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
+        }
       >
-        {loading ? "Syncing…" : "Sync Valve Inventory"}
+        {loading ? "Syncing…" : compact ? "Sync sheet" : "Sync Valve Inventory"}
       </button>
       {message && (
-        <p className="max-w-[16rem] text-right text-xs text-muted">{message}</p>
+        <p
+          className={
+            compact
+              ? "max-w-[14rem] text-xs text-muted"
+              : "max-w-[16rem] text-right text-xs text-muted"
+          }
+        >
+          {message}
+        </p>
       )}
     </div>
   );
