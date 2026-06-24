@@ -50,6 +50,8 @@ type ValveLookupPanelProps = {
   onQueryChange?: (query: string) => void;
   onMapStateChange?: (state: ValveLookupMapState) => void;
   compact?: boolean;
+  /** Authorized maintenance staff can pull fresh valve data from the sheet. */
+  canRefreshFromSheet?: boolean;
 };
 
 export default function ValveLookupPanel({
@@ -57,6 +59,7 @@ export default function ValveLookupPanel({
   onQueryChange,
   onMapStateChange,
   compact = false,
+  canRefreshFromSheet = false,
 }: ValveLookupPanelProps) {
   const router = useRouter();
   const [data, setData] = useState<ValvesResponse | null>(null);
@@ -345,14 +348,16 @@ export default function ValveLookupPanel({
             {data.stale ? " (cached)" : ""}
           </p>
         )}
-        <button
-          type="button"
-          onClick={() => void loadValves(true)}
-          disabled={refreshing}
-          className="text-sm font-medium text-brand-700 hover:underline disabled:opacity-60"
-        >
-          {refreshing ? "Refreshing…" : "Refresh from sheet"}
-        </button>
+        {canRefreshFromSheet && (
+          <button
+            type="button"
+            onClick={() => void loadValves(true)}
+            disabled={refreshing}
+            className="text-sm font-medium text-brand-700 hover:underline disabled:opacity-60"
+          >
+            {refreshing ? "Refreshing…" : "Refresh from sheet"}
+          </button>
+        )}
       </div>
 
       {data?.valves && data.valves.length > 0 && (

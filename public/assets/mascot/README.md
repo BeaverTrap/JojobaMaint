@@ -4,13 +4,13 @@ Drop transparent PNGs here with these **exact filenames** — no code changes ne
 
 | File | Where it shows |
 | --- | --- |
-| `welcome.png` | Empty feed |
-| `search.png` | No search/filter results (feed, articles, assessments) |
-| `tools.png` | Empty maintenance assessments |
-| `reading.png` | Empty articles & tree assessments |
-| `map.png` | Empty sites DB, no site search matches |
-| `calendar.png` | Empty maintenance schedule |
-| `sleep.png` | Request portal offline |
+| `welcome.png` | Feed header, login, empty feed |
+| `search.png` | No search/filter results |
+| `tools.png` | Maintenance feed filter, water page, empty maintenance assessments |
+| `reading.png` | Landscaping feed filter, empty articles & tree assessments |
+| `map.png` | Map & sites page headers, empty sites |
+| `calendar.png` | Schedule page header, empty schedule |
+| `sleep.png` | Request portal page |
 
 ## Sizes (export at these dimensions)
 

@@ -108,6 +108,7 @@ function MascotImage({
       height={size}
       priority={priority}
       className={`object-contain ${animate ? "motion-bob" : ""} ${className}`.trim()}
+      unoptimized
       onError={onFallback}
     />
   );

@@ -5,6 +5,7 @@ import { fetchCalendarEventsForRange } from "@/lib/calendar-events";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import CalendarSyncButton from "@/components/CalendarSyncButton";
 import MascotEmptyState from "@/components/MascotEmptyState";
+import PageMascotHeading from "@/components/PageMascotHeading";
 
 export const dynamic = "force-dynamic";
 
@@ -22,17 +23,13 @@ export default async function SchedulePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink">
-            Maintenance schedule
-          </h1>
-          <p className="text-sm text-muted">
-            Park maintenance calendar.
-          </p>
-        </div>
-        {isAuthorized && <CalendarSyncButton />}
-      </div>
+      <PageMascotHeading
+        scene="calendar"
+        title="Maintenance schedule"
+        description="Park maintenance calendar."
+      >
+        {isAuthorized ? <CalendarSyncButton /> : null}
+      </PageMascotHeading>
 
       <ScheduleCalendar events={events} />
 

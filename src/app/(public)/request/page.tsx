@@ -1,4 +1,5 @@
 import RequestPortalPlaceholder from "@/components/RequestPortalPlaceholder";
+import PageMascotHeading from "@/components/PageMascotHeading";
 import { getMaintainXPortalUrl } from "@/lib/maintainx";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -15,15 +16,11 @@ export default function RequestPage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Submit a Work Request
-        </h1>
-        <p className="text-sm text-muted">
-          Report maintenance issues, request repairs, or ask for help from the
-          maintenance team.
-        </p>
-      </header>
+      <PageMascotHeading
+        scene="sleep"
+        title="Submit a Work Request"
+        description="Report maintenance issues, request repairs, or ask for help from the maintenance team."
+      />
 
       <RequestPortalPlaceholder />
     </div>

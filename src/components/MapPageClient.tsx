@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import MapSyncButton from "@/components/MapSyncButton";
+import PageMascotHeading from "@/components/PageMascotHeading";
 import { ParkMapView } from "@/components/ParkMapView";
 import ValveLookupPanel, {
   type ValveLookupMapState,
@@ -281,6 +282,7 @@ function MapPageContent({
               onQueryChange={handleQueryChange}
               onMapStateChange={handleMapStateChange}
               compact
+              canRefreshFromSheet={isAuthorized}
             />
           </div>
         ) : (
@@ -319,37 +321,29 @@ function MapPageContent({
 
   return (
     <div className="flex min-h-[70dvh] flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold tracking-tight text-ink">
-            Park map &amp; lookup
-          </h1>
-          <p className="text-sm text-muted">
-            Find valves, zones, and lots — then see them on the map. Click
-            places for site profiles, or use lookup for valve shutoff details.
-            Live weather is in the bar below the navigation menu.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-wrap items-start gap-2">
-          {isAuthorized && (
-            <>
-              <Link
-                href="/map/edit"
-                className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
-              >
-                Edit positions
-              </Link>
-              <MapSyncButton />
-            </>
-          )}
-          <Link
-            href="/sites"
-            className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
-          >
-            Browse all sites
-          </Link>
-        </div>
-      </div>
+      <PageMascotHeading
+        scene="map"
+        title="Park map & lookup"
+        description="Find valves, zones, and lots — then see them on the map. Click places for site profiles, or use lookup for valve shutoff details. Live weather is in the bar below the navigation menu."
+      >
+        {isAuthorized ? (
+          <>
+            <Link
+              href="/map/edit"
+              className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+            >
+              Edit positions
+            </Link>
+            <MapSyncButton />
+          </>
+        ) : null}
+        <Link
+          href="/sites"
+          className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+        >
+          Browse all sites
+        </Link>
+      </PageMascotHeading>
 
       {wipBanner}
 
@@ -358,6 +352,7 @@ function MapPageContent({
         onQueryChange={handleQueryChange}
         onMapStateChange={handleMapStateChange}
         compact
+        canRefreshFromSheet={isAuthorized}
       />
 
       <div className="flex flex-wrap items-center gap-4">{layerControls}</div>

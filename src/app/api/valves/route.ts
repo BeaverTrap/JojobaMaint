@@ -6,6 +6,7 @@ import {
   getValvesForZone,
   getZonesForLot,
 } from "@/lib/google-valves";
+import { isAuthorizedStaff } from "@/lib/staff-api-auth";
 
 export async function GET(request: Request) {
   try {
@@ -15,6 +16,9 @@ export async function GET(request: Request) {
     const refresh = searchParams.get("refresh");
 
     if (refresh === "1" || refresh === "true") {
+      if (!(await isAuthorizedStaff())) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       clearValveCache();
     }
 
