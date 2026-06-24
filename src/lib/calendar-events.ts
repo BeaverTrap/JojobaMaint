@@ -12,6 +12,7 @@ export async function fetchCalendarEventsForRange(
   const { data, error } = await supabase
     .from("calendar_events")
     .select(CALENDAR_EVENT_SELECT)
+    .neq("status", "cancelled")
     .lt("start_time", rangeEnd)
     .gt("end_time", rangeStart)
     .order("start_time", { ascending: true });

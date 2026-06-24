@@ -14,6 +14,7 @@ export default function CalendarSyncButton() {
       const data = (await res.json()) as {
         ok?: boolean;
         synced?: number;
+        removed?: number;
         mode?: string;
         error?: string;
         missing?: string[];
@@ -29,8 +30,11 @@ export default function CalendarSyncButton() {
         setMessage(data.error ?? "Sync failed");
         return;
       }
+      const removed = data.removed ?? 0;
+      const removedNote =
+        removed > 0 ? ` Removed ${removed} deleted event(s).` : "";
       setMessage(
-        `Synced ${data.synced ?? 0} event(s) (${data.mode ?? "full"}). Refresh to see updates.`,
+        `Synced ${data.synced ?? 0} event(s) (${data.mode ?? "full"}).${removedNote} Refresh to see updates.`,
       );
     } catch {
       setMessage("Sync failed — check server logs.");

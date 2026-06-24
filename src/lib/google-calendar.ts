@@ -99,7 +99,7 @@ function parseEventTimes(event: calendar_v3.Schema$Event): {
 }
 
 function toRow(event: calendar_v3.Schema$Event) {
-  if (!event.id) return null;
+  if (!event.id || event.status === "cancelled") return null;
   const times = parseEventTimes(event);
   return {
     google_event_id: event.id,
@@ -107,30 +107,97 @@ function toRow(event: calendar_v3.Schema$Event) {
     description: event.description?.trim() || null,
     ...times,
     status:
-      event.status === "cancelled" || event.status === "tentative"
-        ? event.status
-        : "confirmed",
+      event.status === "tentative" ? ("tentative" as const) : ("confirmed" as const),
   };
 }
 
-async function upsertEvents(events: calendar_v3.Schema$Event[]) {
-  const rows = events.map(toRow).filter((row): row is NonNullable<typeof row> => row !== null);
-  if (rows.length === 0) return 0;
+async function deleteEventsByGoogleIds(googleEventIds: string[]): Promise<number> {
+  if (googleEventIds.length === 0) return 0;
 
   const supabase = createAdminClient();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("calendar_events")
-    .upsert(rows, { onConflict: "google_event_id" });
+    .delete({ count: "exact" })
+    .in("google_event_id", googleEventIds);
+
   if (error) throw error;
-  return rows.length;
+  return count ?? googleEventIds.length;
+}
+
+async function pruneStaleEventsInRange(
+  syncedGoogleIds: ReadonlySet<string>,
+  rangeStart: string,
+  rangeEnd: string,
+): Promise<number> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("calendar_events")
+    .select("google_event_id")
+    .lt("start_time", rangeEnd)
+    .gt("end_time", rangeStart);
+
+  if (error) throw error;
+
+  const staleIds = (data ?? [])
+    .map((row) => row.google_event_id)
+    .filter((id) => !syncedGoogleIds.has(id));
+
+  return deleteEventsByGoogleIds(staleIds);
+}
+
+async function applyCalendarEventSync(
+  events: calendar_v3.Schema$Event[],
+  options?: { fullSync?: boolean; rangeStart?: string; rangeEnd?: string },
+): Promise<{ upserted: number; removed: number }> {
+  const removedIds: string[] = [];
+  const activeRows: NonNullable<ReturnType<typeof toRow>>[] = [];
+  const syncedGoogleIds = new Set<string>();
+
+  for (const event of events) {
+    if (!event.id) continue;
+    if (event.status === "cancelled") {
+      removedIds.push(event.id);
+      continue;
+    }
+    syncedGoogleIds.add(event.id);
+    const row = toRow(event);
+    if (row) activeRows.push(row);
+  }
+
+  let removed = await deleteEventsByGoogleIds(removedIds);
+
+  let upserted = 0;
+  if (activeRows.length > 0) {
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from("calendar_events")
+      .upsert(activeRows, { onConflict: "google_event_id" });
+    if (error) throw error;
+    upserted = activeRows.length;
+  }
+
+  if (options?.fullSync && options.rangeStart && options.rangeEnd) {
+    removed += await pruneStaleEventsInRange(
+      syncedGoogleIds,
+      options.rangeStart,
+      options.rangeEnd,
+    );
+  }
+
+  return { upserted, removed };
 }
 
 async function listAllEvents(
   calendar: calendar_v3.Calendar,
   calendarId: string,
-): Promise<{ events: calendar_v3.Schema$Event[]; nextSyncToken: string | null }> {
-  const timeMin = subMonths(new Date(), 3).toISOString();
-  const timeMax = addMonths(new Date(), 12).toISOString();
+): Promise<{
+  events: calendar_v3.Schema$Event[];
+  nextSyncToken: string | null;
+  rangeStart: string;
+  rangeEnd: string;
+}> {
+  const rangeStart = subMonths(new Date(), 3).toISOString();
+  const rangeEnd = addMonths(new Date(), 12).toISOString();
   const events: calendar_v3.Schema$Event[] = [];
   let pageToken: string | undefined;
   let nextSyncToken: string | null = null;
@@ -140,8 +207,8 @@ async function listAllEvents(
       calendarId,
       singleEvents: true,
       orderBy: "startTime",
-      timeMin,
-      timeMax,
+      timeMin: rangeStart,
+      timeMax: rangeEnd,
       maxResults: 250,
       pageToken,
     });
@@ -150,14 +217,19 @@ async function listAllEvents(
     if (res.data.nextSyncToken) nextSyncToken = res.data.nextSyncToken;
   } while (pageToken);
 
-  return { events, nextSyncToken };
+  return { events, nextSyncToken, rangeStart, rangeEnd };
 }
 
 async function listIncrementalEvents(
   calendar: calendar_v3.Calendar,
   calendarId: string,
   syncToken: string,
-): Promise<{ events: calendar_v3.Schema$Event[]; nextSyncToken: string | null }> {
+): Promise<{
+  events: calendar_v3.Schema$Event[];
+  nextSyncToken: string | null;
+  rangeStart?: string;
+  rangeEnd?: string;
+}> {
   const events: calendar_v3.Schema$Event[] = [];
   let pageToken: string | undefined;
   let nextSyncToken: string | null = null;
@@ -190,6 +262,7 @@ async function listIncrementalEvents(
 
 export async function syncGoogleCalendarEvents(): Promise<{
   synced: number;
+  removed: number;
   mode: "full" | "incremental";
 }> {
   const configIssues = getCalendarConfigIssues();
@@ -203,17 +276,27 @@ export async function syncGoogleCalendarEvents(): Promise<{
   const calendarId = getCalendarId();
   const state = await loadSyncState();
 
-  const { events, nextSyncToken } = state.sync_token
+  const fetched = state.sync_token
     ? await listIncrementalEvents(calendar, calendarId, state.sync_token)
     : await listAllEvents(calendar, calendarId);
 
-  const synced = await upsertEvents(events);
+  const fullSync = !state.sync_token || Boolean(fetched.rangeStart);
+  const { upserted, removed } = await applyCalendarEventSync(fetched.events, {
+    fullSync,
+    rangeStart: fetched.rangeStart,
+    rangeEnd: fetched.rangeEnd,
+  });
+
   await saveSyncState({
-    sync_token: nextSyncToken ?? state.sync_token,
+    sync_token: fetched.nextSyncToken ?? state.sync_token,
     last_synced_at: new Date().toISOString(),
   });
 
-  return { synced, mode: state.sync_token ? "incremental" : "full" };
+  return {
+    synced: upserted,
+    removed,
+    mode: state.sync_token && !fullSync ? "incremental" : "full",
+  };
 }
 
 function webhookAddress(): string {
