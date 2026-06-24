@@ -4,7 +4,7 @@ Drop transparent PNGs here with these **exact filenames** — no code changes ne
 
 | File | Where it shows |
 | --- | --- |
-| `welcome.png` | Feed header, login, empty feed |
+| `welcome.png` | Feed header, empty feed |
 | `search.png` | No search/filter results |
 | `tools.png` | Maintenance feed filter, water page, empty maintenance assessments |
 | `reading.png` | Landscaping feed filter, empty articles & tree assessments |
