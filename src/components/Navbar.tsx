@@ -108,8 +108,9 @@ export default function Navbar({
             />
           </div>
         </nav>
-        <ParkWeatherBar />
       </header>
+
+      <ParkWeatherBar />
 
       <MobileBottomNav />
     </>
