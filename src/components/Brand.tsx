@@ -86,7 +86,6 @@ type MascotImageProps = {
   alt: string;
   size: number;
   priority?: boolean;
-  animate?: boolean;
   className?: string;
   onFallback: () => void;
 };
@@ -96,7 +95,6 @@ function MascotImage({
   alt,
   size,
   priority = false,
-  animate = false,
   className = "",
   onFallback,
 }: MascotImageProps) {
@@ -107,7 +105,7 @@ function MascotImage({
       width={size}
       height={size}
       priority={priority}
-      className={`object-contain ${animate ? "motion-bob" : ""} ${className}`.trim()}
+      className={`object-contain ${className}`.trim()}
       unoptimized
       onError={onFallback}
     />
@@ -116,11 +114,9 @@ function MascotImage({
 
 export function Mascot({
   size = 140,
-  animate = false,
   className = "",
 }: {
   size?: number;
-  animate?: boolean;
   className?: string;
 }) {
   const [src, setSrc] = useState(MASCOT_SCENES.default.src);
@@ -136,7 +132,6 @@ export function Mascot({
       alt={MASCOT_SCENES.default.alt}
       size={size}
       priority
-      animate={animate}
       className={className}
       onFallback={() => {
         if (src === MASCOT_SCENES.default.src) {
@@ -152,12 +147,10 @@ export function Mascot({
 export function MascotScene({
   scene,
   size = 140,
-  animate = false,
   className = "",
 }: {
   scene: MascotSceneId;
   size?: number;
-  animate?: boolean;
   className?: string;
 }) {
   const def = MASCOT_SCENES[scene];
@@ -173,7 +166,6 @@ export function MascotScene({
       src={src}
       alt={def.alt}
       size={size}
-      animate={animate}
       className={className}
       onFallback={() => {
         if (def.fallback && src !== def.fallback) {

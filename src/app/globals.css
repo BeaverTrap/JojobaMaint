@@ -330,16 +330,6 @@ body {
   }
 }
 
-@keyframes motion-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
 .motion-pending {
   opacity: 0;
   transform: translateY(20px);
@@ -380,10 +370,6 @@ body {
 
 .motion-panel-enter {
   animation: motion-slide-down 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.motion-bob {
-  animation: motion-bob 2.8s ease-in-out infinite;
 }
 
 .motion-card {
@@ -437,8 +423,7 @@ body {
   .motion-slide-down,
   .motion-page-enter,
   .motion-overlay-enter,
-  .motion-panel-enter,
-  .motion-bob {
+  .motion-panel-enter {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

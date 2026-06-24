@@ -14,7 +14,7 @@ export default async function LoginPage({
       <div className="w-full max-w-md">
         {/* Branding block — single logo/mascot image above the auth button. */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <MascotScene scene="welcome" size={150} animate />
+          <MascotScene scene="welcome" size={150} />
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">
             Jojoba Hills Maintenance
           </h1>

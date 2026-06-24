@@ -22,13 +22,11 @@ export default function PageMascotHeading({
         <MascotScene
           scene={scene}
           size={80}
-          animate
           className="shrink-0 drop-shadow-sm sm:hidden"
         />
         <MascotScene
           scene={scene}
           size={96}
-          animate
           className="hidden shrink-0 drop-shadow-sm sm:block"
         />
         <div className="min-w-0 pt-1">

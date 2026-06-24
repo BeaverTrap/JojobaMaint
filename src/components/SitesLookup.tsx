@@ -184,7 +184,7 @@ export default function SitesLookup({ sites }: SitesLookupProps) {
 
           {filteredSites.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <MascotScene scene="map" size={96} animate className="mx-auto" />
+              <MascotScene scene="map" size={96} className="mx-auto" />
               <p className="mt-3 text-sm text-muted">
                 No sites match that search. Try a lot number, zone, or amenity
                 name.
