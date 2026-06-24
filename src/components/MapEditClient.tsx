@@ -1086,26 +1086,24 @@ export default function MapEditClient({
         : selectedValve;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink">
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
+        <div className="min-w-0">
+          <h1 className="text-lg font-bold tracking-tight text-ink sm:text-xl">
             Map position editor
           </h1>
-          <p className="mt-1 text-sm text-muted">
-            Pull misplaced lots, places, or valves off the map (Reset), pan to
-            the right area, select an item, and click to place. Shift+click to
-            select a range, then Reset all selected or press Delete. Ctrl+Z /
-            Ctrl+Y undo/redo. Save when done.
+          <p className="hidden text-xs text-muted sm:block">
+            Reset · click to place · drag markers · Shift multi-select · Ctrl+Z
+            undo
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={undo}
             disabled={!canUndo}
             title="Undo (Ctrl+Z)"
-            className="rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-40"
+            className="rounded-lg border border-line px-2.5 py-1.5 text-sm font-medium text-ink hover:bg-hover disabled:opacity-40"
           >
             Undo
           </button>
@@ -1114,13 +1112,13 @@ export default function MapEditClient({
             onClick={redo}
             disabled={!canRedo}
             title="Redo (Ctrl+Y)"
-            className="rounded-xl border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-hover disabled:opacity-40"
+            className="rounded-lg border border-line px-2.5 py-1.5 text-sm font-medium text-ink hover:bg-hover disabled:opacity-40"
           >
             Redo
           </button>
           <Link
             href="/map"
-            className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink hover:bg-hover"
+            className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink hover:bg-hover"
           >
             ← Map
           </Link>
@@ -1128,66 +1126,17 @@ export default function MapEditClient({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+            className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save positions"}
+            {saving ? "Saving…" : "Save"}
           </button>
         </div>
       </div>
 
-      {sheetLoadError && (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
-          Could not compare against the valve sheet: {sheetLoadError}. Lot
-          missing-coordinate checks may be incomplete until sheet data loads.
-        </p>
-      )}
-
-      <section
-        className={`rounded-xl border px-4 py-3 ${
-          issueSummary.ok
-            ? "border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-950/30"
-            : issueSummary.errors > 0
-              ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/30"
-              : "border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30"
-        }`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-ink">
-            {issueSummary.ok
-              ? "All checks passed — no coordinate errors."
-              : `${issueSummary.errors} error${issueSummary.errors === 1 ? "" : "s"}, ${issueSummary.warnings} warning${issueSummary.warnings === 1 ? "" : "s"}`}
-          </p>
-          {!issueSummary.ok && issues.length > 0 && (
-            <p className="text-xs text-muted">Tap an issue to select and fix it.</p>
-          )}
-        </div>
-        {!issueSummary.ok && issues.length > 0 && (
-          <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto">
-            {issues.map((issue) => (
-              <li key={issue.id}>
-                <button
-                  type="button"
-                  onClick={() => selectMarker(issue.kind, issue.label)}
-                  className={`w-full rounded-lg px-2 py-1.5 text-left text-sm hover:bg-hover ${
-                    issue.severity === "error"
-                      ? "text-red-800 dark:text-red-200"
-                      : "text-amber-900 dark:text-amber-100"
-                  }`}
-                >
-                  <span className="font-medium">
-                    {issue.severity === "error" ? "Error" : "Warning"}:
-                  </span>{" "}
-                  {issue.message}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <div className="flex min-h-[calc(100dvh-13rem)] flex-col gap-4 xl:min-h-[calc(100dvh-11rem)] xl:flex-row xl:items-stretch">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden lg:flex-row lg:gap-3">
         {isGoogleMapsEnabled() ? (
-          <div className="flex min-h-[55dvh] min-w-0 flex-1 flex-col xl:min-h-0">
+          <div className="relative min-h-[38dvh] shrink-0 overflow-hidden lg:min-h-0 lg:min-w-0 lg:flex-1">
+          <div className="absolute inset-0 flex min-h-0 flex-col">
           <MapEditGoogleMap
             lots={lots}
             places={places}
@@ -1239,9 +1188,10 @@ export default function MapEditClient({
             onSelectValve={handleValveMapClick}
           />
           </div>
+          </div>
         ) : (
         <div
-          className={`${MAP_VIEWPORT_CLASS} min-h-[55dvh] min-w-0 flex-1 cursor-crosshair overflow-hidden rounded-xl border border-line bg-black xl:min-h-0`}
+          className={`${MAP_VIEWPORT_CLASS} relative min-h-[38dvh] shrink-0 cursor-crosshair overflow-hidden rounded-xl border border-line bg-black lg:min-h-0 lg:min-w-0 lg:flex-1`}
           onClick={handleMapClick}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
@@ -1348,8 +1298,58 @@ export default function MapEditClient({
         </div>
         )}
 
-        <aside className="flex w-full shrink-0 flex-col gap-2 xl:w-80 2xl:w-96">
-          <div className="flex overflow-hidden rounded-xl border border-line">
+        <aside className="flex min-h-0 w-full flex-col gap-2 lg:h-full lg:w-96 lg:shrink-0">
+          {sheetLoadError ? (
+            <p className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
+              Sheet compare unavailable: {sheetLoadError}
+            </p>
+          ) : null}
+
+          {issueSummary.ok ? (
+            <p className="shrink-0 text-xs text-muted">
+              All coordinate checks passed.
+            </p>
+          ) : (
+            <details
+              open
+              className={`shrink-0 rounded-xl border px-3 py-2 ${
+                issueSummary.errors > 0
+                  ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/30"
+                  : "border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30"
+              }`}
+            >
+              <summary className="cursor-pointer text-sm font-semibold text-ink">
+                {issueSummary.errors} error
+                {issueSummary.errors === 1 ? "" : "s"},{" "}
+                {issueSummary.warnings} warning
+                {issueSummary.warnings === 1 ? "" : "s"}
+              </summary>
+              {issues.length > 0 ? (
+                <ul className="mt-2 max-h-28 space-y-0.5 overflow-y-auto overscroll-contain">
+                  {issues.map((issue) => (
+                    <li key={issue.id}>
+                      <button
+                        type="button"
+                        onClick={() => selectMarker(issue.kind, issue.label)}
+                        className={`w-full rounded-lg px-2 py-1 text-left text-xs hover:bg-hover ${
+                          issue.severity === "error"
+                            ? "text-red-800 dark:text-red-200"
+                            : "text-amber-900 dark:text-amber-100"
+                        }`}
+                      >
+                        <span className="font-medium">
+                          {issue.severity === "error" ? "Error" : "Warning"}:
+                        </span>{" "}
+                        {issue.message}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </details>
+          )}
+
+          <div className="flex shrink-0 overflow-hidden rounded-xl border border-line">
             {(["lots", "places", "valves"] as const).map((tab) => (
               <button
                 key={tab}
@@ -1377,7 +1377,7 @@ export default function MapEditClient({
               </button>
             ))}
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-surface p-2 xl:max-h-none">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-line bg-surface p-2">
             {mode === "lots" && (
               <form
                 onSubmit={handleAddLot}
@@ -1803,6 +1803,7 @@ export default function MapEditClient({
                 );
               })}
           </div>
+          <div className="shrink-0 space-y-2 border-t border-line pt-2">
           {selected && mode === "places" && selectedPlace && places[selectedPlace] && (
             <div className="rounded-xl border border-line bg-surface p-2">
               <p className="mb-2 text-xs font-medium text-muted">
@@ -1848,6 +1849,7 @@ export default function MapEditClient({
               {message}
             </p>
           )}
+          </div>
         </aside>
       </div>
     </div>

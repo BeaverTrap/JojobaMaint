@@ -276,6 +276,21 @@ body {
   object-fit: cover;
 }
 
+/* Map editor — full-height workspace, no page/footer scroll fighting the panel */
+body:has(.map-edit-shell) footer {
+  display: none;
+}
+
+body:has(.map-edit-shell) main {
+  padding-bottom: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  body:has(.map-edit-shell) main {
+    padding-bottom: 1rem;
+  }
+}
+
 /* ── Motion (respect prefers-reduced-motion) ── */
 @keyframes motion-fade-up {
   from {

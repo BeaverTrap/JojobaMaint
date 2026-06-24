@@ -23,14 +23,13 @@ export default async function MapEditPage() {
   const mapData = await fetchMapPositions(supabase);
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col">
       <MapEditClient initialData={mapData} />
-      <p className="text-xs text-muted">
-        Need sheet data first?{" "}
+      <p className="mt-2 shrink-0 text-xs text-muted">
+        Need sheet data?{" "}
         <Link href="/sites" className="font-medium text-brand-700 hover:underline">
-          Sync sites from sheet
-        </Link>{" "}
-        on the Sites page.
+          Sync on Sites
+        </Link>
       </p>
     </div>
   );
