@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
+import AnimateIn from "@/components/AnimateIn";
 import FeedItemCard from "@/components/FeedItemCard";
 import { filterFeedItems, type FeedItem } from "@/lib/feed";
 import { parseFeedFilter, type FeedFilter } from "@/lib/feed-section";
@@ -65,8 +66,10 @@ export default function Feed({
         <EmptyState hasQuery={query.trim().length > 0} />
       ) : (
         <div className="space-y-4">
-          {filtered.map((item) => (
-            <FeedItemCard key={item.id} item={item} canEdit={canEdit} />
+          {filtered.map((item, index) => (
+            <AnimateIn key={item.id} delay={Math.min(index * 55, 330)}>
+              <FeedItemCard item={item} canEdit={canEdit} />
+            </AnimateIn>
           ))}
         </div>
       )}
@@ -89,8 +92,8 @@ function Tab({
       onClick={onClick}
       className={
         active
-          ? "rounded-full bg-brand-600 px-4 py-1.5 text-sm font-semibold text-white"
-          : "rounded-full border border-line bg-surface px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-hover"
+          ? "motion-tab motion-press rounded-full bg-brand-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm"
+          : "motion-tab motion-press rounded-full border border-line bg-surface px-4 py-1.5 text-sm font-medium text-ink hover:bg-hover"
       }
     >
       {label}
@@ -100,7 +103,8 @@ function Tab({
 
 function EmptyState({ hasQuery }: { hasQuery: boolean }) {
   return (
-    <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
+    <AnimateIn variant="scale">
+      <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
       <p className="text-3xl">{hasQuery ? "🔍" : "🛠️"}</p>
       <p className="mt-3 text-sm font-medium text-ink">
         {hasQuery ? "Nothing matched" : "Nothing on the feed yet"}
@@ -111,5 +115,6 @@ function EmptyState({ hasQuery }: { hasQuery: boolean }) {
           : "Posts, articles, and assessments will all show here."}
       </p>
     </div>
+    </AnimateIn>
   );
 }

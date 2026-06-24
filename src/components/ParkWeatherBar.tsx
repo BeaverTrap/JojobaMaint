@@ -218,7 +218,7 @@ export default function ParkWeatherBar() {
 
   return (
     <div className="no-print" data-weather-expanded={expanded ? "true" : "false"}>
-      <div className={`sticky top-14 z-20 ${barSurface}`}>
+      <div className={`sticky top-14 z-20 motion-fade-in ${barSurface}`}>
         <div className="mx-auto max-w-5xl px-3 sm:px-4">
           <div
             role="status"
@@ -292,12 +292,12 @@ export default function ParkWeatherBar() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/40 motion-overlay-enter"
             onClick={closeForecast}
             aria-label="Close forecast"
           />
           <div
-            className={`absolute inset-x-0 top-14 flex max-h-[calc(100dvh-3.5rem-env(safe-area-inset-bottom)-4.5rem)] flex-col ${barSurface} shadow-lg`}
+            className={`absolute inset-x-0 top-14 flex max-h-[calc(100dvh-3.5rem-env(safe-area-inset-bottom)-4.5rem)] flex-col motion-panel-enter ${barSurface} shadow-lg`}
           >
             <div className="flex items-center justify-between gap-2 border-b border-sky-200/70 px-3 py-2 dark:border-sky-800/40">
               <p className="text-sm font-semibold text-sky-950 dark:text-sky-100">

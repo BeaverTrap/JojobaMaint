@@ -24,7 +24,7 @@ export default function FeedItemCard({
   const useCrewIcon = item.posterAvatar != null;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+    <article className="motion-card overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
       {useCrewIcon ? (
         <PostPostHeader
           posterAvatar={item.posterAvatar}

@@ -16,7 +16,7 @@ export function ContentIndexCardLink({
   footer?: React.ReactNode;
 }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+    <article className="motion-card overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
       <Link href={href} className="block transition hover:bg-hover/50">
         {coverUrl && (
           <ContentCoverImage

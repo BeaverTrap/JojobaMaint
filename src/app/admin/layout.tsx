@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import PageEnter from "@/components/PageEnter";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function AdminLayout({
@@ -17,7 +18,7 @@ export default async function AdminLayout({
     <div className="flex min-h-dvh flex-col">
       <Navbar profile={profile} isAuthorized={isAuthorized} isLoggedIn />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:py-6 md:pb-6">
-        {children}
+        <PageEnter>{children}</PageEnter>
       </main>
       <footer className="border-t border-line py-6 text-center text-xs text-muted">
         Jojoba Hills SKP Resort · Maintenance Department

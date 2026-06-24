@@ -49,7 +49,7 @@ export default function CalendarSyncButton() {
         type="button"
         onClick={handleSync}
         disabled={loading}
-        className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
+        className="motion-press rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60"
       >
         {loading ? "Syncing…" : "Sync calendar"}
       </button>

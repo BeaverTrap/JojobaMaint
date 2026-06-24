@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import SearchBar from "@/components/SearchBar";
+import AnimateIn from "@/components/AnimateIn";
 import ShareButtons from "@/components/ShareButtons";
 import { ContentIndexCardLink } from "@/components/ContentIndexCard";
 import AssessmentListCardLead from "@/components/AssessmentListCardLead";
@@ -80,7 +81,8 @@ export default function TreeAssessmentsIndex({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
+        <AnimateIn variant="scale">
+          <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
           <p className="text-3xl">🌳</p>
           <p className="mt-3 text-sm font-medium text-ink">
             No assessments yet
@@ -91,10 +93,12 @@ export default function TreeAssessmentsIndex({
               : "Published assessments will appear here for transparency."}
           </p>
         </div>
+        </AnimateIn>
       ) : (
         <div className="space-y-3">
-          {filtered.map((a) => (
-            <ContentIndexCardLink
+          {filtered.map((a, index) => (
+            <AnimateIn key={a.id} delay={Math.min(index * 50, 300)}>
+              <ContentIndexCardLink
               key={a.id}
               href={`/tree-assessments/${a.slug}`}
               coverUrl={a.cover_image_url}
@@ -131,6 +135,7 @@ export default function TreeAssessmentsIndex({
               )}
               <p className="mt-2 text-sm font-medium text-brand-700">Read more →</p>
             </ContentIndexCardLink>
+            </AnimateIn>
           ))}
         </div>
       )}
@@ -153,8 +158,8 @@ function Tab({
       onClick={onClick}
       className={
         active
-          ? "rounded-full bg-brand-600 px-4 py-1.5 text-sm font-semibold text-white"
-          : "rounded-full border border-line bg-surface px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-hover"
+          ? "motion-tab motion-press rounded-full bg-brand-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm"
+          : "motion-tab motion-press rounded-full border border-line bg-surface px-4 py-1.5 text-sm font-medium text-ink hover:bg-hover"
       }
     >
       {label}

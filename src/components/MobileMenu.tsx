@@ -35,7 +35,7 @@ export default function MobileMenu({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-ink md:hidden"
+        className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-ink motion-press md:hidden"
         aria-label="Open menu"
         aria-expanded={open}
       >
@@ -43,7 +43,7 @@ export default function MobileMenu({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[100] md:hidden">
+        <div className="fixed inset-0 z-[100] md:hidden motion-overlay-enter">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
@@ -51,7 +51,7 @@ export default function MobileMenu({
             onClick={close}
           />
           <div
-            className="absolute right-3 top-[3.75rem] z-[101] flex w-[min(calc(100vw-1.5rem),16.5rem)] max-h-[min(70dvh,calc(100dvh-5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl dark:bg-[#0a0c0b]"
+            className="motion-panel-enter absolute right-3 top-[3.75rem] z-[101] flex w-[min(calc(100vw-1.5rem),16.5rem)] max-h-[min(70dvh,calc(100dvh-5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl dark:bg-[#0a0c0b]"
             style={{ backgroundColor: "var(--color-surface)" }}
             role="dialog"
             aria-modal="true"

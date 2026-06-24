@@ -16,6 +16,7 @@ import {
   subMonths,
 } from "date-fns";
 import type { CalendarEvent } from "@/lib/database.types";
+import AnimateIn from "@/components/AnimateIn";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -78,12 +79,13 @@ export default function ScheduleCalendar({
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+      <AnimateIn>
+      <section className="motion-card overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
         <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={() => setMonth((m) => subMonths(m, 1))}
-            className="rounded-xl border border-line px-3 py-2 text-sm font-semibold text-ink transition hover:bg-hover"
+            className="motion-press rounded-xl border border-line px-3 py-2 text-sm font-semibold text-ink transition hover:bg-hover"
             aria-label="Previous month"
           >
             ←
@@ -107,7 +109,7 @@ export default function ScheduleCalendar({
           <button
             type="button"
             onClick={() => setMonth((m) => addMonths(m, 1))}
-            className="rounded-xl border border-line px-3 py-2 text-sm font-semibold text-ink transition hover:bg-hover"
+            className="motion-press rounded-xl border border-line px-3 py-2 text-sm font-semibold text-ink transition hover:bg-hover"
             aria-label="Next month"
           >
             →
@@ -176,9 +178,11 @@ export default function ScheduleCalendar({
           })}
         </div>
       </section>
+      </AnimateIn>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5">
+        <AnimateIn delay={80}>
+        <section className="motion-card rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5">
           <h3 className="text-sm font-bold text-ink">
             {selectedDay
               ? format(selectedDay, "EEEE, MMMM d")
@@ -206,8 +210,10 @@ export default function ScheduleCalendar({
             ))}
           </ul>
         </section>
+        </AnimateIn>
 
-        <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5">
+        <AnimateIn delay={140}>
+        <section className="motion-card rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5">
           <h3 className="text-sm font-bold text-ink">Coming up</h3>
           {upcoming.length === 0 ? (
             <p className="mt-2 text-sm text-muted">
@@ -236,6 +242,7 @@ export default function ScheduleCalendar({
             </ul>
           )}
         </section>
+        </AnimateIn>
       </div>
     </div>
   );

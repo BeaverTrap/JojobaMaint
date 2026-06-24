@@ -23,7 +23,7 @@ export default function PostCard({
   const location = postLocationLabel(post);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+    <article className="motion-card overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
       <PostPostHeader
         posterAvatar={post.poster_avatar}
         feedSection={post.category}
