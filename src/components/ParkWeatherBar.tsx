@@ -75,7 +75,7 @@ function WeatherForecastPanel({
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
         <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            {data.locationLabel} · right now
+            {data.locationLabel}
           </p>
           <p className="mt-1 text-2xl font-bold tabular-nums text-ink sm:text-3xl">
             {current.temperatureF}°F
@@ -222,7 +222,7 @@ export default function ParkWeatherBar() {
         <div className="mx-auto max-w-5xl px-3 sm:px-4">
           <div
             role="status"
-            aria-label={`${PARK_WEATHER_BAR_LABEL} weather conditions`}
+            aria-label={`${PARK_WEATHER_BAR_LABEL} conditions`}
             className="flex items-center gap-2 py-1.5 sm:gap-3"
           >
             <button

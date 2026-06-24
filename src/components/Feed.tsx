@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import AnimateIn from "@/components/AnimateIn";
+import MascotEmptyState from "@/components/MascotEmptyState";
 import FeedItemCard from "@/components/FeedItemCard";
 import { filterFeedItems, type FeedItem } from "@/lib/feed";
 import { parseFeedFilter, type FeedFilter } from "@/lib/feed-section";
@@ -49,25 +50,36 @@ export default function Feed({
 
   return (
     <div className="space-y-4">
-      <SearchBar value={query} onChange={setQuery} placeholder="Search the feed…" />
+      <AnimateIn>
+        <SearchBar value={query} onChange={setQuery} placeholder="Search the feed…" />
+      </AnimateIn>
 
       <div className="flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <Tab
-            key={f.id}
-            label={f.label}
-            active={activeFilter === f.id}
-            onClick={() => setActiveFilter(f.id)}
-          />
+        {FILTERS.map((f, index) => (
+          <AnimateIn key={f.id} delay={index * 45} variant="fade">
+            <Tab
+              label={f.label}
+              active={activeFilter === f.id}
+              onClick={() => setActiveFilter(f.id)}
+            />
+          </AnimateIn>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState hasQuery={query.trim().length > 0} />
+        <MascotEmptyState
+          scene={query.trim().length > 0 ? "search" : "welcome"}
+          title={query.trim().length > 0 ? "Nothing matched" : "Nothing on the feed yet"}
+          description={
+            query.trim().length > 0
+              ? "Try another search or filter."
+              : "Posts, articles, and assessments will all show here."
+          }
+        />
       ) : (
         <div className="space-y-4">
           {filtered.map((item, index) => (
-            <AnimateIn key={item.id} delay={Math.min(index * 55, 330)}>
+            <AnimateIn key={item.id} delay={Math.min(index * 70, 420)}>
               <FeedItemCard item={item} canEdit={canEdit} />
             </AnimateIn>
           ))}
@@ -101,20 +113,3 @@ function Tab({
   );
 }
 
-function EmptyState({ hasQuery }: { hasQuery: boolean }) {
-  return (
-    <AnimateIn variant="scale">
-      <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
-      <p className="text-3xl">{hasQuery ? "🔍" : "🛠️"}</p>
-      <p className="mt-3 text-sm font-medium text-ink">
-        {hasQuery ? "Nothing matched" : "Nothing on the feed yet"}
-      </p>
-      <p className="mt-1 text-sm text-muted">
-        {hasQuery
-          ? "Try another search or filter."
-          : "Posts, articles, and assessments will all show here."}
-      </p>
-    </div>
-    </AnimateIn>
-  );
-}

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { formatPostedEditedLines } from "@/lib/content-dates";
 import SearchBar from "@/components/SearchBar";
 import AnimateIn from "@/components/AnimateIn";
+import MascotEmptyState from "@/components/MascotEmptyState";
 import ShareButtons from "@/components/ShareButtons";
 import ContentTagList from "@/components/ContentTagList";
 import { ContentIndexCardLink } from "@/components/ContentIndexCard";
@@ -60,21 +61,27 @@ export default function ArticlesIndex({
       </div>
 
       {filtered.length === 0 ? (
-        <AnimateIn variant="scale">
-          <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
-          <p className="text-3xl">📖</p>
-          <p className="mt-3 text-sm font-medium text-ink">No articles yet</p>
-          <p className="mt-1 text-sm text-muted">
-            {canEdit
-              ? "Create your first guide from the dashboard."
-              : "Check back soon for park guides and best practices."}
-          </p>
-        </div>
-        </AnimateIn>
+        <MascotEmptyState
+          scene={
+            query.trim().length > 0 || activeTag !== "all" ? "search" : "reading"
+          }
+          title={
+            query.trim().length > 0 || activeTag !== "all"
+              ? "No articles matched"
+              : "No articles yet"
+          }
+          description={
+            query.trim().length > 0 || activeTag !== "all"
+              ? "Try another search or tag."
+              : canEdit
+                ? "Create your first guide from the dashboard."
+                : "Check back soon for park guides and best practices."
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((a, index) => (
-            <AnimateIn key={a.id} delay={Math.min(index * 50, 300)}>
+            <AnimateIn key={a.id} delay={Math.min(index * 70, 420)}>
               <ContentIndexCardLink
               key={a.id}
               href={`/articles/${a.slug}`}

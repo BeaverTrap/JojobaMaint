@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import AnimateIn from "@/components/AnimateIn";
+import MascotEmptyState from "@/components/MascotEmptyState";
 import ShareButtons from "@/components/ShareButtons";
 import { ContentIndexCardLink } from "@/components/ContentIndexCard";
 import AssessmentListCardLead from "@/components/AssessmentListCardLead";
@@ -81,23 +82,29 @@ export default function TreeAssessmentsIndex({
       </div>
 
       {filtered.length === 0 ? (
-        <AnimateIn variant="scale">
-          <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
-          <p className="text-3xl">🌳</p>
-          <p className="mt-3 text-sm font-medium text-ink">
-            No assessments yet
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            {canEdit
-              ? "Publish lot-specific assessments so residents can see our findings."
-              : "Published assessments will appear here for transparency."}
-          </p>
-        </div>
-        </AnimateIn>
+        <MascotEmptyState
+          scene={
+            query.trim().length > 0 || activeConcern !== "all"
+              ? "search"
+              : "reading"
+          }
+          title={
+            query.trim().length > 0 || activeConcern !== "all"
+              ? "No assessments matched"
+              : "No assessments yet"
+          }
+          description={
+            query.trim().length > 0 || activeConcern !== "all"
+              ? "Try another search or concern filter."
+              : canEdit
+                ? "Publish lot-specific assessments so residents can see our findings."
+                : "Published assessments will appear here for transparency."
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((a, index) => (
-            <AnimateIn key={a.id} delay={Math.min(index * 50, 300)}>
+            <AnimateIn key={a.id} delay={Math.min(index * 70, 420)}>
               <ContentIndexCardLink
               key={a.id}
               href={`/tree-assessments/${a.slug}`}

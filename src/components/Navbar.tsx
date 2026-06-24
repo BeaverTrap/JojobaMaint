@@ -131,8 +131,8 @@ function NavLink({
       href={href}
       className={
         highlight
-          ? "shrink-0 rounded-lg bg-brand-50 px-2.5 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 dark:bg-brand-900/80 dark:text-brand-200"
-          : "shrink-0 rounded-lg px-2.5 py-2 text-sm font-semibold text-ink transition hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-hover dark:hover:text-brand-300"
+          ? "motion-press shrink-0 rounded-lg bg-brand-50 px-2.5 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 dark:bg-brand-900/80 dark:text-brand-200"
+          : "motion-press shrink-0 rounded-lg px-2.5 py-2 text-sm font-semibold text-ink transition hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-hover dark:hover:text-brand-300"
       }
     >
       {label}

@@ -60,7 +60,7 @@ export default function AnimateIn({
         setVisible(true);
         if (once) observer.disconnect();
       },
-      { threshold: 0.08, rootMargin: "0px 0px -5% 0px" },
+      { threshold: 0.04, rootMargin: "0px 0px -2% 0px" },
     );
 
     observer.observe(el);

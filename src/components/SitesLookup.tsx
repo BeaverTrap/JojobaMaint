@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { MascotScene } from "@/components/Brand";
 import { formatCrossConnection } from "@/lib/lots";
 import {
   siteTypeLabel,
@@ -182,9 +183,13 @@ export default function SitesLookup({ sites }: SitesLookupProps) {
           </div>
 
           {filteredSites.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-muted">
-              No sites match that search. Try a lot number, zone, or amenity name.
-            </p>
+            <div className="px-4 py-8 text-center">
+              <MascotScene scene="map" size={96} animate className="mx-auto" />
+              <p className="mt-3 text-sm text-muted">
+                No sites match that search. Try a lot number, zone, or amenity
+                name.
+              </p>
+            </div>
           ) : (
             <ul className="max-h-[min(24rem,50dvh)] divide-y divide-line overflow-y-auto">
               {filteredSites.map((site) => (

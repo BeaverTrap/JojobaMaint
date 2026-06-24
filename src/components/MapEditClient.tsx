@@ -1185,8 +1185,9 @@ export default function MapEditClient({
         )}
       </section>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
+      <div className="flex min-h-[calc(100dvh-13rem)] flex-col gap-4 xl:min-h-[calc(100dvh-11rem)] xl:flex-row xl:items-stretch">
         {isGoogleMapsEnabled() ? (
+          <div className="flex min-h-[55dvh] min-w-0 flex-1 flex-col xl:min-h-0">
           <MapEditGoogleMap
             lots={lots}
             places={places}
@@ -1237,9 +1238,10 @@ export default function MapEditClient({
             onSelectPlace={handlePlaceMapClick}
             onSelectValve={handleValveMapClick}
           />
+          </div>
         ) : (
         <div
-          className={`${MAP_VIEWPORT_CLASS} min-h-[55dvh] flex-1 cursor-crosshair overflow-hidden rounded-xl border border-line bg-black`}
+          className={`${MAP_VIEWPORT_CLASS} min-h-[55dvh] min-w-0 flex-1 cursor-crosshair overflow-hidden rounded-xl border border-line bg-black xl:min-h-0`}
           onClick={handleMapClick}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
@@ -1346,7 +1348,7 @@ export default function MapEditClient({
         </div>
         )}
 
-        <div className="flex w-full flex-col gap-2 lg:w-80">
+        <aside className="flex w-full shrink-0 flex-col gap-2 xl:w-80 2xl:w-96">
           <div className="flex overflow-hidden rounded-xl border border-line">
             {(["lots", "places", "valves"] as const).map((tab) => (
               <button
@@ -1375,7 +1377,7 @@ export default function MapEditClient({
               </button>
             ))}
           </div>
-          <div className="max-h-96 flex-1 overflow-y-auto rounded-xl border border-line bg-surface p-2">
+          <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-surface p-2 xl:max-h-none">
             {mode === "lots" && (
               <form
                 onSubmit={handleAddLot}
@@ -1846,7 +1848,7 @@ export default function MapEditClient({
               {message}
             </p>
           )}
-        </div>
+        </aside>
       </div>
     </div>
   );

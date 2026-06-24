@@ -280,7 +280,7 @@ body {
 @keyframes motion-fade-up {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
@@ -300,18 +300,18 @@ body {
 @keyframes motion-scale-in {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.9) translateY(12px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
 @keyframes motion-slide-down {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-18px);
   }
   to {
     opacity: 1;
@@ -322,7 +322,7 @@ body {
 @keyframes motion-page-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -330,16 +330,27 @@ body {
   }
 }
 
+@keyframes motion-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 .motion-pending {
   opacity: 0;
+  transform: translateY(20px);
 }
 
 .motion-fade-up,
 .motion-fade-in,
 .motion-scale-in,
 .motion-slide-down {
-  animation-duration: 0.45s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-duration: 0.58s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   animation-fill-mode: both;
 }
 
@@ -360,54 +371,62 @@ body {
 }
 
 .motion-page-enter {
-  animation: motion-page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: motion-page-enter 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .motion-overlay-enter {
-  animation: motion-fade-in 0.2s ease-out both;
+  animation: motion-fade-in 0.28s ease-out both;
 }
 
 .motion-panel-enter {
-  animation: motion-slide-down 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: motion-slide-down 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motion-bob {
+  animation: motion-bob 2.8s ease-in-out infinite;
 }
 
 .motion-card {
   transition:
-    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.22s ease,
-    border-color 0.2s ease;
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s ease,
+    border-color 0.22s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .motion-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-5px);
     box-shadow:
-      0 10px 28px rgb(15 31 23 / 0.08),
-      0 2px 6px rgb(15 31 23 / 0.04);
+      0 16px 36px rgb(15 31 23 / 0.12),
+      0 4px 10px rgb(15 31 23 / 0.06);
   }
 
   .dark .motion-card:hover {
     box-shadow:
-      0 12px 32px rgb(0 0 0 / 0.45),
-      0 2px 8px rgb(0 0 0 / 0.25);
+      0 18px 40px rgb(0 0 0 / 0.5),
+      0 4px 12px rgb(0 0 0 / 0.3);
   }
 }
 
 .motion-press {
-  transition: transform 0.15s ease;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .motion-press:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .motion-tab {
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.15s ease,
-    box-shadow 0.2s ease;
+    background-color 0.22s ease,
+    color 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s ease;
+}
+
+.motion-tab:hover {
+  transform: translateY(-1px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -418,14 +437,16 @@ body {
   .motion-slide-down,
   .motion-page-enter,
   .motion-overlay-enter,
-  .motion-panel-enter {
+  .motion-panel-enter,
+  .motion-bob {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
 
   .motion-card,
-  .motion-card:hover {
+  .motion-card:hover,
+  .motion-tab:hover {
     transform: none !important;
     box-shadow: none;
   }

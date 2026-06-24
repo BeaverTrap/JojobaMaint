@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { fetchCalendarEventsForRange } from "@/lib/calendar-events";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import CalendarSyncButton from "@/components/CalendarSyncButton";
+import MascotEmptyState from "@/components/MascotEmptyState";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +37,15 @@ export default async function SchedulePage() {
       <ScheduleCalendar events={events} />
 
       {events.length === 0 && (
-        <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
-          No events in the cache yet.
-          {isAuthorized
-            ? " Tap Sync calendar to load events."
-            : " Events appear here when the schedule is updated."}
-        </p>
+        <MascotEmptyState
+          scene="calendar"
+          title="No events in the cache yet"
+          description={
+            isAuthorized
+              ? "Tap Sync calendar to load events from Google Calendar."
+              : "Events appear here when the schedule is updated."
+          }
+        />
       )}
     </div>
   );

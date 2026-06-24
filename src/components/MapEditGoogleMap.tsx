@@ -164,7 +164,10 @@ export default function MapEditGoogleMap({
   }
 
   return (
-    <GoogleMapFrame className="overflow-hidden rounded-xl border border-line">
+    <GoogleMapFrame
+      fillHeight
+      className="min-h-0 flex-1 overflow-hidden rounded-xl border border-line"
+    >
       <Map
         mapId={googleMapId()}
         defaultCenter={parkMapCenter()}

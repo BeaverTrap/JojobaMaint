@@ -2,6 +2,11 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import {
+  MASCOT_FALLBACK_SRC,
+  MASCOT_SCENES,
+  type MascotSceneId,
+} from "@/lib/mascot-scenes";
 
 /**
  * Branding placeholders.
@@ -58,30 +63,128 @@ export function Logo({
   );
 }
 
-export function Mascot({ size = 140 }: { size?: number }) {
-  const [errored, setErrored] = useState(false);
+function MascotFallback({
+  size,
+  className = "",
+}: {
+  size: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-center rounded-full bg-brand-100 text-5xl ${className}`.trim()}
+      style={{ width: size, height: size }}
+      aria-hidden
+    >
+      🌵
+    </div>
+  );
+}
 
-  if (errored) {
-    return (
-      <div
-        className="flex items-center justify-center rounded-full bg-brand-100 text-5xl"
-        style={{ width: size, height: size }}
-        aria-hidden
-      >
-        🌵
-      </div>
-    );
+type MascotImageProps = {
+  src: string;
+  alt: string;
+  size: number;
+  priority?: boolean;
+  animate?: boolean;
+  className?: string;
+  onFallback: () => void;
+};
+
+function MascotImage({
+  src,
+  alt,
+  size,
+  priority = false,
+  animate = false,
+  className = "",
+  onFallback,
+}: MascotImageProps) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={size}
+      height={size}
+      priority={priority}
+      className={`object-contain ${animate ? "motion-bob" : ""} ${className}`.trim()}
+      onError={onFallback}
+    />
+  );
+}
+
+export function Mascot({
+  size = 140,
+  animate = false,
+  className = "",
+}: {
+  size?: number;
+  animate?: boolean;
+  className?: string;
+}) {
+  const [src, setSrc] = useState(MASCOT_SCENES.default.src);
+  const [showEmoji, setShowEmoji] = useState(false);
+
+  if (showEmoji) {
+    return <MascotFallback size={size} className={className} />;
   }
 
   return (
-    <Image
-      src="/assets/mascot.png"
-      alt="Jojoba Hills mascot"
-      width={size}
-      height={size}
+    <MascotImage
+      src={src}
+      alt={MASCOT_SCENES.default.alt}
+      size={size}
       priority
-      className="object-contain"
-      onError={() => setErrored(true)}
+      animate={animate}
+      className={className}
+      onFallback={() => {
+        if (src === MASCOT_SCENES.default.src) {
+          setSrc(MASCOT_FALLBACK_SRC);
+          return;
+        }
+        setShowEmoji(true);
+      }}
+    />
+  );
+}
+
+export function MascotScene({
+  scene,
+  size = 140,
+  animate = false,
+  className = "",
+}: {
+  scene: MascotSceneId;
+  size?: number;
+  animate?: boolean;
+  className?: string;
+}) {
+  const def = MASCOT_SCENES[scene];
+  const [src, setSrc] = useState(def.src);
+  const [showEmoji, setShowEmoji] = useState(false);
+
+  if (showEmoji) {
+    return <MascotFallback size={size} className={className} />;
+  }
+
+  return (
+    <MascotImage
+      src={src}
+      alt={def.alt}
+      size={size}
+      animate={animate}
+      className={className}
+      onFallback={() => {
+        if (def.fallback && src !== def.fallback) {
+          setSrc(def.fallback);
+          return;
+        }
+        if (src !== MASCOT_FALLBACK_SRC) {
+          setSrc(MASCOT_FALLBACK_SRC);
+          return;
+        }
+        setShowEmoji(true);
+      }}
     />
   );
 }

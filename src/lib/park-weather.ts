@@ -35,7 +35,7 @@ export type ParkWeatherSnapshot = {
 };
 
 export const PARK_WEATHER_LOCATION_LABEL = "Jojoba Hills SKP, Aguanga CA";
-export const PARK_WEATHER_BAR_LABEL = "Jojoba Hills right now";
+export const PARK_WEATHER_BAR_LABEL = "Jojoba Weather";
 
 export function getParkWeatherCoordinates(): { lat: number; lng: number } {
   return parkMapCenter();

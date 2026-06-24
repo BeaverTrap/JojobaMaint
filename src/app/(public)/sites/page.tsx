@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchSites } from "@/lib/sites";
 import LotSyncButton from "@/components/LotSyncButton";
+import MascotEmptyState from "@/components/MascotEmptyState";
 import SitesLookup from "@/components/SitesLookup";
 
 export const dynamic = "force-dynamic";
@@ -34,12 +35,15 @@ export default async function SitesIndexPage() {
       </div>
 
       {sites.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
-          No sites in the database yet.
-          {isAuthorized
-            ? " Tap Sync to load site data."
-            : " Site details appear here once they&apos;re available."}
-        </p>
+        <MascotEmptyState
+          scene="map"
+          title="No sites in the database yet"
+          description={
+            isAuthorized
+              ? "Tap Sync to load site data from the sheet."
+              : "Site details appear here once they're available."
+          }
+        />
       ) : (
         <SitesLookup sites={sites} />
       )}
