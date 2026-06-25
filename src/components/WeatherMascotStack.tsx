@@ -424,10 +424,8 @@ export default function WeatherMascotStack({
         onPointerDown={onLayerPointerDown}
       >
         <div
-          className={`flex h-full flex-col items-center justify-center rounded px-0.5 py-0.5 text-center shadow-sm ${
-            editMode
-              ? "bg-white/95"
-              : "pointer-events-none border border-amber-900/25 bg-white/95"
+          className={`flex h-full flex-col items-center justify-center px-0.5 py-0.5 text-center ${
+            editMode ? "rounded bg-white/95 shadow-sm" : "pointer-events-none bg-transparent"
           }`}
         >
           <span
