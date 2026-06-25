@@ -40,8 +40,8 @@ export const DEFAULT_WEATHER_MASCOT_LAYOUT: WeatherMascotLayoutConfig = {
     height: 100,
   },
   tempHotspot: {
-    left: 42.8774373259053,
-    top: 15.28125,
+    left: 34.27158774373259,
+    top: 40.59765625,
     width: 31.45682451253482,
     height: 18.8046875,
   },

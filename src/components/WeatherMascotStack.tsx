@@ -51,17 +51,17 @@ const LAYER_STYLES: Record<
     label: "Map",
     z: 5,
   },
-  quail: {
-    border: "border-amber-500",
-    badge: "bg-amber-600",
-    label: "Quail",
-    z: 15,
-  },
   temp: {
     border: "border-brand-500",
     badge: "bg-brand-600",
     label: "Temp",
-    z: 25,
+    z: 10,
+  },
+  quail: {
+    border: "border-amber-500",
+    badge: "bg-amber-600",
+    label: "Quail",
+    z: 20,
   },
 };
 
@@ -416,32 +416,6 @@ export default function WeatherMascotStack({
         </EditableLayer>
       ) : null}
 
-      {!compositeMode ? (
-        <EditableLayer
-          layer="quail"
-          rect={layout.quail}
-          editMode={editMode}
-          active={activeEditLayer === "quail"}
-          onSelect={onActiveEditLayerChange}
-          onPointerDown={onLayerPointerDown}
-        >
-          <LayerImage
-            key={`quail-${quailSources[0]}`}
-            sources={quailSources}
-            alt=""
-            className="pointer-events-none h-full w-full object-contain object-bottom"
-            onResolved={handleQuailResolved}
-          />
-        </EditableLayer>
-      ) : (
-        <LayerImage
-          key={`composite-${quailSet}`}
-          sources={[WEATHER_MASCOT_COMPOSITE]}
-          alt=""
-          className="pointer-events-none absolute inset-0 z-10 h-full w-full object-contain"
-        />
-      )}
-
       <EditableLayer
         layer="temp"
         rect={layout.tempHotspot}
@@ -474,6 +448,32 @@ export default function WeatherMascotStack({
           </span>
         </div>
       </EditableLayer>
+
+      {!compositeMode ? (
+        <EditableLayer
+          layer="quail"
+          rect={layout.quail}
+          editMode={editMode}
+          active={activeEditLayer === "quail"}
+          onSelect={onActiveEditLayerChange}
+          onPointerDown={onLayerPointerDown}
+        >
+          <LayerImage
+            key={`quail-${quailSources[0]}`}
+            sources={quailSources}
+            alt=""
+            className="pointer-events-none h-full w-full object-contain object-bottom"
+            onResolved={handleQuailResolved}
+          />
+        </EditableLayer>
+      ) : (
+        <LayerImage
+          key={`composite-${quailSet}`}
+          sources={[WEATHER_MASCOT_COMPOSITE]}
+          alt=""
+          className="pointer-events-none absolute inset-0 z-10 h-full w-full object-contain"
+        />
+      )}
     </div>
   );
 }
