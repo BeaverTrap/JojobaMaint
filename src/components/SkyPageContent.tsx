@@ -85,13 +85,13 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
 
   return (
     <div className="space-y-6 pb-4">
-      <div className="flex items-start gap-3 sm:gap-4">
+      <div className="flex items-center gap-4 sm:gap-5">
         <WeatherMascotStack
           temperatureF={current.temperatureF}
           weatherLabel={current.weatherLabel}
           weatherCode={current.weatherCode}
           rotationSeed={data.fetchedAt}
-          width={88}
+          width={176}
           className="shrink-0 sm:hidden"
         />
         <WeatherMascotStack
@@ -99,10 +99,10 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
           weatherLabel={current.weatherLabel}
           weatherCode={current.weatherCode}
           rotationSeed={data.fetchedAt}
-          width={112}
+          width={248}
           className="hidden shrink-0 sm:block"
         />
-        <div className="min-w-0 pt-1">
+        <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
             Jojoba Weather &amp; sky
           </h1>
