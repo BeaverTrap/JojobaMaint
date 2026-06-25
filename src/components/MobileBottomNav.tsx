@@ -98,6 +98,17 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
           />
         </svg>
       );
+    case "Weather":
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M8 17a4 4 0 0 1 .9-7.9A5 5 0 0 1 18 9a3.5 3.5 0 0 1 .5 7H8Z"
+            stroke={stroke}
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
     case "Park map":
       return (
         <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>

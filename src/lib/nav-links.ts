@@ -4,6 +4,7 @@ export const NAV_LINKS = [
   { href: "/", label: "Feed" },
   { href: "/schedule", label: "Schedule" },
   { href: "/water", label: "Water" },
+  { href: "/weather", label: "Weather", shortLabel: "Weather" },
   { href: "/map", label: "Park map" },
 ] as const;
 

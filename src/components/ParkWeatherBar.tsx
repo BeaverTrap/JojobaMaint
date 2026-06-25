@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useId, useState } from "react";
 import {
   MdClose,
@@ -72,64 +73,62 @@ function WeatherForecastPanel({
   if (!data || !current) return null;
 
   return (
-    <div className="flex items-start gap-3">
+    <div className="relative">
       <MascotScene
         scene="weather"
-        size={72}
-        className="hidden shrink-0 drop-shadow-sm sm:block"
+        size={160}
+        className="pointer-events-none absolute left-0 top-0 z-10 hidden drop-shadow-md sm:block"
       />
       <MascotScene
         scene="weather"
-        size={64}
-        className="shrink-0 drop-shadow-sm sm:hidden"
+        size={112}
+        className="pointer-events-none absolute left-0 top-0 z-10 drop-shadow-md sm:hidden"
       />
-      <div className="min-w-0 flex-1 space-y-3">
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-        <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            {data.locationLabel}
-          </p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-ink sm:text-3xl">
-            {current.temperatureF}°F
-          </p>
-          <p className="mt-0.5 text-sm text-ink">
-            {current.weatherLabel}
-            <span className="text-muted">
-              {" "}
-              · Feels like {current.apparentTemperatureF}°F
-            </span>
-          </p>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
-            <span>
-              Wind {current.windMph} mph {current.windDirection}
-            </span>
-            <span>Humidity {current.humidityPercent}%</span>
-            <span>Updated {formatFetchedAt(data.fetchedAt)}</span>
-          </div>
-        </div>
 
-        {data.airQuality && (
-          <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80 sm:min-w-[10rem]">
+      <div className="pl-[5.25rem] sm:pl-[7.5rem]">
+        <div className="max-w-[10.5rem] space-y-2 sm:max-w-[11.5rem]">
+          <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-              Air quality
+              {data.locationLabel}
             </p>
-            <p className="mt-1 text-sm font-semibold text-ink">
-              AQI {data.airQuality.usAqi}
+            <p className="mt-1 text-2xl font-bold tabular-nums text-ink">
+              {current.temperatureF}°F
             </p>
-            <p className="text-xs text-muted">
-              {data.airQuality.label}
-              {data.airQuality.pm25 != null && (
-                <>
-                  {" "}
-                  · PM2.5 {data.airQuality.pm25.toFixed(1)} µg/m³
-                </>
-              )}
+            <p className="mt-0.5 text-sm text-ink">
+              {current.weatherLabel}
+              <span className="text-muted">
+                {" "}
+                · Feels {current.apparentTemperatureF}°F
+              </span>
             </p>
+            <div className="mt-2 space-y-0.5 text-xs text-muted">
+              <p>
+                Wind {current.windMph} mph {current.windDirection}
+              </p>
+              <p>Humidity {current.humidityPercent}%</p>
+              <p>Updated {formatFetchedAt(data.fetchedAt)}</p>
+            </div>
           </div>
-        )}
+
+          {data.airQuality && (
+            <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2 shadow-sm dark:bg-surface/80">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                Air quality
+              </p>
+              <p className="mt-0.5 text-sm font-semibold text-ink">
+                AQI {data.airQuality.usAqi} · {data.airQuality.label}
+              </p>
+              {data.airQuality.pm25 != null && (
+                <p className="text-xs text-muted">
+                  PM2.5 {data.airQuality.pm25.toFixed(1)} µg/m³
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div>
+      <div className="relative z-0 mt-2 pl-[2.75rem] sm:mt-1 sm:pl-[4.5rem]">
         <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-sky-900/70 dark:text-sky-300/70">
           7-day outlook
         </p>
@@ -154,12 +153,14 @@ function WeatherForecastPanel({
         </ul>
       </div>
 
-      <p className="hidden text-[11px] text-muted md:block">
-        Tap <strong className="font-semibold text-ink">Forecast</strong> or the
-        conditions line anytime to open or close this panel. Refreshes about
-        every 15 minutes.
+      <p className="mt-3 hidden pl-[2.75rem] text-[11px] text-muted sm:pl-[4.5rem] md:block">
+        Tap <strong className="font-semibold text-ink">Forecast</strong> for a
+        quick look, or open the{" "}
+        <Link href="/weather" className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
+          full weather &amp; sky page
+        </Link>
+        . Refreshes about every 15 minutes.
       </p>
-      </div>
     </div>
   );
 }
@@ -238,12 +239,9 @@ export default function ParkWeatherBar() {
             aria-label={`${PARK_WEATHER_BAR_LABEL} conditions`}
             className="flex items-center gap-2 py-1.5 sm:gap-3"
           >
-            <button
-              type="button"
-              onClick={toggleForecast}
-              aria-expanded={expanded}
-              aria-controls={`${forecastId}-mobile ${forecastId}-desktop`}
-              className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm text-sky-950 hover:opacity-90 dark:text-sky-100"
+            <Link
+              href="/weather"
+              className="flex min-w-0 flex-1 items-center gap-2 text-sm text-sky-950 hover:opacity-90 dark:text-sky-100"
             >
               {current ? (
                 <>
@@ -276,7 +274,7 @@ export default function ParkWeatherBar() {
                   Loading weather at Jojoba Hills…
                 </span>
               )}
-            </button>
+            </Link>
             <button
               type="button"
               onClick={toggleForecast}
@@ -334,6 +332,15 @@ export default function ParkWeatherBar() {
                 current={current}
                 error={error}
               />
+              <p className="mt-3 border-t border-sky-200/70 pt-3 text-center text-xs dark:border-sky-800/40">
+                <Link
+                  href="/weather"
+                  className="font-semibold text-brand-700 hover:underline dark:text-brand-300"
+                  onClick={closeForecast}
+                >
+                  Open full weather &amp; sky page →
+                </Link>
+              </p>
             </div>
           </div>
         </div>
