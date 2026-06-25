@@ -11,7 +11,9 @@ Drop transparent PNGs here with these **exact filenames** — no code changes ne
 | `map.png` | Map & sites page headers, empty sites |
 | `calendar.png` | Schedule page header, empty schedule |
 | `sleep.png` | Request portal page |
-| `weather.png` | Weather forecast panel (when expanded) |
+| `weather.png` | Legacy composite fallback for layered forecast quail |
+| `weather/map-*.png` | Map layer only — see `weather/README.md` |
+| `weather/quail-*.png` | Quail pose layer — see `weather/README.md` |
 
 ## Sizes (export at these dimensions)
 

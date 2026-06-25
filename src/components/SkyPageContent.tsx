@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import PageMascotHeading from "@/components/PageMascotHeading";
+import WeatherMascotStack from "@/components/WeatherMascotStack";
 import { formatSkyTime } from "@/lib/sky/astronomy";
 import {
   formatIssDuration,
@@ -85,11 +85,33 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
 
   return (
     <div className="space-y-6 pb-4">
-      <PageMascotHeading
-        scene="weather"
-        title="Jojoba Weather & sky"
-        description="Conditions at the park, plus launches, alerts, and what to look for in the sky."
-      />
+      <div className="flex items-start gap-3 sm:gap-4">
+        <WeatherMascotStack
+          temperatureF={current.temperatureF}
+          weatherLabel={current.weatherLabel}
+          weatherCode={current.weatherCode}
+          rotationSeed={data.fetchedAt}
+          width={88}
+          className="shrink-0 sm:hidden"
+        />
+        <WeatherMascotStack
+          temperatureF={current.temperatureF}
+          weatherLabel={current.weatherLabel}
+          weatherCode={current.weatherCode}
+          rotationSeed={data.fetchedAt}
+          width={112}
+          className="hidden shrink-0 sm:block"
+        />
+        <div className="min-w-0 pt-1">
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Jojoba Weather &amp; sky
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            Conditions at the park, plus launches, alerts, and what to look for
+            in the sky.
+          </p>
+        </div>
+      </div>
 
       <Section title="Right now">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

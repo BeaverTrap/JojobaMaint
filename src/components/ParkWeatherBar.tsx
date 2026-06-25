@@ -13,7 +13,7 @@ import {
   PARK_WEATHER_BAR_LABEL,
   type ParkWeatherSnapshot,
 } from "@/lib/park-weather";
-import { MascotScene } from "@/components/Brand";
+import WeatherMascotStack from "@/components/WeatherMascotStack";
 
 const REFRESH_MS = 15 * 60 * 1000;
 const MOBILE_MQ = "(max-width: 767px)";
@@ -73,63 +73,75 @@ function WeatherForecastPanel({
   if (!data || !current) return null;
 
   return (
-    <div className="relative">
-      <MascotScene
-        scene="weather"
-        size={160}
-        className="pointer-events-none absolute left-0 top-0 z-10 hidden drop-shadow-md sm:block"
-      />
-      <MascotScene
-        scene="weather"
-        size={112}
-        className="pointer-events-none absolute left-0 top-0 z-10 drop-shadow-md sm:hidden"
-      />
+    <div className="space-y-1">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <WeatherMascotStack
+          temperatureF={current.temperatureF}
+          weatherLabel={current.weatherLabel}
+          weatherCode={current.weatherCode}
+          rotationSeed={data.fetchedAt}
+          width={152}
+          className="relative z-10 max-sm:-mb-[4.5rem] sm:hidden"
+        />
+        <WeatherMascotStack
+          temperatureF={current.temperatureF}
+          weatherLabel={current.weatherLabel}
+          weatherCode={current.weatherCode}
+          rotationSeed={data.fetchedAt}
+          width={200}
+          className="relative z-10 hidden sm:-mb-24 sm:block"
+        />
 
-      <div className="pl-[5.25rem] sm:pl-[7.5rem]">
-        <div className="max-w-[10.5rem] space-y-2 sm:max-w-[11.5rem]">
-          <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-              {data.locationLabel}
-            </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-ink">
-              {current.temperatureF}°F
-            </p>
-            <p className="mt-0.5 text-sm text-ink">
-              {current.weatherLabel}
-              <span className="text-muted">
-                {" "}
-                · Feels {current.apparentTemperatureF}°F
-              </span>
-            </p>
-            <div className="mt-2 space-y-0.5 text-xs text-muted">
-              <p>
-                Wind {current.windMph} mph {current.windDirection}
-              </p>
-              <p>Humidity {current.humidityPercent}%</p>
-              <p>Updated {formatFetchedAt(data.fetchedAt)}</p>
-            </div>
-          </div>
-
-          {data.airQuality && (
-            <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2 shadow-sm dark:bg-surface/80">
+        <div className="min-w-0 flex-1">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+            <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                Air quality
+                {data.locationLabel}
               </p>
-              <p className="mt-0.5 text-sm font-semibold text-ink">
-                AQI {data.airQuality.usAqi} · {data.airQuality.label}
+              <p className="mt-1 text-2xl font-bold tabular-nums text-ink sm:text-3xl">
+                {current.temperatureF}°F
               </p>
-              {data.airQuality.pm25 != null && (
-                <p className="text-xs text-muted">
-                  PM2.5 {data.airQuality.pm25.toFixed(1)} µg/m³
-                </p>
-              )}
+              <p className="mt-0.5 text-sm text-ink">
+                {current.weatherLabel}
+                <span className="text-muted">
+                  {" "}
+                  · Feels like {current.apparentTemperatureF}°F
+                </span>
+              </p>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+                <span>
+                  Wind {current.windMph} mph {current.windDirection}
+                </span>
+                <span>Humidity {current.humidityPercent}%</span>
+                <span>Updated {formatFetchedAt(data.fetchedAt)}</span>
+              </div>
             </div>
-          )}
+
+            {data.airQuality ? (
+              <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80 sm:min-w-[10rem]">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  Air quality
+                </p>
+                <p className="mt-1 text-sm font-semibold text-ink">
+                  AQI {data.airQuality.usAqi}
+                </p>
+                <p className="text-xs text-muted">
+                  {data.airQuality.label}
+                  {data.airQuality.pm25 != null && (
+                    <>
+                      {" "}
+                      · PM2.5 {data.airQuality.pm25.toFixed(1)} µg/m³
+                    </>
+                  )}
+                </p>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="relative z-0 mt-2 pl-[2.75rem] sm:mt-1 sm:pl-[4.5rem]">
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-sky-900/70 dark:text-sky-300/70">
+      <div className="relative z-0">
+        <p className="mb-1.5 pl-[4.5rem] text-[10px] font-semibold uppercase tracking-wide text-sky-900/70 sm:pl-[12.5rem] dark:text-sky-300/70">
           7-day outlook
         </p>
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line/80 bg-surface/90 shadow-sm dark:bg-surface/80">
@@ -153,7 +165,7 @@ function WeatherForecastPanel({
         </ul>
       </div>
 
-      <p className="mt-3 hidden pl-[2.75rem] text-[11px] text-muted sm:pl-[4.5rem] md:block">
+      <p className="hidden pt-1 text-[11px] text-muted md:block">
         Tap <strong className="font-semibold text-ink">Forecast</strong> for a
         quick look, or open the{" "}
         <Link href="/weather" className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
