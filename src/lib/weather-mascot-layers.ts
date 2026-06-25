@@ -177,14 +177,27 @@ export function quailSrcFallbackChain(
 }
 
 /** Short label for the map temp chip (fits the hotspot). */
-export function weatherOverlayShortLabel(code: number, label: string): string {
+export function weatherOverlayShortLabel(
+  code: number,
+  label: string,
+  temperatureF?: number,
+): string {
+  if (isRainyWeatherCode(code)) {
+    if (code >= 95) return "Storm";
+    if (code >= 51 && code <= 67) return "Rain";
+    if (code >= 80 && code <= 82) return "Showers";
+    return "Rain";
+  }
+
+  if (temperatureF != null) {
+    if (temperatureF >= WEATHER_HOT_TEMP_F) return "Hot";
+    if (temperatureF <= WEATHER_COLD_TEMP_F) return "Cold";
+  }
+
   if (code === 0 || code === 1) return "Sunny";
   if (code === 2 || code === 3) return "Cloudy";
   if (code >= 45 && code <= 48) return "Fog";
   if (code >= 71 && code <= 75) return "Snow";
-  if (code >= 95) return "Storm";
-  if (code >= 51 && code <= 67) return "Rain";
-  if (code >= 80 && code <= 82) return "Showers";
   const first = label.split(" ")[0];
   return first ?? label;
 }

@@ -167,42 +167,37 @@ function EditableLayer({
     );
   }
 
-  const interactive = active;
-
   return (
     <div
-      className={`absolute border-2 border-dashed transition-opacity ${
-        interactive
-          ? `cursor-grab bg-white/10 active:cursor-grabbing ${style.border}`
-          : `pointer-events-none opacity-40 ${style.border}`
+      className={`absolute pointer-events-none ${
+        active
+          ? `outline outline-1 outline-dashed ${style.border}`
+          : `opacity-50 outline outline-1 outline-dotted outline-offset-0 ${style.border}`
       }`}
       style={{ ...css, zIndex }}
     >
       <button
         type="button"
-        className={`absolute -top-5 left-0 z-30 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm ${style.badge} ${
-          interactive ? "ring-2 ring-white" : "pointer-events-auto opacity-100"
+        className={`absolute -top-3 left-0 z-30 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm pointer-events-auto ${style.badge} ${
+          active ? "cursor-grab ring-2 ring-white active:cursor-grabbing" : ""
         }`}
         onClick={(e) => {
           e.stopPropagation();
           onSelect?.(layer);
         }}
-      >
-        {style.label}
-        {!interactive ? " · click to edit" : ""}
-      </button>
-      <div
-        className={interactive ? "h-full w-full" : "pointer-events-none h-full w-full"}
         onPointerDown={
-          interactive ? (e) => onPointerDown(e, layer, "move") : undefined
+          active ? (e) => onPointerDown(e, layer, "move") : undefined
         }
       >
-        {children}
-      </div>
-      {interactive ? (
+        {active ? "Drag · " : ""}
+        {style.label}
+        {!active ? " · select" : ""}
+      </button>
+      <div className="pointer-events-none h-full w-full">{children}</div>
+      {active ? (
         <span
           role="presentation"
-          className={`absolute bottom-0 right-0 z-30 h-4 w-4 translate-x-1/2 translate-y-1/2 cursor-se-resize rounded-sm border-2 border-white ${style.badge}`}
+          className={`absolute bottom-0 right-0 z-30 h-3 w-3 translate-x-1/2 translate-y-1/2 cursor-se-resize rounded-sm border border-white pointer-events-auto ${style.badge}`}
           onPointerDown={(e) => onPointerDown(e, layer, "resize")}
         />
       ) : null}
@@ -287,7 +282,11 @@ export default function WeatherMascotStack({
   const chipFont = Math.max(7, Math.round(width * 0.038));
   const chipTitle = Math.max(8, Math.round(width * 0.048));
   const chipIcon = Math.max(10, Math.round(width * 0.065));
-  const shortLabel = weatherOverlayShortLabel(weatherCode, weatherLabel);
+  const shortLabel = weatherOverlayShortLabel(
+    weatherCode,
+    weatherLabel,
+    temperatureF,
+  );
 
   const commitLayout = useCallback(
     (next: WeatherMascotLayoutConfig) => {

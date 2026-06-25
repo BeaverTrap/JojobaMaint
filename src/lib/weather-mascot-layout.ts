@@ -32,18 +32,18 @@ export type WeatherMascotLayoutConfig = {
 export const DEFAULT_WEATHER_MASCOT_LAYOUT: WeatherMascotLayoutConfig = {
   width: 718,
   height: 512,
-  map: { left: 0, top: 3.90625, width: 100, height: 92.1875 },
+  map: { left: 0, top: 0, width: 100, height: 89.6484375 },
   quail: {
-    left: 22.061281337047358,
+    left: 22.757660167130922,
     top: 0,
     width: 77.24233983286908,
     height: 100,
   },
   tempHotspot: {
-    left: 42.8774373259053,
-    top: 15.28125,
-    width: 31.45682451253482,
-    height: 18.8046875,
+    left: 49.84122562674096,
+    top: 11.5703125,
+    width: 30.2033426183844,
+    height: 18.4140625,
   },
 };
 

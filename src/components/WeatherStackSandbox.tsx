@@ -3,9 +3,11 @@
 import { useCallback, useMemo, useState } from "react";
 import WeatherMascotStack from "@/components/WeatherMascotStack";
 import {
+  clampLayerRect,
   DEFAULT_WEATHER_MASCOT_LAYOUT,
   formatLayoutForSourceFile,
   type WeatherEditLayerId,
+  type WeatherLayoutRect,
   type WeatherMascotLayoutConfig,
 } from "@/lib/weather-mascot-layout";
 import {
@@ -62,6 +64,24 @@ const WEATHER_PRESETS = [
   },
 ] as const;
 
+function getLayerRect(
+  layout: WeatherMascotLayoutConfig,
+  layer: WeatherEditLayerId,
+): WeatherLayoutRect {
+  return layer === "temp" ? layout.tempHotspot : layout[layer];
+}
+
+function setLayerRect(
+  layout: WeatherMascotLayoutConfig,
+  layer: WeatherEditLayerId,
+  rect: WeatherLayoutRect,
+): WeatherMascotLayoutConfig {
+  const next = clampLayerRect(rect, layer);
+  return layer === "temp"
+    ? { ...layout, tempHotspot: next }
+    : { ...layout, [layer]: next };
+}
+
 export default function WeatherStackSandbox() {
   const [editMode, setEditMode] = useState(true);
   const [activeLayer, setActiveLayer] = useState<WeatherEditLayerId>("quail");
@@ -111,6 +131,31 @@ export default function WeatherStackSandbox() {
     },
     [],
   );
+
+  const patchActiveLayer = useCallback(
+    (patch: Partial<WeatherLayoutRect>) => {
+      setLayout((prev) => {
+        const current = getLayerRect(prev, activeLayer);
+        return setLayerRect(prev, activeLayer, { ...current, ...patch });
+      });
+    },
+    [activeLayer],
+  );
+
+  const nudgeActiveLayer = useCallback(
+    (axis: "left" | "top", delta: number) => {
+      setLayout((prev) => {
+        const current = getLayerRect(prev, activeLayer);
+        return setLayerRect(prev, activeLayer, {
+          ...current,
+          [axis]: current[axis] + delta,
+        });
+      });
+    },
+    [activeLayer],
+  );
+
+  const activeRect = getLayerRect(layout, activeLayer);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-16">
@@ -192,6 +237,65 @@ export default function WeatherStackSandbox() {
               </span>
             </button>
           ))}
+        </div>
+      ) : null}
+
+      {editMode ? (
+        <div className="rounded-xl border border-line bg-surface p-4">
+          <p className="text-sm font-medium text-ink">
+            Fine-tune{" "}
+            {LAYER_OPTIONS.find((o) => o.id === activeLayer)?.label ?? "layer"}
+          </p>
+          <p className="mt-1 text-xs text-muted">
+            Drag the small label to move, corner dot to resize — or type exact
+            percentages.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-4">
+            {(["left", "top", "width", "height"] as const).map((key) => (
+              <label key={key} className="block text-xs">
+                <span className="font-medium capitalize text-ink">{key} %</span>
+                <input
+                  type="number"
+                  step={0.1}
+                  value={Number(activeRect[key].toFixed(2))}
+                  onChange={(e) =>
+                    patchActiveLayer({ [key]: Number(e.target.value) })
+                  }
+                  className="mt-1 w-full rounded-lg border border-line bg-surface px-2 py-1.5 font-mono text-sm"
+                />
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => nudgeActiveLayer("left", -0.5)}
+              className="rounded-lg bg-surface px-2 py-1 text-xs font-semibold ring-1 ring-line"
+            >
+              ← 0.5%
+            </button>
+            <button
+              type="button"
+              onClick={() => nudgeActiveLayer("left", 0.5)}
+              className="rounded-lg bg-surface px-2 py-1 text-xs font-semibold ring-1 ring-line"
+            >
+              0.5% →
+            </button>
+            <button
+              type="button"
+              onClick={() => nudgeActiveLayer("top", -0.5)}
+              className="rounded-lg bg-surface px-2 py-1 text-xs font-semibold ring-1 ring-line"
+            >
+              ↑ 0.5%
+            </button>
+            <button
+              type="button"
+              onClick={() => nudgeActiveLayer("top", 0.5)}
+              className="rounded-lg bg-surface px-2 py-1 text-xs font-semibold ring-1 ring-line"
+            >
+              ↓ 0.5%
+            </button>
+          </div>
         </div>
       ) : null}
 

@@ -25,11 +25,11 @@ Split the forecast quail into **map + live temp chip + quail pose**.
 
 1. Open **`/weather/stack`**
 2. Turn on **Edit mode**
-3. Pick **Editing layer** (Map / Quail / Temp) — inactive layers won’t block clicks
-4. **Quick preview** — Normal, Cold, Hot, Rain (mimics live weather sets)
-5. **Refresh quail pose** — cycles to another pose in the current set
-6. **Drag** the active box; **drag the corner** to resize
-5. **Copy layout for deploy** — paste into `src/lib/weather-mascot-layout.ts` (`DEFAULT_WEATHER_MASCOT_LAYOUT`) and push
+3. Pick **Editing layer** — drag the **small label** to move, **corner dot** to resize
+4. **Fine-tune** fields — type exact % or nudge by 0.5%
+5. **Quick preview** — Normal, Cold, Hot, Rain
+6. **Refresh quail pose** — cycles to another pose in the current set
+7. **Copy layout for deploy** — paste into `src/lib/weather-mascot-layout.ts` and push
 
 ## Map export
 
