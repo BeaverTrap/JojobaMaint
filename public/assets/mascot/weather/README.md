@@ -33,6 +33,6 @@ Split the forecast quail into **map + live temp chip + quail pose**.
 
 ## Map export
 
-Map PNGs: map frame only — **no baked-in temperature text**. Leave the top-right clear for the live chip.
+Map PNGs should include a **clear white box** on the map for the live temp chip — align `tempHotspot` in `/weather/stack` to that box (not the geometric center of the map).
 
 Reference composite: `../weather.png` (718 × 512).
