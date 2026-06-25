@@ -8,7 +8,8 @@ export type MascotSceneId =
   | "reading"
   | "map"
   | "calendar"
-  | "sleep";
+  | "sleep"
+  | "weather";
 
 export const MASCOT_DEFAULT_SRC = "/assets/mascot.png";
 export const MASCOT_FALLBACK_SRC = "/assets/maintenance_Quail_wht.png";
@@ -59,6 +60,11 @@ export const MASCOT_SCENES: Record<MascotSceneId, MascotSceneDef> = {
   sleep: {
     src: "/assets/mascot/sleep.png",
     alt: "Quail resting",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  weather: {
+    src: "/assets/mascot/weather.png",
+    alt: "Quail checking the weather",
     fallback: MASCOT_DEFAULT_SRC,
   },
 };

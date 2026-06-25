@@ -12,6 +12,7 @@ import {
   PARK_WEATHER_BAR_LABEL,
   type ParkWeatherSnapshot,
 } from "@/lib/park-weather";
+import { MascotScene } from "@/components/Brand";
 
 const REFRESH_MS = 15 * 60 * 1000;
 const MOBILE_MQ = "(max-width: 767px)";
@@ -71,7 +72,18 @@ function WeatherForecastPanel({
   if (!data || !current) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="flex items-start gap-3">
+      <MascotScene
+        scene="weather"
+        size={72}
+        className="hidden shrink-0 drop-shadow-sm sm:block"
+      />
+      <MascotScene
+        scene="weather"
+        size={64}
+        className="shrink-0 drop-shadow-sm sm:hidden"
+      />
+      <div className="min-w-0 flex-1 space-y-3">
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
         <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
@@ -147,6 +159,7 @@ function WeatherForecastPanel({
         conditions line anytime to open or close this panel. Refreshes about
         every 15 minutes.
       </p>
+      </div>
     </div>
   );
 }
