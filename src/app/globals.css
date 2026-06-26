@@ -41,6 +41,9 @@
   --color-brand-900: #1b3829;
   --color-brand-950: #0f1f17;
 
+  /* Brass/gold from the JojobaWorks logo wordmark ("Works" + the rule). */
+  --color-gold: #c0882c;
+
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
@@ -52,6 +55,8 @@
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-baloo-display), var(--font-geist-sans),
+    ui-sans-serif, system-ui, sans-serif;
 }
 
 html {

@@ -22,54 +22,90 @@ export function Logo({
   size?: number;
   withText?: boolean;
 }) {
-  const [errored, setErrored] = useState(false);
+  if (!withText) {
+    return (
+      <span
+        className="flex items-center justify-center rounded-lg bg-brand-600 font-display font-extrabold text-white"
+        style={{ width: size, height: size, fontSize: size * 0.42 }}
+        aria-hidden
+      >
+        JW
+      </span>
+    );
+  }
 
   return (
-    <span className="flex items-center gap-2.5">
-      {errored ? (
-        <span
-          className="flex items-center justify-center rounded-xl bg-brand-600 font-bold text-white"
-          style={{ width: size, height: size, fontSize: size * 0.4 }}
-          aria-hidden
-        >
-          JW
-        </span>
-      ) : (
-        <span
-          className="relative shrink-0"
-          style={{ width: size, height: size }}
-        >
-          <Image
-            src="/assets/logo_quail_wht.jpg"
-            alt="JojobaWorks quail mascot"
-            width={size}
-            height={size}
-            priority
-            className="h-full w-full rounded-xl object-contain dark:hidden"
-            onError={() => setErrored(true)}
-          />
-          <Image
-            src="/assets/logo_quail_blk.jpg"
-            alt=""
-            aria-hidden
-            width={size}
-            height={size}
-            priority
-            className="hidden h-full w-full rounded-xl object-contain dark:block"
-            onError={() => setErrored(true)}
-          />
-        </span>
-      )}
-      {withText && (
-        <span className="flex flex-col leading-tight">
-          <span className="text-sm font-bold tracking-tight text-ink">
-            JojobaWorks
-          </span>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted">
+    <span aria-label="JojobaWorks" className="inline-flex items-center">
+      <Wordmark size={Math.round(size * 0.52)} />
+    </span>
+  );
+}
+
+/**
+ * CSS recreation of the JojobaWorks wordmark: rounded display face with
+ * "Jojoba" in ink and "Works" in brass gold, above a gold rule + subtitle.
+ */
+export function Wordmark({
+  className = "",
+  showSubtitle = false,
+  size = 19,
+}: {
+  className?: string;
+  showSubtitle?: boolean;
+  size?: number;
+}) {
+  return (
+    <span className={`flex flex-col leading-none ${className}`.trim()}>
+      <span
+        className="font-display font-extrabold tracking-[-0.04em] text-ink"
+        style={{ fontSize: size }}
+      >
+        Jojoba<span className="text-gold">Works</span>
+      </span>
+      {showSubtitle && (
+        <span className="mt-1 flex items-center gap-1.5">
+          <span aria-hidden className="h-0.5 w-4 rounded-full bg-gold" />
+          <span
+            className="font-display font-semibold tracking-[0.16em] text-muted"
+            style={{ fontSize: Math.max(10, Math.round(size * 0.55)) }}
+          >
             Maintenance Dept.
           </span>
         </span>
       )}
+    </span>
+  );
+}
+
+/**
+ * Full image lockup (quail + wordmark) for spacious surfaces like the login
+ * screen. Uses blend modes to drop the JPG's solid background so it sits
+ * cleanly on the canvas in both themes.
+ */
+export function LogoLockup({ width = 300 }: { width?: number }) {
+  const height = Math.round((width * 821) / 1916);
+  return (
+    <span
+      className="relative inline-block"
+      style={{ width, height }}
+    >
+      <Image
+        src="/assets/logo_wht.jpg"
+        alt="JojobaWorks — Maintenance Dept."
+        width={width}
+        height={height}
+        priority
+        className="h-full w-full object-contain mix-blend-multiply dark:hidden"
+      />
+      <Image
+        src="/assets/logo_blk.jpg"
+        alt=""
+        aria-hidden
+        width={width}
+        height={height}
+        priority
+        className="hidden h-full w-full object-contain mix-blend-lighten dark:block"
+      />
     </span>
   );
 }

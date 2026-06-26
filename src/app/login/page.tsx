@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/Brand";
+import { LogoLockup } from "@/components/Brand";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default async function LoginPage({
@@ -12,9 +12,9 @@ export default async function LoginPage({
   return (
     <main className="flex min-h-dvh items-center justify-center bg-canvas px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Branding block — single logo/mascot image above the auth button. */}
+        {/* Branding block — full logo lockup above the auth button. */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <Logo size={72} />
+          <LogoLockup width={300} />
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">
             Staff sign in
           </h1>
