@@ -16,21 +16,21 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["productivity", "business"],
     icons: [
       {
-        src: "/assets/logo_quail_wht.jpg",
+        src: "/icon.png",
         sizes: "192x192",
-        type: "image/jpeg",
+        type: "image/png",
         purpose: "any",
       },
       {
-        src: "/assets/logo_quail_wht.jpg",
+        src: "/icon.png",
         sizes: "512x512",
-        type: "image/jpeg",
+        type: "image/png",
         purpose: "any",
       },
       {
-        src: "/assets/logo_quail_wht.jpg",
+        src: "/icon.png",
         sizes: "512x512",
-        type: "image/jpeg",
+        type: "image/png",
         purpose: "maskable",
       },
     ],

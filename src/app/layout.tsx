@@ -31,10 +31,6 @@ export const metadata: Metadata = {
     title: "JojobaWorks",
     statusBarStyle: "default",
   },
-  icons: {
-    icon: "/assets/logo_quail_wht.jpg",
-    apple: "/assets/logo_quail_wht.jpg",
-  },
 };
 
 export const viewport: Viewport = {
