@@ -139,7 +139,7 @@ function WeatherForecastPanel({
       <p className="hidden pt-1 text-[11px] text-muted md:block">
         Tap <strong className="font-semibold text-ink">Forecast</strong> for a
         quick look, or open the{" "}
-        <Link href="/outdoors" className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
+        <Link href="/weather" className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
           full weather &amp; sky page
         </Link>
         . Refreshes about every 15 minutes.
@@ -201,7 +201,7 @@ export default function ParkWeatherBar() {
             className="flex items-center gap-2 py-1.5 sm:gap-3"
           >
             <Link
-              href="/outdoors"
+              href="/weather"
               className="flex min-w-0 flex-1 items-center gap-2 text-sm text-sky-950 hover:opacity-90 dark:text-sky-100"
             >
               {current ? (
@@ -295,7 +295,7 @@ export default function ParkWeatherBar() {
               />
               <p className="mt-3 border-t border-sky-200/70 pt-3 text-center text-xs dark:border-sky-800/40">
                 <Link
-                  href="/outdoors"
+                  href="/weather"
                   className="font-semibold text-brand-700 hover:underline dark:text-brand-300"
                   onClick={closeForecast}
                 >

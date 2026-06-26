@@ -63,7 +63,7 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
-                Jojoba Outdoors
+                Jojoba Weather &amp; sky
               </h1>
               <ParkLocalClock />
             </div>

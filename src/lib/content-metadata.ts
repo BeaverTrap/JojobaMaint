@@ -14,7 +14,7 @@ export function buildContentMetadata({
 }): Metadata {
   const desc =
     description?.trim().slice(0, 200) ||
-    "Jojoba Hills Maintenance — public logbook and park information.";
+    "JojobaWorks — public logbook and park information.";
   const url = absoluteUrl(path);
 
   return {
@@ -25,7 +25,7 @@ export function buildContentMetadata({
       description: desc,
       url,
       type: "article",
-      siteName: "Jojoba Hills Maintenance",
+      siteName: "JojobaWorks",
       ...(imageUrl ? { images: [{ url: imageUrl, alt: title }] } : {}),
     },
     twitter: {

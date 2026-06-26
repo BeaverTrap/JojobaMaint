@@ -9,14 +9,10 @@ import {
 } from "@/lib/mascot-scenes";
 
 /**
- * Branding placeholders.
+ * JojobaWorks branding.
  *
- * Drop your real files into /public/assets/ and they appear automatically:
- *   - /public/assets/logo.png    -> <Logo />
- *   - /public/assets/mascot.png  -> <Mascot />
- *
- * Until the files exist, a clean text/emoji placeholder is shown so the
- * layout never breaks.
+ * Logo uses light/dark quail JPGs from /public/assets. Mascot scenes use the
+ * page-specific quail artwork in /public/assets/mascot/.
  */
 
 export function Logo({
@@ -33,29 +29,44 @@ export function Logo({
       {errored ? (
         <span
           className="flex items-center justify-center rounded-xl bg-brand-600 font-bold text-white"
-          style={{ width: size, height: size, fontSize: size * 0.45 }}
+          style={{ width: size, height: size, fontSize: size * 0.4 }}
           aria-hidden
         >
-          JH
+          JW
         </span>
       ) : (
-        <Image
-          src="/assets/logo.png"
-          alt="Jojoba Hills logo"
-          width={size}
-          height={size}
-          priority
-          className="rounded-xl object-contain"
-          onError={() => setErrored(true)}
-        />
+        <span
+          className="relative shrink-0"
+          style={{ width: size, height: size }}
+        >
+          <Image
+            src="/assets/logo_quail_wht.jpg"
+            alt="JojobaWorks quail mascot"
+            width={size}
+            height={size}
+            priority
+            className="h-full w-full rounded-xl object-contain dark:hidden"
+            onError={() => setErrored(true)}
+          />
+          <Image
+            src="/assets/logo_quail_blk.jpg"
+            alt=""
+            aria-hidden
+            width={size}
+            height={size}
+            priority
+            className="hidden h-full w-full rounded-xl object-contain dark:block"
+            onError={() => setErrored(true)}
+          />
+        </span>
       )}
       {withText && (
         <span className="flex flex-col leading-tight">
           <span className="text-sm font-bold tracking-tight text-ink">
-            Jojoba Hills
+            JojobaWorks
           </span>
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted">
-            Maintenance
+            Maintenance Dept.
           </span>
         </span>
       )}

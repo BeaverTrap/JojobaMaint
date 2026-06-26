@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
-  Jojoba Hills Maintenance — light + dark themes.
+  JojobaWorks — light + dark themes.
   Dark mode: true black canvas, near-black cards, dark green accents.
 */
 @custom-variant dark (&:where(.dark, .dark *));

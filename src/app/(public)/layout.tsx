@@ -30,7 +30,7 @@ export default async function PublicLayout({
           <PageEnter>{children}</PageEnter>
         </main>
         <footer className="no-print border-t border-line py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-center text-xs text-muted md:pb-6">
-          Jojoba Hills SKP Resort · Maintenance Department
+          JojobaWorks · Maintenance Dept.
         </footer>
       </div>
     </ParkWeatherProvider>

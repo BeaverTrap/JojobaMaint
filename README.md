@@ -1,6 +1,6 @@
-# Jojoba Hills Maintenance
+# JojobaWorks
 
-A modern, responsive web app for the Jojoba Hills SKP Resort maintenance department. It works as a **digital logbook**, an **internal social feed**, and a **project photo gallery** — all gated behind Google sign-in.
+A modern, responsive web app for the JojobaWorks maintenance department at Jojoba Hills SKP Resort. It works as a **digital logbook**, an **internal social feed**, and a **project photo gallery** — all gated behind Google sign-in.
 
 **Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Auth + Postgres + Storage) · Vercel.
 
@@ -16,7 +16,7 @@ A modern, responsive web app for the Jojoba Hills SKP Resort maintenance departm
 - **Quick uploader** — short description + one photo (camera roll or PC) straight to the feed.
 - **Gallery Manager** — named project albums with a **masonry grid** and **multi-image drag-and-drop** upload.
 - **Client-side image compression** — every image is squeezed to **~300 KB** (WebP) before upload to stay within the Supabase Free Tier's 1 GB.
-- **Branding placeholders** — drop `logo.png` / `mascot.png` into `public/assets/` and they appear automatically.
+- **JojobaWorks branding** — logo and quail mascot assets live in `public/assets/` and are wired into the navbar, PWA metadata, and reports.
 
 ---
 
@@ -146,15 +146,15 @@ Add that to `.env.local` (and Vercel env vars in production), restart the dev se
 
 ## Custom branding
 
-Add your files to `public/assets/` (no code changes needed):
+JojobaWorks logo files live in `public/assets/`:
 
 | File | Appears in |
 | --- | --- |
-| `public/assets/logo.png` | Navbar (top-left) + login screen |
-| `public/assets/mascot.png` | Login screen (above the sign-in button) |
+| `logo_quail_wht.jpg` / `logo_quail_blk.jpg` | Navbar, login, PWA metadata, print reports |
+| `logo_wht.jpg` / `logo_blk.jpg` | Full horizontal lockup for future hero or sign-in treatments |
+| `logo_text_wht.jpg` / `logo_text_blk.jpg` | Wordmark-only layouts |
 
-Until they exist, clean text/emoji placeholders are shown. Brand colors live as
-`--color-brand-*` tokens in `src/app/globals.css` — tweak them to match the park.
+Brand colors live as `--color-brand-*` tokens in `src/app/globals.css`.
 
 ---
 

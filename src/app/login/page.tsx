@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mascot } from "@/components/Brand";
+import { Logo } from "@/components/Brand";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default async function LoginPage({
@@ -14,9 +14,9 @@ export default async function LoginPage({
       <div className="w-full max-w-md">
         {/* Branding block — single logo/mascot image above the auth button. */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <Mascot size={150} />
+          <Logo size={72} />
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">
-            Jojoba Hills Maintenance
+            Staff sign in
           </h1>
           <p className="mt-1 text-sm text-muted">
             Digital logbook &amp; maintenance feed

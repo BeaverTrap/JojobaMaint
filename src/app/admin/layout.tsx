@@ -21,7 +21,7 @@ export default async function AdminLayout({
         <PageEnter>{children}</PageEnter>
       </main>
       <footer className="border-t border-line py-6 text-center text-xs text-muted">
-        Jojoba Hills SKP Resort · Maintenance Department
+        JojobaWorks · Maintenance Dept.
       </footer>
     </div>
   );

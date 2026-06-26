@@ -2,7 +2,7 @@ import type { NwsAlert } from "@/lib/sky/types";
 
 const NWS_USER_AGENT =
   process.env.NWS_USER_AGENT ??
-  "JojobaMaint/1.0 (https://jojoba-maint.vercel.app, weather@jojoba.local)";
+  "JojobaWorks/1.0 (weather@jojoba.local)";
 
 type NwsAlertsResponse = {
   features?: Array<{

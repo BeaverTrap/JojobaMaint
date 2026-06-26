@@ -186,7 +186,7 @@ export default function WeatherStackSandbox() {
         <p className="mt-1 text-sm text-muted">
           Drag layers into place, then copy the layout snippet into{" "}
           <code className="text-xs">src/lib/weather-mascot-layout.ts</code> and
-          save from <code className="text-xs">/outdoors/stack</code>.
+          save from <code className="text-xs">/weather/stack</code>.
           deploy — everyone gets the same positions.
         </p>
       </div>

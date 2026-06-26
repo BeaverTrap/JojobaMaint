@@ -15,18 +15,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jojoba Hills Maintenance",
+  title: "JojobaWorks",
   description:
-    "Digital logbook and maintenance feed for the Jojoba Hills SKP Resort maintenance department.",
+    "Digital logbook and maintenance feed for the JojobaWorks maintenance department at Jojoba Hills SKP Resort.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "JH Maint",
+    title: "JojobaWorks",
     statusBarStyle: "default",
   },
   icons: {
-    icon: "/assets/logo.png",
-    apple: "/assets/mascot.png",
+    icon: "/assets/logo_quail_wht.jpg",
+    apple: "/assets/logo_quail_wht.jpg",
   },
 };
 

@@ -64,9 +64,9 @@ export const ADMIN_MANAGE_LINKS: AdminHubLink[] = [
 
 export const ADMIN_TOOLS_LINKS: AdminHubLink[] = [
   {
-    href: "/outdoors/stack",
-    title: "Outdoors mascot layout",
-    description: "Tune the layered weather mascot used on the outdoors page.",
+    href: "/weather/stack",
+    title: "Weather mascot layout",
+    description: "Tune the layered weather mascot used on the weather page.",
     minimumRole: "admin",
   },
 ];

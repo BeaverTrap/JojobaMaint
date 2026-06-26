@@ -17,12 +17,12 @@ export default function PrintReportHeader() {
             className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white"
             aria-hidden
           >
-            JH
+            JW
           </span>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src="/assets/logo.png"
+            src="/assets/logo_quail_wht.jpg"
             alt=""
             width={56}
             height={56}
@@ -31,9 +31,9 @@ export default function PrintReportHeader() {
           />
         )}
         <div>
-          <p className="text-lg font-bold tracking-tight text-ink">Jojoba Hills</p>
+          <p className="text-lg font-bold tracking-tight text-ink">JojobaWorks</p>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-            Maintenance Department
+            Maintenance Dept.
           </p>
         </div>
       </div>

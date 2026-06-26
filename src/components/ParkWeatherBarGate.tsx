@@ -7,10 +7,8 @@ export default function ParkWeatherBarGate() {
   const pathname = usePathname();
 
   // The weather bar lives inside ParkWeatherProvider (public layout only) and
-  // duplicates the outdoors page mascot, so skip it on admin and /outdoors.
+  // duplicates the /weather page mascot, so skip it on admin and /weather.
   if (
-    pathname === "/outdoors" ||
-    pathname.startsWith("/outdoors/") ||
     pathname === "/weather" ||
     pathname.startsWith("/weather/") ||
     pathname === "/admin" ||
