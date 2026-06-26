@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
 import { fetchCategories } from "@/lib/posts";
 import {
   fetchMaintenanceAssessmentIssueTypes,
@@ -9,6 +9,7 @@ import {
 import { fetchContentTags } from "@/lib/content-tags";
 import { fetchTreeAssessmentConcerns } from "@/lib/tree-assessments";
 import ComposeArea from "@/components/ComposeArea";
+import AdminHubSections from "@/components/AdminHubSections";
 import type { ComposeFormat } from "@/components/ComposeFormatToggle";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,9 @@ export default async function AdminDashboardPage({
   const activeArea = resolveArea(areaParam, legacyType);
   const format: ComposeFormat =
     formatParam === "structured" ? "structured" : "quick";
+
+  const { staffRole } = await getCurrentUser();
+  const role = staffRole ?? "staff";
 
   const supabase = await createClient();
 
@@ -66,67 +70,31 @@ export default async function AdminDashboardPage({
   }[];
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-xl font-bold tracking-tight text-ink">Create</h1>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <AreaChoice
-          href="/admin?area=landscaping"
-          active={activeArea === "landscaping"}
-          title="Landscaping"
-        />
-        <AreaChoice
-          href="/admin?area=maintenance"
-          active={activeArea === "maintenance"}
-          title="Maintenance"
-        />
-        <AreaChoice
-          href="/admin/articles/new"
-          active={false}
-          title="Article"
-        />
-      </div>
+    <div className="space-y-6">
+      <AdminHubSections staffRole={role} activeArea={activeArea} />
 
       {activeArea && (
         <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
-          <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
-            <ComposeArea
-              key={activeArea}
-              area={activeArea}
-              initialFormat={format}
+          <h2 className="text-sm font-bold uppercase tracking-wide text-ink">
+            {activeArea === "landscaping" ? "Landscaping" : "Maintenance"} post
+          </h2>
+          <Suspense fallback={<p className="mt-3 text-sm text-muted">Loading…</p>}>
+            <div className="mt-4">
+              <ComposeArea
+                key={activeArea}
+                area={activeArea}
+                initialFormat={format}
                 categories={categories}
                 contentTags={contentTags}
                 recentPosts={recentPosts}
                 treeConcerns={treeConcerns}
-              maintenanceWorkTypes={maintenanceWorkTypes}
-              maintenanceIssueTypes={maintenanceIssueTypes}
-            />
+                maintenanceWorkTypes={maintenanceWorkTypes}
+                maintenanceIssueTypes={maintenanceIssueTypes}
+              />
+            </div>
           </Suspense>
         </section>
       )}
     </div>
-  );
-}
-
-function AreaChoice({
-  href,
-  active,
-  title,
-}: {
-  href: string;
-  active: boolean;
-  title: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        active
-          ? "flex min-h-[3.25rem] items-center justify-center rounded-2xl border-2 border-brand-600 bg-brand-600 px-4 py-3 text-center font-semibold text-white shadow-sm"
-          : "flex min-h-[3.25rem] items-center justify-center rounded-2xl border border-line bg-surface px-4 py-3 text-center font-semibold text-ink shadow-sm transition hover:bg-hover"
-      }
-    >
-      {title}
-    </Link>
   );
 }

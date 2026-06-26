@@ -5,7 +5,13 @@ type Ll2Launch = {
   name?: string;
   status?: { name?: string; abbrev?: string };
   net?: string;
+  image?: string | null;
+  webcast_live?: boolean;
+  vidURLs?: Array<{ url?: string }>;
+  infoURLs?: Array<{ url?: string }>;
   launch_service_provider?: { name?: string };
+  mission?: { description?: string | null } | null;
+  program?: Array<{ name?: string; info_url?: string | null }>;
   pad?: {
     name?: string;
     location?: { name?: string };
@@ -22,6 +28,42 @@ function isVandenbergLaunch(launch: Ll2Launch): boolean {
   const loc = launch.pad?.location?.name?.toLowerCase() ?? "";
   const pad = launch.pad?.name?.toLowerCase() ?? "";
   return loc.includes("vandenberg") || pad.includes("vandenberg");
+}
+
+/** Official live channel by provider — fallback when the feed has no per-launch stream. */
+const PROVIDER_WATCH_URL: { match: string; url: string }[] = [
+  { match: "spacex", url: "https://www.youtube.com/@SpaceX/streams" },
+  {
+    match: "united launch alliance",
+    url: "https://www.youtube.com/@unitedlaunchalliance/streams",
+  },
+  { match: "rocket lab", url: "https://www.youtube.com/@RocketLab/streams" },
+  { match: "firefly", url: "https://www.youtube.com/@FireflyAerospace/streams" },
+];
+
+function deriveWatch(
+  launch: Ll2Launch,
+  provider: string,
+): { watchUrl: string | null; watchLabel: string | null } {
+  const directVid = launch.vidURLs?.find((v) => v.url)?.url;
+  if (directVid) {
+    return { watchUrl: directVid, watchLabel: "Watch live" };
+  }
+
+  const providerLower = provider.toLowerCase();
+  const channel = PROVIDER_WATCH_URL.find((p) =>
+    providerLower.includes(p.match),
+  );
+  if (channel) {
+    return { watchUrl: channel.url, watchLabel: `${provider} live` };
+  }
+
+  const info = launch.infoURLs?.find((u) => u.url)?.url ?? launch.program?.[0]?.info_url;
+  if (info) {
+    return { watchUrl: info, watchLabel: "Mission info" };
+  }
+
+  return { watchUrl: null, watchLabel: null };
 }
 
 function viewingHintForLaunch(
@@ -105,15 +147,21 @@ export async function fetchVandenbergLaunches(
       sunsetIso,
       currentWeatherCode,
     );
+    const provider =
+      launch.launch_service_provider?.name ?? launch.net ?? "Unknown provider";
+    const { watchUrl, watchLabel } = deriveWatch(launch, provider);
     return {
       id: launch.id ?? launch.name ?? "launch",
       name: launch.name ?? "Upcoming launch",
-      provider:
-        launch.launch_service_provider?.name ?? launch.net ?? "Unknown provider",
+      provider,
       status: launch.status?.name ?? "Scheduled",
       windowStart: launch.window_start ?? null,
       windowEnd: launch.window_end ?? null,
       padName: launch.pad?.name ?? "Vandenberg",
+      imageUrl: launch.image ?? null,
+      missionDescription: launch.mission?.description ?? null,
+      watchUrl,
+      watchLabel,
       viewingHint,
       viewingNote,
     };

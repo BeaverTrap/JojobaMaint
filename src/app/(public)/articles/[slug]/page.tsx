@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ContentCoverImage from "@/components/ContentCoverImage";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
+import { canManageSiteContent } from "@/lib/staff-roles";
 import {
   ARTICLE_SELECT,
   ARTICLE_TAG_EMBED,
@@ -54,7 +55,8 @@ export default async function ArticlePage({
 }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { isAuthorized } = await getCurrentUser();
+  const { isAuthorized, staffRole } = await getCurrentUser();
+  const canEditArticle = canManageSiteContent(staffRole);
 
   const { data: article } = await supabase
     .from("articles")
@@ -130,7 +132,7 @@ export default async function ArticlePage({
             <p key={line}>{line}</p>
           ))}
         </div>
-        {isAuthorized && (
+        {canEditArticle && (
           <Link
             href={`/admin/articles/${a.id}/edit`}
             className="no-print mt-3 inline-flex rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-hover"

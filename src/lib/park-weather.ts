@@ -1,4 +1,5 @@
 import { parkMapCenter } from "@/lib/map-geography";
+import { moonPhaseForDateIso } from "@/lib/moon-phase";
 
 export type ParkWeatherCurrent = {
   temperatureF: number;
@@ -8,6 +9,8 @@ export type ParkWeatherCurrent = {
   windDirection: string;
   weatherLabel: string;
   weatherCode: number;
+  /** From Open-Meteo `is_day` — false after sunset for clear-sky night treatment. */
+  isDay: boolean;
 };
 
 export type ParkWeatherDaily = {
@@ -16,6 +19,9 @@ export type ParkWeatherDaily = {
   lowF: number;
   precipChancePercent: number;
   weatherLabel: string;
+  weatherCode: number;
+  /** 0 = new moon, 0.5 = full — computed locally (Open-Meteo moon_phase unavailable). */
+  moonPhase: number;
 };
 
 export type ParkWeatherAirQuality = {
@@ -36,6 +42,8 @@ export type ParkWeatherSnapshot = {
 
 export const PARK_WEATHER_LOCATION_LABEL = "Jojoba Hills SKP, Aguanga CA";
 export const PARK_WEATHER_BAR_LABEL = "Jojoba Weather";
+/** IANA timezone for park weather, forecasts, and local clock. */
+export const PARK_TIMEZONE = "America/Los_Angeles";
 
 export function getParkWeatherCoordinates(): { lat: number; lng: number } {
   return parkMapCenter();
@@ -93,6 +101,7 @@ type OpenMeteoForecast = {
     weather_code: number;
     wind_speed_10m: number;
     wind_direction_10m: number;
+    is_day?: number;
   };
   daily: {
     time: string[];
@@ -117,7 +126,7 @@ export async function fetchParkWeatherSnapshot(): Promise<ParkWeatherSnapshot> {
   forecastUrl.searchParams.set("longitude", String(lng));
   forecastUrl.searchParams.set(
     "current",
-    "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m",
+    "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,is_day",
   );
   forecastUrl.searchParams.set(
     "daily",
@@ -169,6 +178,8 @@ export async function fetchParkWeatherSnapshot(): Promise<ParkWeatherSnapshot> {
           forecast.daily.precipitation_probability_max[i] ?? 0,
         ),
         weatherLabel: weatherCodeLabel(code),
+        weatherCode: code,
+        moonPhase: moonPhaseForDateIso(date),
       };
     });
 
@@ -185,6 +196,7 @@ export async function fetchParkWeatherSnapshot(): Promise<ParkWeatherSnapshot> {
       windDirection: windDirectionLabel(forecast.current.wind_direction_10m),
       weatherLabel: weatherCodeLabel(currentCode),
       weatherCode: currentCode,
+      isDay: forecast.current.is_day !== 0,
     },
     daily,
     airQuality,

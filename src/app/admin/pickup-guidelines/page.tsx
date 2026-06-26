@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireStaffRole } from "@/lib/require-staff-role";
 import PickupGuidelinesForm from "@/components/PickupGuidelinesForm";
 import { fetchPickupGuidelines } from "@/lib/pickup-guidelines";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPickupGuidelinesPage() {
+  await requireStaffRole("manager");
   const supabase = await createClient();
   const guidelines = await fetchPickupGuidelines(supabase);
 

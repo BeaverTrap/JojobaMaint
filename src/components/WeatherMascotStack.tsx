@@ -10,7 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { MdWbCloudy, MdWbSunny, MdWaterDrop } from "react-icons/md";
+import { MdWbCloudy, MdWbSunny, MdWaterDrop, MdNightlight } from "react-icons/md";
 import {
   mapSrcFallbackChain,
   quailSrcFallbackChain,
@@ -65,8 +65,25 @@ const LAYER_STYLES: Record<
   },
 };
 
-function WeatherOverlayIcon({ code, size }: { code: number; size: number }) {
+function WeatherOverlayIcon({
+  code,
+  size,
+  isDay = true,
+}: {
+  code: number;
+  size: number;
+  isDay?: boolean;
+}) {
   if (code === 0 || code === 1) {
+    if (!isDay) {
+      return (
+        <MdNightlight
+          className="text-indigo-500"
+          style={{ width: size, height: size }}
+          aria-hidden
+        />
+      );
+    }
     return (
       <MdWbSunny
         className="text-amber-500"
@@ -108,7 +125,13 @@ function LayerImage({
   onResolved?: (src: string) => void;
   onExhausted?: () => void;
 }) {
+  const sourcesKey = sources.join("|");
   const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [sourcesKey]);
+
   const src = sources[index];
 
   if (!src) {
@@ -209,6 +232,7 @@ export default function WeatherMascotStack({
   temperatureF,
   weatherLabel,
   weatherCode,
+  isDay = true,
   width = 200,
   className = "",
   editMode = false,
@@ -219,10 +243,12 @@ export default function WeatherMascotStack({
   onLayoutChange,
   previewMapVariant,
   previewQuailSrc,
+  stageBottomPad: stageBottomPadProp,
 }: {
   temperatureF: number;
   weatherLabel: string;
   weatherCode: number;
+  isDay?: boolean;
   width?: number;
   className?: string;
   editMode?: boolean;
@@ -235,6 +261,8 @@ export default function WeatherMascotStack({
   previewMapVariant?: WeatherMapVariant;
   /** Sandbox: force a specific quail PNG. */
   previewQuailSrc?: string;
+  /** Extra stage height as % of render width (overrides layout.stageBottomPad). */
+  stageBottomPad?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -256,9 +284,9 @@ export default function WeatherMascotStack({
   const mapSources = useMemo(
     () =>
       previewMapVariant != null
-        ? [mapSrcFallbackChain(previewMapVariant)[0]]
-        : mapSrcFallbackChain(mapVariant),
-    [mapVariant, previewMapVariant],
+        ? mapSrcFallbackChain(previewMapVariant, isDay)
+        : mapSrcFallbackChain(mapVariant, isDay),
+    [isDay, mapVariant, previewMapVariant],
   );
   const quailSources = useMemo(
     () =>
@@ -278,7 +306,16 @@ export default function WeatherMascotStack({
     }
   }, [previewMapVariant, previewQuailSrc]);
 
-  const height = Math.round(width * (layout.height / layout.width));
+  useEffect(() => {
+    setShowMap(true);
+    setCompositeMode(false);
+  }, [weatherCode, isDay, temperatureF, mapVariant]);
+
+  const stageBottomPad =
+    stageBottomPadProp ?? layout.stageBottomPad ?? 0;
+  const stageHeight = Math.round(width * (layout.height / layout.width));
+  const padPx = Math.round(width * (stageBottomPad / 100));
+  const totalHeight = stageHeight + padPx;
   const chipFont = Math.max(7, Math.round(width * 0.038));
   const chipTitle = Math.max(8, Math.round(width * 0.048));
   const chipIcon = Math.max(10, Math.round(width * 0.065));
@@ -286,6 +323,7 @@ export default function WeatherMascotStack({
     weatherCode,
     weatherLabel,
     temperatureF,
+    isDay,
   );
 
   const commitLayout = useCallback(
@@ -298,14 +336,14 @@ export default function WeatherMascotStack({
 
   const commitLayerRect = useCallback(
     (layer: WeatherEditLayerId, rect: WeatherLayoutRect) => {
-      const nextRect = clampLayerRect(rect, layer);
+      const nextRect = clampLayerRect(rect, layer, { relaxed: editMode });
       const next =
         layer === "temp"
           ? { ...layout, tempHotspot: nextRect }
           : { ...layout, [layer]: nextRect };
       commitLayout(next);
     },
-    [commitLayout, layout],
+    [commitLayout, editMode, layout],
   );
 
   const handleQuailResolved = useCallback(
@@ -387,15 +425,19 @@ export default function WeatherMascotStack({
 
   return (
     <div
-      ref={containerRef}
-      className={`relative shrink-0 ${className}`.trim()}
-      style={{ width, height }}
+      className={`relative shrink-0 overflow-visible ${className}`.trim()}
+      style={{ width, height: totalHeight }}
       role="img"
       aria-label={ariaLabel}
-      onPointerMove={editMode ? onDragPointerMove : undefined}
-      onPointerUp={editMode ? onDragPointerUp : undefined}
-      onPointerCancel={editMode ? onDragPointerUp : undefined}
     >
+      <div
+        ref={containerRef}
+        className="absolute left-0 top-0 overflow-visible"
+        style={{ width, height: stageHeight }}
+        onPointerMove={editMode ? onDragPointerMove : undefined}
+        onPointerUp={editMode ? onDragPointerUp : undefined}
+        onPointerCancel={editMode ? onDragPointerUp : undefined}
+      >
       {showMap && !compositeMode ? (
         <EditableLayer
           layer="map"
@@ -406,7 +448,7 @@ export default function WeatherMascotStack({
           onPointerDown={onLayerPointerDown}
         >
           <LayerImage
-            key={`map-${mapVariant}-${mapSources[0]}`}
+            key={`map-${mapVariant}-${mapSources[0]}-${isDay ? "day" : "night"}`}
             sources={mapSources}
             alt=""
             className="pointer-events-none h-full w-full object-contain object-left-top"
@@ -438,7 +480,7 @@ export default function WeatherMascotStack({
             className="mt-px flex items-center justify-center gap-px font-semibold tabular-nums leading-none text-amber-950"
             style={{ fontSize: chipFont }}
           >
-            <WeatherOverlayIcon code={weatherCode} size={chipIcon} />
+            <WeatherOverlayIcon code={weatherCode} size={chipIcon} isDay={isDay} />
             <span>
               {temperatureF}°F | {shortLabel}
             </span>
@@ -471,6 +513,7 @@ export default function WeatherMascotStack({
           className="pointer-events-none absolute inset-0 z-10 h-full w-full object-contain"
         />
       )}
+      </div>
     </div>
   );
 }

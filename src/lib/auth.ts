@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/database.types";
+import type { StaffRole } from "@/lib/staff-roles";
 
 export type CurrentUser = {
   userId: string | null;
   profile: Profile | null;
   isAuthorized: boolean;
+  staffRole: StaffRole | null;
 };
 
 /**
@@ -19,7 +21,7 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { userId: null, profile: null, isAuthorized: false };
+    return { userId: null, profile: null, isAuthorized: false, staffRole: null };
   }
 
   const { data: profile } = await supabase
@@ -33,5 +35,6 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     userId: user.id,
     profile: typed,
     isAuthorized: Boolean(typed?.is_authorized),
+    staffRole: typed?.staff_role ?? null,
   };
 }

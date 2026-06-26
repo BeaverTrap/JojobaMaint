@@ -1,31 +1,13 @@
 import type { ParkAstronomyToday } from "@/lib/sky/types";
+import { moonPhaseForDateIso, moonPhaseLabel } from "@/lib/moon-phase";
 
 type AstronomyResponse = {
   daily?: {
     time?: string[];
     sunrise?: string[];
     sunset?: string[];
-    moonrise?: (string | null)[];
-    moonset?: (string | null)[];
-    moon_phase?: number[];
   };
 };
-
-const MOON_LABELS = [
-  "New moon",
-  "Waxing crescent",
-  "First quarter",
-  "Waxing gibbous",
-  "Full moon",
-  "Waning gibbous",
-  "Last quarter",
-  "Waning crescent",
-];
-
-function moonPhaseLabel(phase: number): string {
-  const idx = Math.min(7, Math.max(0, Math.round(phase * 8) % 8));
-  return MOON_LABELS[idx] ?? "Moon";
-}
 
 function parseTimeToHours(iso: string): number | null {
   const d = new Date(iso);
@@ -40,7 +22,7 @@ export async function fetchParkAstronomy(
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lng));
-  url.searchParams.set("daily", "sunrise,sunset,moonrise,moonset,moon_phase");
+  url.searchParams.set("daily", "sunrise,sunset");
   url.searchParams.set("timezone", "America/Los_Angeles");
   url.searchParams.set("forecast_days", "1");
 
@@ -63,7 +45,8 @@ export async function fetchParkAstronomy(
   const sunset = json.daily?.sunset?.[0];
   if (!sunrise || !sunset) return null;
 
-  const moonPhase = json.daily?.moon_phase?.[0] ?? 0;
+  const today = json.daily?.time?.[0] ?? sunrise.slice(0, 10);
+  const moonPhase = moonPhaseForDateIso(today);
   const riseH = parseTimeToHours(sunrise);
   const setH = parseTimeToHours(sunset);
   const daylightHours =
@@ -81,8 +64,8 @@ export async function fetchParkAstronomy(
   return {
     sunrise,
     sunset,
-    moonrise: json.daily?.moonrise?.[0] ?? null,
-    moonset: json.daily?.moonset?.[0] ?? null,
+    moonrise: null,
+    moonset: null,
     moonPhase,
     moonPhaseLabel: moonPhaseLabel(moonPhase),
     daylightHours: Math.round(daylightHours * 10) / 10,

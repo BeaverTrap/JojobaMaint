@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import WeatherStackSandbox from "@/components/WeatherStackSandbox";
-
-export const metadata: Metadata = {
-  title: "Weather mascot setup",
-  robots: { index: false, follow: false },
-};
+import { redirect } from "next/navigation";
 
 export default function WeatherStackPage() {
-  return <WeatherStackSandbox />;
+  redirect("/outdoors/stack");
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireStaffRole } from "@/lib/require-staff-role";
 import {
   fetchArticleCategories,
   fetchArticleRelatedIds,
@@ -20,6 +21,7 @@ export default async function EditArticlePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  await requireStaffRole("manager");
   const supabase = await createClient();
 
   const [{ data: article }, tags, initialTags, initialRelatedIds, recentArticles] =

@@ -36,14 +36,19 @@ export async function fetchNearbyEarthquakes(
   lng: number,
   maxRadiusKm = 250,
   minMagnitude = 2.5,
-  limit = 10,
+  limit = 25,
 ): Promise<RecentEarthquake[]> {
+  const startTime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+
   const url = new URL("https://earthquake.usgs.gov/fdsnws/event/1/query");
   url.searchParams.set("format", "geojson");
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lng));
   url.searchParams.set("maxradiuskm", String(maxRadiusKm));
   url.searchParams.set("minmagnitude", String(minMagnitude));
+  url.searchParams.set("starttime", startTime);
   url.searchParams.set("orderby", "time");
   url.searchParams.set("limit", String(limit));
 
@@ -68,6 +73,8 @@ export async function fetchNearbyEarthquakes(
         time: new Date(timeMs).toISOString(),
         distanceMiles: Math.round(haversineMiles(lat, lng, eqLat, eqLng)),
         depthKm: depth != null ? Math.round(depth * 10) / 10 : null,
+        latitude: eqLat,
+        longitude: eqLng,
         url: f.properties?.url ?? "https://earthquake.usgs.gov/",
       } satisfies RecentEarthquake;
     })

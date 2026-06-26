@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatPostedEditedLines } from "@/lib/content-dates";
 import { createClient } from "@/lib/supabase/server";
+import { requireStaffRole } from "@/lib/require-staff-role";
 import {
   fetchTreeAssessmentConcerns,
   TREE_ASSESSMENT_SELECT,
@@ -11,6 +12,7 @@ import type { TreeAssessmentWithAuthor } from "@/lib/database.types";
 export const dynamic = "force-dynamic";
 
 export default async function AdminTreeAssessmentsPage() {
+  await requireStaffRole("manager");
   const supabase = await createClient();
   const [concerns, { data }] = await Promise.all([
     fetchTreeAssessmentConcerns(supabase),

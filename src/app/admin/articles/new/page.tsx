@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireStaffRole } from "@/lib/require-staff-role";
 import {
   fetchArticleCategories,
   fetchRecentArticlesForPicker,
@@ -9,6 +10,7 @@ import ArticleForm from "@/components/ArticleForm";
 export const dynamic = "force-dynamic";
 
 export default async function NewArticlePage() {
+  await requireStaffRole("manager");
   const supabase = await createClient();
   const [tags, recentArticles] = await Promise.all([
     fetchArticleCategories(supabase),

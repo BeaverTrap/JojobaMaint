@@ -12,6 +12,7 @@ export type ParkWeatherHourly = {
   weatherCode: number;
   windMph: number;
   uvIndex: number | null;
+  isDay: boolean;
 };
 
 export type ParkAstronomyToday = {
@@ -42,6 +43,8 @@ export type RecentEarthquake = {
   time: string;
   distanceMiles: number;
   depthKm: number | null;
+  latitude: number;
+  longitude: number;
   url: string;
 };
 
@@ -53,6 +56,11 @@ export type VandenbergLaunch = {
   windowStart: string | null;
   windowEnd: string | null;
   padName: string;
+  imageUrl: string | null;
+  missionDescription: string | null;
+  /** Official webcast / live stream or info page, when known. */
+  watchUrl: string | null;
+  watchLabel: string | null;
   /** Rough hint for SoCal inland viewing */
   viewingHint: "good" | "maybe" | "unlikely" | "unknown";
   viewingNote: string;
@@ -62,6 +70,18 @@ export type IssPass = {
   riseTime: string;
   durationSeconds: number;
   maxElevationNote: string;
+};
+
+export type NasaApod = {
+  title: string;
+  date: string | null;
+  explanation: string;
+  imageUrl: string;
+  hdUrl: string | null;
+  mediaType: "image" | "video";
+  /** Link to the full-res image or the source video. */
+  sourceUrl: string | null;
+  copyright: string | null;
 };
 
 export type SkyPageData = {
@@ -78,6 +98,7 @@ export type SkyPageData = {
   earthquakes: RecentEarthquake[];
   launches: VandenbergLaunch[];
   issPasses: IssPass[];
+  apod: NasaApod | null;
   errors: Partial<Record<SkyFeedId, string>>;
 };
 
@@ -86,4 +107,5 @@ export type SkyFeedId =
   | "alerts"
   | "earthquakes"
   | "launches"
-  | "iss";
+  | "iss"
+  | "apod";

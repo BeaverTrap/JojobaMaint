@@ -98,7 +98,7 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
           />
         </svg>
       );
-    case "Weather":
+    case "Outdoors":
       return (
         <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
           <path

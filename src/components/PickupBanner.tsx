@@ -52,11 +52,6 @@ export default function PickupBanner({
             Weekly waste pickups — material bound for the chipper or the cactus
             pits — occur on {scheduleDays}.
           </p>
-          {isSummerSchedule && (
-            <p className="text-xs text-muted">
-              Thursday pickups are temporarily paused for the summer schedule.
-            </p>
-          )}
           {showGuidelinesLink && (
             <p>
               <Link

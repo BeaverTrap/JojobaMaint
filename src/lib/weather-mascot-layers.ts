@@ -127,6 +127,16 @@ export function resolveQuailSet(
   return "regular";
 }
 
+/** Aligns quail picks across views that share the same 15-minute refresh window. */
+const QUILL_ROTATION_BUCKET_MS = 15 * 60 * 1000;
+
+export function quailRotationSeed(fetchedAt: string): string {
+  const t = new Date(fetchedAt).getTime();
+  if (Number.isNaN(t)) return fetchedAt;
+  const bucket = Math.floor(t / QUILL_ROTATION_BUCKET_MS) * QUILL_ROTATION_BUCKET_MS;
+  return String(bucket);
+}
+
 /** Stable pick within a set — changes when the weather refresh seed changes. */
 export function rotationIndex(seed: string, count: number): number {
   if (count <= 0) return 0;
@@ -137,16 +147,40 @@ export function rotationIndex(seed: string, count: number): number {
   return hash % count;
 }
 
-export function mapAssetPath(variant: WeatherMapVariant): string {
-  const file =
-    variant === "clear" ? "map-sunny.png" : `map-${variant}.png`;
-  return `${WEATHER_LAYER_BASE}/${file}`;
+export function mapAssetFile(
+  variant: WeatherMapVariant,
+  isDay = true,
+): string {
+  if (isDay) {
+    return variant === "clear" ? "map-sunny.png" : `map-${variant}.png`;
+  }
+  if (variant === "clear") return "map-night.png";
+  return `map-${variant}_night.png`;
 }
 
-export function mapSrcFallbackChain(variant: WeatherMapVariant): string[] {
-  const chain: string[] = [mapAssetPath(variant)];
+export function mapAssetPath(
+  variant: WeatherMapVariant,
+  isDay = true,
+): string {
+  return `${WEATHER_LAYER_BASE}/${mapAssetFile(variant, isDay)}`;
+}
+
+export function mapSrcFallbackChain(
+  variant: WeatherMapVariant,
+  isDay = true,
+): string[] {
+  const chain: string[] = [mapAssetPath(variant, isDay)];
+
+  if (!isDay) {
+    chain.push(mapAssetPath("clear", true));
+    if (variant !== "clear") {
+      chain.push(mapAssetPath("clear", false));
+    }
+    return chain;
+  }
+
   if (variant !== "clear") {
-    chain.push(mapAssetPath("clear"));
+    chain.push(mapAssetPath("clear", true));
   }
   return chain;
 }
@@ -176,11 +210,16 @@ export function quailSrcFallbackChain(
   return chain;
 }
 
+export function isClearWeatherCode(code: number): boolean {
+  return code === 0 || code === 1;
+}
+
 /** Short label for the map temp chip (fits the hotspot). */
 export function weatherOverlayShortLabel(
   code: number,
   label: string,
   temperatureF?: number,
+  isDay = true,
 ): string {
   if (isRainyWeatherCode(code)) {
     if (code >= 95) return "Storm";
@@ -194,7 +233,7 @@ export function weatherOverlayShortLabel(
     if (temperatureF <= WEATHER_COLD_TEMP_F) return "Cold";
   }
 
-  if (code === 0 || code === 1) return "Sunny";
+  if (code === 0 || code === 1) return isDay ? "Sunny" : "Clear";
   if (code === 2 || code === 3) return "Cloudy";
   if (code >= 45 && code <= 48) return "Fog";
   if (code >= 71 && code <= 75) return "Snow";

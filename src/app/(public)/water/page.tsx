@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
+import { canManageSiteContent } from "@/lib/staff-roles";
 import { fetchWaterUsageReadings, fetchWaterSyncState } from "@/lib/water-usage";
 import WaterUsageDashboard from "@/components/WaterUsageDashboard";
 import WaterSyncButton from "@/components/WaterSyncButton";
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 
 export default async function WaterPage() {
   const supabase = await createClient();
-  const { isAuthorized } = await getCurrentUser();
+  const { staffRole } = await getCurrentUser();
+  const canSync = canManageSiteContent(staffRole);
   const [readings, lastSyncedAt] = await Promise.all([
     fetchWaterUsageReadings(supabase),
     fetchWaterSyncState(supabase),
@@ -19,11 +21,11 @@ export default async function WaterPage() {
   return (
     <div className="space-y-6">
       <PageMascotHeading
-        scene="tools"
+        scene="water"
         title="Water usage"
         description="Monthly water usage reports. Pick any past month below."
       >
-        {isAuthorized ? <WaterSyncButton /> : null}
+        {canSync ? <WaterSyncButton /> : null}
       </PageMascotHeading>
 
       <Suspense

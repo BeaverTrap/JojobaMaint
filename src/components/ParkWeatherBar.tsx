@@ -5,28 +5,17 @@ import { useCallback, useEffect, useId, useState } from "react";
 import {
   MdClose,
   MdExpandMore,
-  MdWbCloudy,
-  MdWbSunny,
-  MdWaterDrop,
 } from "react-icons/md";
 import {
   PARK_WEATHER_BAR_LABEL,
   type ParkWeatherSnapshot,
 } from "@/lib/park-weather";
 import WeatherMascotStack from "@/components/WeatherMascotStack";
-
-const REFRESH_MS = 15 * 60 * 1000;
+import WeatherConditionIcon from "@/components/WeatherConditionIcon";
+import DailyOutlookList from "@/components/DailyOutlookList";
+import { useParkWeather } from "@/components/ParkWeatherProvider";
+import { quailRotationSeed } from "@/lib/weather-mascot-layers";
 const MOBILE_MQ = "(max-width: 767px)";
-
-function formatDay(dateIso: string): string {
-  const date = new Date(`${dateIso}T12:00:00`);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    timeZone: "America/Los_Angeles",
-  });
-}
 
 function formatFetchedAt(iso: string): string {
   const date = new Date(iso);
@@ -39,14 +28,8 @@ function formatFetchedAt(iso: string): string {
   });
 }
 
-function WeatherIcon({ code }: { code: number }) {
-  if (code === 0 || code === 1) {
-    return <MdWbSunny className="h-4 w-4 shrink-0" aria-hidden />;
-  }
-  if (code >= 51 && code <= 67) {
-    return <MdWaterDrop className="h-4 w-4 shrink-0" aria-hidden />;
-  }
-  return <MdWbCloudy className="h-4 w-4 shrink-0" aria-hidden />;
+function WeatherIcon({ code, isDay }: { code: number; isDay: boolean }) {
+  return <WeatherConditionIcon code={code} isDay={isDay} size={16} />;
 }
 
 function WeatherForecastPanel({
@@ -72,27 +55,33 @@ function WeatherForecastPanel({
 
   if (!data || !current) return null;
 
-  return (
-    <div className="space-y-1">
-      <div className="flex items-start gap-3 sm:gap-4">
-        <WeatherMascotStack
-          temperatureF={current.temperatureF}
-          weatherLabel={current.weatherLabel}
-          weatherCode={current.weatherCode}
-          rotationSeed={data.fetchedAt}
-          width={152}
-          className="relative z-10 max-sm:-mb-[4.5rem] sm:hidden"
-        />
-        <WeatherMascotStack
-          temperatureF={current.temperatureF}
-          weatherLabel={current.weatherLabel}
-          weatherCode={current.weatherCode}
-          rotationSeed={data.fetchedAt}
-          width={200}
-          className="relative z-10 hidden sm:-mb-24 sm:block"
-        />
+  const rotationSeed = quailRotationSeed(data.fetchedAt);
 
-        <div className="min-w-0 flex-1">
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+        <div className="shrink-0">
+          <WeatherMascotStack
+            temperatureF={current.temperatureF}
+            weatherLabel={current.weatherLabel}
+            weatherCode={current.weatherCode}
+            isDay={current.isDay}
+            rotationSeed={rotationSeed}
+            width={180}
+            className="relative z-10 sm:hidden"
+          />
+          <WeatherMascotStack
+            temperatureF={current.temperatureF}
+            weatherLabel={current.weatherLabel}
+            weatherCode={current.weatherCode}
+            isDay={current.isDay}
+            rotationSeed={rotationSeed}
+            width={248}
+            className="relative z-10 hidden sm:block"
+          />
+        </div>
+
+        <div className="min-w-0 w-full flex-1">
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
             <div className="rounded-xl border border-line/80 bg-surface/90 px-3 py-2.5 shadow-sm dark:bg-surface/80">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
@@ -140,35 +129,17 @@ function WeatherForecastPanel({
         </div>
       </div>
 
-      <div className="relative z-0">
-        <p className="mb-1.5 pl-[4.5rem] text-[10px] font-semibold uppercase tracking-wide text-sky-900/70 sm:pl-[12.5rem] dark:text-sky-300/70">
+      <div>
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-sky-900/70 dark:text-sky-300/70">
           7-day outlook
         </p>
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line/80 bg-surface/90 shadow-sm dark:bg-surface/80">
-          {data.daily.map((day) => (
-            <li
-              key={day.date}
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[7rem_1fr_auto_auto]"
-            >
-              <span className="font-medium text-ink">{formatDay(day.date)}</span>
-              <span className="truncate text-muted sm:col-start-2">
-                {day.weatherLabel}
-              </span>
-              <span className="shrink-0 tabular-nums font-medium text-ink">
-                {day.highF}° / {day.lowF}°
-              </span>
-              <span className="shrink-0 text-xs text-muted">
-                {day.precipChancePercent}% rain
-              </span>
-            </li>
-          ))}
-        </ul>
+        <DailyOutlookList days={data.daily} compact />
       </div>
 
       <p className="hidden pt-1 text-[11px] text-muted md:block">
         Tap <strong className="font-semibold text-ink">Forecast</strong> for a
         quick look, or open the{" "}
-        <Link href="/weather" className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
+        <Link href="/outdoors" className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
           full weather &amp; sky page
         </Link>
         . Refreshes about every 15 minutes.
@@ -179,30 +150,8 @@ function WeatherForecastPanel({
 
 export default function ParkWeatherBar() {
   const forecastId = useId();
-  const [data, setData] = useState<ParkWeatherSnapshot | null>(null);
-  const [error, setError] = useState(false);
+  const { data, error } = useParkWeather();
   const [expanded, setExpanded] = useState(false);
-
-  const loadWeather = useCallback(() => {
-    fetch("/api/weather")
-      .then(async (res) => {
-        const json = (await res.json()) as ParkWeatherSnapshot & {
-          error?: string;
-        };
-        if (!res.ok) throw new Error(json.error ?? "Weather unavailable");
-        setData(json);
-        setError(false);
-      })
-      .catch(() => {
-        setError(true);
-      });
-  }, []);
-
-  useEffect(() => {
-    loadWeather();
-    const interval = window.setInterval(loadWeather, REFRESH_MS);
-    return () => window.clearInterval(interval);
-  }, [loadWeather]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -252,7 +201,7 @@ export default function ParkWeatherBar() {
             className="flex items-center gap-2 py-1.5 sm:gap-3"
           >
             <Link
-              href="/weather"
+              href="/outdoors"
               className="flex min-w-0 flex-1 items-center gap-2 text-sm text-sky-950 hover:opacity-90 dark:text-sky-100"
             >
               {current ? (
@@ -261,7 +210,7 @@ export default function ParkWeatherBar() {
                     {PARK_WEATHER_BAR_LABEL}
                   </span>
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-200/60 text-sky-800 dark:bg-sky-800/40 dark:text-sky-200">
-                    <WeatherIcon code={current.weatherCode} />
+                    <WeatherIcon code={current.weatherCode} isDay={current.isDay} />
                   </span>
                   <span className="min-w-0 truncate font-semibold tabular-nums">
                     {current.temperatureF}°F
@@ -346,7 +295,7 @@ export default function ParkWeatherBar() {
               />
               <p className="mt-3 border-t border-sky-200/70 pt-3 text-center text-xs dark:border-sky-800/40">
                 <Link
-                  href="/weather"
+                  href="/outdoors"
                   className="font-semibold text-brand-700 hover:underline dark:text-brand-300"
                   onClick={closeForecast}
                 >

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { formatPostedEditedLines } from "@/lib/content-dates";
 import { createClient } from "@/lib/supabase/server";
+import { requireStaffRole } from "@/lib/require-staff-role";
 import { fetchArticleCategories, ARTICLE_SELECT } from "@/lib/articles";
 import type { ArticleWithAuthor } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminArticlesPage() {
+  await requireStaffRole("manager");
   const supabase = await createClient();
   const [categories, { data }] = await Promise.all([
     fetchArticleCategories(supabase),

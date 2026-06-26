@@ -10,11 +10,14 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type StaffRole = "staff" | "manager" | "admin";
+
 export interface Profile {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
   is_authorized: boolean;
+  staff_role: StaffRole | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +25,7 @@ export interface Profile {
 export interface AuthorizedEmail {
   email: string;
   note: string | null;
+  staff_role: StaffRole;
   created_at: string;
 }
 

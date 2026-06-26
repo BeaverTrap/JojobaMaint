@@ -39,28 +39,46 @@ const PREVIEW_WIDTH_DEFAULT = 718;
 
 const WEATHER_PRESETS = [
   {
-    id: "normal",
-    label: "Normal",
+    id: "clear",
+    label: "Clear",
     temperatureF: 78,
     weatherCode: 0,
+    isDay: true,
   },
   {
     id: "cold",
     label: "Cold",
-    temperatureF: WEATHER_COLD_TEMP_F,
+    temperatureF: 45,
     weatherCode: 0,
+    isDay: true,
   },
   {
     id: "hot",
     label: "Hot",
-    temperatureF: WEATHER_HOT_TEMP_F,
+    temperatureF: 92,
     weatherCode: 0,
+    isDay: true,
+  },
+  {
+    id: "cloudy",
+    label: "Cloudy",
+    temperatureF: 68,
+    weatherCode: 3,
+    isDay: true,
   },
   {
     id: "rain",
     label: "Rain",
-    temperatureF: 68,
+    temperatureF: 62,
     weatherCode: 61,
+    isDay: true,
+  },
+  {
+    id: "storm",
+    label: "Storm",
+    temperatureF: 65,
+    weatherCode: 95,
+    isDay: true,
   },
 ] as const;
 
@@ -76,7 +94,7 @@ function setLayerRect(
   layer: WeatherEditLayerId,
   rect: WeatherLayoutRect,
 ): WeatherMascotLayoutConfig {
-  const next = clampLayerRect(rect, layer);
+  const next = clampLayerRect(rect, layer, { relaxed: true });
   return layer === "temp"
     ? { ...layout, tempHotspot: next }
     : { ...layout, [layer]: next };
@@ -88,6 +106,8 @@ export default function WeatherStackSandbox() {
   const [previewWidth, setPreviewWidth] = useState(PREVIEW_WIDTH_DEFAULT);
   const [temperatureF, setTemperatureF] = useState(78);
   const [weatherCode, setWeatherCode] = useState(0);
+  const [isDay, setIsDay] = useState(true);
+  const [activePresetId, setActivePresetId] = useState<string | null>("clear");
   const [rotationSeed, setRotationSeed] = useState(() =>
     new Date().toISOString(),
   );
@@ -127,6 +147,8 @@ export default function WeatherStackSandbox() {
     (preset: (typeof WEATHER_PRESETS)[number]) => {
       setTemperatureF(preset.temperatureF);
       setWeatherCode(preset.weatherCode);
+      setIsDay(preset.isDay);
+      setActivePresetId(preset.id);
       setRotationSeed(new Date().toISOString());
     },
     [],
@@ -164,6 +186,7 @@ export default function WeatherStackSandbox() {
         <p className="mt-1 text-sm text-muted">
           Drag layers into place, then copy the layout snippet into{" "}
           <code className="text-xs">src/lib/weather-mascot-layout.ts</code> and
+          save from <code className="text-xs">/outdoors/stack</code>.
           deploy — everyone gets the same positions.
         </p>
       </div>
@@ -210,11 +233,29 @@ export default function WeatherStackSandbox() {
             key={preset.id}
             type="button"
             onClick={() => applyPreset(preset)}
-            className="rounded-lg bg-surface px-3 py-1.5 text-sm font-semibold text-ink ring-1 ring-line hover:bg-brand-50 dark:hover:bg-brand-950/30"
+            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ring-1 ring-line hover:bg-brand-50 dark:hover:bg-brand-950/30 ${
+              activePresetId === preset.id
+                ? "bg-brand-600 text-white ring-brand-600 hover:bg-brand-600"
+                : "bg-surface text-ink"
+            }`}
           >
             {preset.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => {
+            setIsDay((v) => !v);
+            setActivePresetId(null);
+          }}
+          className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
+            !isDay
+              ? "bg-indigo-600 text-white"
+              : "bg-surface text-ink ring-1 ring-line"
+          }`}
+        >
+          {isDay ? "Day" : "Night"}
+        </button>
       </div>
 
       {editMode ? (
@@ -247,9 +288,31 @@ export default function WeatherStackSandbox() {
             {LAYER_OPTIONS.find((o) => o.id === activeLayer)?.label ?? "layer"}
           </p>
           <p className="mt-1 text-xs text-muted">
-            Drag the small label to move, corner dot to resize — or type exact
-            percentages.
+            Drag the small label to move, corner dot to resize — layers can
+            extend past the stage edge. Type exact percentages below.
           </p>
+          <label className="mt-3 block text-xs">
+            <span className="font-medium text-ink">
+              Stage bottom pad %{" "}
+              <span className="font-normal text-muted">
+                (extra vertical room below the map)
+              </span>
+            </span>
+            <input
+              type="number"
+              step={1}
+              min={0}
+              max={40}
+              value={layout.stageBottomPad ?? 0}
+              onChange={(e) =>
+                setLayout((prev) => ({
+                  ...prev,
+                  stageBottomPad: Math.max(0, Number(e.target.value)),
+                }))
+              }
+              className="mt-1 w-full max-w-[8rem] rounded-lg border border-line bg-surface px-2 py-1.5 font-mono text-sm"
+            />
+          </label>
           <div className="mt-3 grid gap-3 sm:grid-cols-4">
             {(["left", "top", "width", "height"] as const).map((key) => (
               <label key={key} className="block text-xs">
@@ -313,12 +376,13 @@ export default function WeatherStackSandbox() {
         <span className="text-muted">{previewWidth}px wide (art is 718px)</span>
       </label>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-sky-50/80 p-4 sm:p-8 dark:bg-sky-950/20">
-        <div className="mx-auto w-fit min-w-0">
+      <div className="overflow-x-auto rounded-2xl border border-line bg-sky-50/80 p-6 sm:p-10 dark:bg-sky-950/20">
+        <div className="mx-auto w-fit min-w-0 overflow-visible py-4">
           <WeatherMascotStack
             temperatureF={temperatureF}
             weatherLabel={weatherLabel}
             weatherCode={weatherCode}
+            isDay={isDay}
             width={previewWidth}
             editMode={editMode}
             activeEditLayer={activeLayer}
@@ -326,6 +390,7 @@ export default function WeatherStackSandbox() {
             rotationSeed={rotationSeed}
             layout={layout}
             onLayoutChange={handleLayoutChange}
+            stageBottomPad={layout.stageBottomPad}
           />
         </div>
       </div>
@@ -338,7 +403,10 @@ export default function WeatherStackSandbox() {
             min={32}
             max={115}
             value={temperatureF}
-            onChange={(e) => setTemperatureF(Number(e.target.value))}
+            onChange={(e) => {
+              setTemperatureF(Number(e.target.value));
+              setActivePresetId(null);
+            }}
             className="mt-1 w-full"
           />
           <span className="text-muted">{temperatureF}°F</span>
@@ -348,7 +416,10 @@ export default function WeatherStackSandbox() {
           <span className="font-medium text-ink">Weather code</span>
           <select
             value={weatherCode}
-            onChange={(e) => setWeatherCode(Number(e.target.value))}
+            onChange={(e) => {
+              setWeatherCode(Number(e.target.value));
+              setActivePresetId(null);
+            }}
             className="mt-1 w-full rounded-lg border border-line bg-surface px-2 py-1.5"
           >
             {WEATHER_CODES.map((w) => (

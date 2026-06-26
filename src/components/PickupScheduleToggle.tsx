@@ -89,7 +89,7 @@ export default function PickupScheduleToggle({
         <ScheduleOption
           selected={mode === "summer"}
           title="Summer schedule"
-          detail="Mondays only — slow season when many residents are away."
+          detail="Mondays only — Thursdays paused for summer."
           onSelect={() => select("summer")}
         />
         <ScheduleOption

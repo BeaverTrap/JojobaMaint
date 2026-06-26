@@ -16,6 +16,13 @@ import {
   subMonths,
 } from "date-fns";
 import type { CalendarEvent } from "@/lib/database.types";
+import {
+  GREEN_WASTE_PICKUP_LABEL,
+  isGreenWastePickupCalendarEvent,
+  isWastePickupDay,
+  wastePickupDayNote,
+  type PickupScheduleMode,
+} from "@/lib/pickup-schedule";
 import AnimateIn from "@/components/AnimateIn";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -30,6 +37,17 @@ function eventOccursOnDay(event: CalendarEvent, day: Date): boolean {
   return start <= dayEnd && end > dayStart;
 }
 
+function visibleDayEvents(
+  dayEvents: CalendarEvent[],
+  day: Date,
+  mode: PickupScheduleMode,
+): CalendarEvent[] {
+  if (!isWastePickupDay(day, mode)) {
+    return dayEvents;
+  }
+  return dayEvents.filter((event) => !isGreenWastePickupCalendarEvent(event));
+}
+
 function formatEventTime(event: CalendarEvent): string {
   if (event.all_day) return "All day";
   const start = parseISO(event.start_time);
@@ -37,10 +55,34 @@ function formatEventTime(event: CalendarEvent): string {
   return `${format(start, "h:mm a")} – ${format(end, "h:mm a")}`;
 }
 
+function GreenWastePickupDetail({
+  day,
+  mode,
+}: {
+  day: Date;
+  mode: PickupScheduleMode;
+}) {
+  const note = wastePickupDayNote(day, mode);
+  return (
+    <li className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+      <p className="font-semibold text-emerald-950 dark:text-emerald-100">
+        {GREEN_WASTE_PICKUP_LABEL}
+      </p>
+      {note ? (
+        <p className="mt-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+          {note}
+        </p>
+      ) : null}
+    </li>
+  );
+}
+
 export default function ScheduleCalendar({
   events,
+  pickupScheduleMode,
 }: {
   events: CalendarEvent[];
+  pickupScheduleMode: PickupScheduleMode;
 }) {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -64,16 +106,24 @@ export default function ScheduleCalendar({
     return map;
   }, [calendarDays, events]);
 
-  const selectedEvents = useMemo(() => {
+  const selectedWastePickup =
+    selectedDay !== null &&
+    isWastePickupDay(selectedDay, pickupScheduleMode);
+  const selectedEventsVisible = useMemo(() => {
     if (!selectedDay) return [];
     const key = format(selectedDay, "yyyy-MM-dd");
-    return eventsByDay.get(key) ?? [];
-  }, [selectedDay, eventsByDay]);
+    return visibleDayEvents(
+      eventsByDay.get(key) ?? [],
+      selectedDay,
+      pickupScheduleMode,
+    );
+  }, [selectedDay, eventsByDay, pickupScheduleMode]);
 
   const upcoming = useMemo(() => {
     const now = new Date();
     return events
       .filter((e) => parseISO(e.end_time) >= now)
+      .filter((e) => !isGreenWastePickupCalendarEvent(e))
       .slice(0, 6);
   }, [events]);
 
@@ -128,10 +178,16 @@ export default function ScheduleCalendar({
         <div className="grid grid-cols-7">
           {calendarDays.map((day) => {
             const key = format(day, "yyyy-MM-dd");
-            const dayEvents = eventsByDay.get(key) ?? [];
+            const dayEvents = visibleDayEvents(
+              eventsByDay.get(key) ?? [],
+              day,
+              pickupScheduleMode,
+            );
             const inMonth = isSameMonth(day, month);
             const today = isToday(day);
             const selected = selectedDay ? isSameDay(day, selectedDay) : false;
+            const wastePickup =
+              inMonth && isWastePickupDay(day, pickupScheduleMode);
 
             return (
               <button
@@ -158,7 +214,15 @@ export default function ScheduleCalendar({
                   {format(day, "d")}
                 </span>
                 <div className="mt-1 space-y-0.5">
-                  {dayEvents.slice(0, 2).map((event) => (
+                  {wastePickup ? (
+                    <p
+                      className="truncate rounded-md bg-emerald-600/15 px-1 py-0.5 text-[10px] font-semibold leading-tight text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100"
+                      title={wastePickupDayNote(day, pickupScheduleMode) ?? GREEN_WASTE_PICKUP_LABEL}
+                    >
+                      {GREEN_WASTE_PICKUP_LABEL}
+                    </p>
+                  ) : null}
+                  {dayEvents.slice(0, wastePickup ? 1 : 2).map((event) => (
                     <p
                       key={event.id}
                       className="truncate rounded-md bg-brand-600/10 px-1 py-0.5 text-[10px] font-semibold leading-tight text-brand-800 dark:bg-brand-900/50 dark:text-brand-200"
@@ -167,9 +231,9 @@ export default function ScheduleCalendar({
                       {event.title}
                     </p>
                   ))}
-                  {dayEvents.length > 2 && (
+                  {dayEvents.length > (wastePickup ? 1 : 2) && (
                     <p className="px-1 text-[10px] font-medium text-muted">
-                      +{dayEvents.length - 2} more
+                      +{dayEvents.length - (wastePickup ? 1 : 2)} more
                     </p>
                   )}
                 </div>
@@ -188,11 +252,17 @@ export default function ScheduleCalendar({
               ? format(selectedDay, "EEEE, MMMM d")
               : "Select a day"}
           </h3>
-          {selectedDay && selectedEvents.length === 0 && (
+          {selectedDay && !selectedWastePickup && selectedEventsVisible.length === 0 && (
             <p className="mt-2 text-sm text-muted">No maintenance scheduled.</p>
           )}
           <ul className="mt-3 space-y-3">
-            {selectedEvents.map((event) => (
+            {selectedWastePickup && selectedDay ? (
+              <GreenWastePickupDetail
+                day={selectedDay}
+                mode={pickupScheduleMode}
+              />
+            ) : null}
+            {selectedEventsVisible.map((event) => (
               <li
                 key={event.id}
                 className="rounded-xl border border-line bg-canvas/40 p-3"

@@ -7,7 +7,8 @@ const nextConfig: NextConfig = {
       { source: "/galleries/:path*", destination: "/", permanent: true },
       { source: "/admin/galleries", destination: "/admin", permanent: false },
       { source: "/admin/galleries/:path*", destination: "/admin", permanent: false },
-      { source: "/lots", destination: "/sites", permanent: true },
+      { source: "/weather", destination: "/outdoors", permanent: true },
+      { source: "/weather/:path*", destination: "/outdoors/:path*", permanent: true },
       { source: "/lots/:path*", destination: "/sites/:path*", permanent: true },
     ];
   },

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireStaffRole } from "@/lib/require-staff-role";
 import {
   fetchTreeAssessmentConcerns,
   TREE_ASSESSMENT_SELECT,
@@ -21,6 +22,7 @@ export default async function EditTreeAssessmentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  await requireStaffRole("manager");
   const supabase = await createClient();
 
   const [{ data: row }, concerns, contentTags, initialTags] = await Promise.all([

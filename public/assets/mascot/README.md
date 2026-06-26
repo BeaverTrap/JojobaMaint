@@ -6,7 +6,8 @@ Drop transparent PNGs here with these **exact filenames** — no code changes ne
 | --- | --- |
 | `welcome.png` | Feed header, empty feed |
 | `search.png` | No search/filter results |
-| `tools.png` | Maintenance feed filter, water page, empty maintenance assessments |
+| `tools.png` | Maintenance feed filter, empty maintenance assessments |
+| `water.png` | Water usage page |
 | `reading.png` | Landscaping feed filter, empty articles & tree assessments |
 | `map.png` | Map & sites page headers, empty sites |
 | `calendar.png` | Schedule page header, empty schedule |

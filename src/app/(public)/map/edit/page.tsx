@@ -2,13 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import MapEditClient from "@/components/MapEditClient";
 import { getCurrentUser } from "@/lib/auth";
+import { canManageSiteContent } from "@/lib/staff-roles";
 import { createClient } from "@/lib/supabase/server";
 import { fetchMapPositions } from "@/lib/map-positions";
 
 export const dynamic = "force-dynamic";
 
 export default async function MapEditPage() {
-  const [{ isAuthorized, userId }, supabase] = await Promise.all([
+  const [{ staffRole, userId }, supabase] = await Promise.all([
     getCurrentUser(),
     createClient(),
   ]);
@@ -16,7 +17,7 @@ export default async function MapEditPage() {
   if (!userId) {
     redirect("/login?next=/map/edit");
   }
-  if (!isAuthorized) {
+  if (!canManageSiteContent(staffRole)) {
     redirect("/map");
   }
 
