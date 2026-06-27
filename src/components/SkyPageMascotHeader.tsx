@@ -19,8 +19,8 @@ export default function SkyPageMascotHeader() {
   if (!data) {
     return (
       <>
-        <MascotPlaceholder className="w-[176px] shrink-0 sm:hidden" />
-        <MascotPlaceholder className="hidden w-[248px] shrink-0 sm:block" />
+        <MascotPlaceholder className="w-[200px] shrink-0 sm:hidden" />
+        <MascotPlaceholder className="hidden w-[300px] shrink-0 sm:block" />
       </>
     );
   }
@@ -36,7 +36,7 @@ export default function SkyPageMascotHeader() {
         weatherCode={current.weatherCode}
         isDay={current.isDay}
         rotationSeed={rotationSeed}
-        width={176}
+        width={200}
         className="shrink-0 sm:hidden"
       />
       <WeatherMascotStack
@@ -45,7 +45,7 @@ export default function SkyPageMascotHeader() {
         weatherCode={current.weatherCode}
         isDay={current.isDay}
         rotationSeed={rotationSeed}
-        width={248}
+        width={300}
         className="hidden shrink-0 sm:block"
       />
     </>

@@ -196,7 +196,7 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/50 dark:bg-white/20"
           aria-hidden
         />
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
           <SkyPageMascotHeader />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-4">
