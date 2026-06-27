@@ -138,9 +138,16 @@ function hintBadge(hint: VandenbergLaunch["viewingHint"]): {
   }
 }
 
-function GlassCard({ children }: { children: React.ReactNode }) {
+function GlassCard({
+  children,
+  decorations,
+}: {
+  children: React.ReactNode;
+  decorations?: React.ReactNode;
+}) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white/[0.06] p-5 ring-1 ring-white/10 backdrop-blur-sm">
+    <div className="relative overflow-hidden rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/10 backdrop-blur-sm sm:p-5">
+      {decorations}
       {children}
     </div>
   );
@@ -165,24 +172,29 @@ function LaunchPanel({
   const [next, ...rest] = launches;
 
   return (
-    <GlassCard>
-      <Image
-        src="/images/spacex.png"
-        alt=""
-        aria-hidden
-        width={385}
-        height={1254}
-        className="pointer-events-none absolute -bottom-8 left-3 h-80 w-auto object-contain object-bottom opacity-95 drop-shadow-[0_0_26px_rgba(125,211,252,0.3)] sm:left-5 sm:h-[25rem]"
-      />
-      <Image
-        src="/images/Astronaught_003.png"
-        alt=""
-        aria-hidden
-        width={200}
-        height={200}
-        className="pointer-events-none absolute -right-3 -top-3 h-40 w-40 object-contain opacity-95 drop-shadow-[0_0_28px_rgba(125,211,252,0.35)] sm:-right-4 sm:h-48 sm:w-48"
-      />
-      <div className="relative ml-auto max-w-[68%]">
+    <GlassCard
+      decorations={
+        <>
+          <Image
+            src="/images/spacex.png"
+            alt=""
+            aria-hidden
+            width={385}
+            height={1254}
+            className="pointer-events-none absolute -bottom-8 left-5 hidden h-[25rem] w-auto object-contain object-bottom opacity-95 drop-shadow-[0_0_26px_rgba(125,211,252,0.3)] sm:block"
+          />
+          <Image
+            src="/images/Astronaught_003.png"
+            alt=""
+            aria-hidden
+            width={200}
+            height={200}
+            className="pointer-events-none absolute -right-4 -top-3 hidden h-48 w-48 object-contain opacity-95 drop-shadow-[0_0_28px_rgba(125,211,252,0.35)] sm:block"
+          />
+        </>
+      }
+    >
+      <div className="relative sm:ml-auto sm:max-w-[68%]">
         <Eyebrow>Next rocket launch</Eyebrow>
         {error ? (
           <p className="mt-2 text-sm text-amber-200/90">{error}</p>
@@ -196,82 +208,87 @@ function LaunchPanel({
             {next.name}
           </p>
         )}
-      </div>
 
-      {next && !error ? (
-        <div className="relative ml-auto mt-4 max-w-[68%]">
-          <p className="text-xs text-white/55">
-            {next.provider} · {next.padName}
-          </p>
-          <div className="mt-3">
-            {next.windowStart ? (
-              <Countdown target={next.windowStart} nowLabel="Liftoff window open" />
-            ) : (
-              <p className="rounded-lg bg-white/10 px-2.5 py-1 text-sm font-semibold text-white/80 ring-1 ring-white/15">
-                Date to be confirmed
-              </p>
-            )}
-          </div>
-          <p className="mt-3 text-sm text-white/80">
-            {formatLaunchWindow(next.windowStart, next.windowEnd)}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${hintBadge(next.viewingHint).className}`}
-            >
-              {hintBadge(next.viewingHint).label}
-            </span>
-          </div>
-          <p className="mt-2 text-xs leading-relaxed text-white/60">
-            {next.viewingNote}
-          </p>
-          {next.watchUrl ? (
-            <a
-              href={next.watchUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-3 py-1.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-400"
-            >
-              <MdPlayCircle className="h-4 w-4" aria-hidden />
-              {next.watchLabel ?? "Watch live"}
-            </a>
-          ) : null}
-
-          {rest.length > 0 ? (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => setExpanded((o) => !o)}
-                aria-expanded={expanded}
-                className="inline-flex items-center gap-0.5 text-xs font-semibold text-sky-300 hover:text-sky-200"
-              >
-                {expanded
-                  ? "Hide later launches"
-                  : `${rest.length} more launch${rest.length === 1 ? "" : "es"} scheduled`}
-                <MdExpandMore
-                  className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
-                  aria-hidden
+        {next && !error ? (
+          <>
+            <p className="mt-2 text-xs text-white/55">
+              {next.provider} · {next.padName}
+            </p>
+            <div className="mt-3">
+              {next.windowStart ? (
+                <Countdown
+                  target={next.windowStart}
+                  nowLabel="Liftoff window open"
                 />
-              </button>
-              {expanded ? (
-                <ul className="mt-2 space-y-2">
-                  {rest.map((l) => (
-                    <li
-                      key={l.id}
-                      className="rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10"
-                    >
-                      <p className="text-sm font-semibold text-white">{l.name}</p>
-                      <p className="text-xs text-white/55">
-                        {formatLaunchWindow(l.windowStart, l.windowEnd)}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              ) : (
+                <p className="rounded-lg bg-white/10 px-2.5 py-1 text-sm font-semibold text-white/80 ring-1 ring-white/15">
+                  Date to be confirmed
+                </p>
+              )}
             </div>
-          ) : null}
-        </div>
-      ) : null}
+            <p className="mt-3 text-sm text-white/80">
+              {formatLaunchWindow(next.windowStart, next.windowEnd)}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${hintBadge(next.viewingHint).className}`}
+              >
+                {hintBadge(next.viewingHint).label}
+              </span>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-white/60">
+              {next.viewingNote}
+            </p>
+            {next.watchUrl ? (
+              <a
+                href={next.watchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-400 sm:w-auto sm:justify-start sm:py-1.5"
+              >
+                <MdPlayCircle className="h-4 w-4" aria-hidden />
+                {next.watchLabel ?? "Watch live"}
+              </a>
+            ) : null}
+
+            {rest.length > 0 ? (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setExpanded((o) => !o)}
+                  aria-expanded={expanded}
+                  className="inline-flex items-center gap-0.5 text-xs font-semibold text-sky-300 hover:text-sky-200"
+                >
+                  {expanded
+                    ? "Hide later launches"
+                    : `${rest.length} more launch${rest.length === 1 ? "" : "es"} scheduled`}
+                  <MdExpandMore
+                    className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                    aria-hidden
+                  />
+                </button>
+                {expanded ? (
+                  <ul className="mt-2 space-y-2">
+                    {rest.map((l) => (
+                      <li
+                        key={l.id}
+                        className="rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10"
+                      >
+                        <p className="text-sm font-semibold text-white">
+                          {l.name}
+                        </p>
+                        <p className="text-xs text-white/55">
+                          {formatLaunchWindow(l.windowStart, l.windowEnd)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
     </GlassCard>
   );
 }
@@ -287,24 +304,29 @@ function IssPanel({
   const [next, ...rest] = passes;
 
   return (
-    <GlassCard>
-      <Image
-        src="/images/iss.png"
-        alt=""
-        aria-hidden
-        width={320}
-        height={180}
-        className="pointer-events-none absolute -right-24 top-5 h-28 w-72 -rotate-6 object-contain opacity-90 drop-shadow-[0_0_28px_rgba(251,191,36,0.22)] sm:-right-28 sm:top-4 sm:h-36 sm:w-96"
-      />
-      <Image
-        src="/images/Astronaught_001.png"
-        alt=""
-        aria-hidden
-        width={160}
-        height={160}
-        className="pointer-events-none absolute -bottom-8 -right-5 h-32 w-32 object-contain opacity-95 drop-shadow-[0_0_25px_rgba(165,180,252,0.3)] sm:h-40 sm:w-40"
-      />
-      <div className="relative max-w-[66%]">
+    <GlassCard
+      decorations={
+        <>
+          <Image
+            src="/images/iss.png"
+            alt=""
+            aria-hidden
+            width={320}
+            height={180}
+            className="pointer-events-none absolute -right-28 top-4 hidden h-36 w-96 -rotate-6 object-contain opacity-90 drop-shadow-[0_0_28px_rgba(251,191,36,0.22)] sm:block"
+          />
+          <Image
+            src="/images/Astronaught_001.png"
+            alt=""
+            aria-hidden
+            width={160}
+            height={160}
+            className="pointer-events-none absolute -bottom-8 -right-5 hidden h-40 w-40 object-contain opacity-95 drop-shadow-[0_0_25px_rgba(165,180,252,0.3)] sm:block"
+          />
+        </>
+      }
+    >
+      <div className="relative sm:max-w-[66%]">
         <Eyebrow>Next ISS flyover</Eyebrow>
         {error ? (
           <p className="mt-2 text-sm text-amber-200/90">{error}</p>
@@ -318,59 +340,63 @@ function IssPanel({
             {formatIssPassTime(next.riseTime)}
           </p>
         )}
-      </div>
 
-      {next && !error ? (
-        <div className="relative mt-4">
-          <p className="text-xs text-white/55">
-            Overhead for {formatIssDuration(next.durationSeconds)} ·{" "}
-            {next.maxElevationNote}
-          </p>
-          <div className="mt-3">
-            <Countdown target={next.riseTime} nowLabel="Look up — overhead now" />
-          </div>
-          <p className="mt-3 text-xs leading-relaxed text-white/60">
-            The ISS looks like a bright, fast-moving star with no blinking
-            lights. Find a spot away from glare and look up at the time above.
-          </p>
-
-          {rest.length > 0 ? (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => setExpanded((o) => !o)}
-                aria-expanded={expanded}
-                className="inline-flex items-center gap-0.5 text-xs font-semibold text-indigo-300 hover:text-indigo-200"
-              >
-                {expanded
-                  ? "Hide later passes"
-                  : `${rest.length} more pass${rest.length === 1 ? "" : "es"} this week`}
-                <MdExpandMore
-                  className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
-                  aria-hidden
-                />
-              </button>
-              {expanded ? (
-                <ul className="mt-2 space-y-2">
-                  {rest.map((p) => (
-                    <li
-                      key={p.riseTime}
-                      className="rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10"
-                    >
-                      <p className="text-sm font-semibold text-white">
-                        {formatIssPassTime(p.riseTime)}
-                      </p>
-                      <p className="text-xs text-white/55">
-                        {formatIssDuration(p.durationSeconds)} · {p.maxElevationNote}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+        {next && !error ? (
+          <>
+            <p className="mt-2 text-xs text-white/55">
+              Overhead for {formatIssDuration(next.durationSeconds)} ·{" "}
+              {next.maxElevationNote}
+            </p>
+            <div className="mt-3">
+              <Countdown
+                target={next.riseTime}
+                nowLabel="Look up — overhead now"
+              />
             </div>
-          ) : null}
-        </div>
-      ) : null}
+            <p className="mt-3 text-xs leading-relaxed text-white/60">
+              The ISS looks like a bright, fast-moving star with no blinking
+              lights. Find a spot away from glare and look up at the time above.
+            </p>
+
+            {rest.length > 0 ? (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setExpanded((o) => !o)}
+                  aria-expanded={expanded}
+                  className="inline-flex items-center gap-0.5 text-xs font-semibold text-indigo-300 hover:text-indigo-200"
+                >
+                  {expanded
+                    ? "Hide later passes"
+                    : `${rest.length} more pass${rest.length === 1 ? "" : "es"} this week`}
+                  <MdExpandMore
+                    className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                    aria-hidden
+                  />
+                </button>
+                {expanded ? (
+                  <ul className="mt-2 space-y-2">
+                    {rest.map((p) => (
+                      <li
+                        key={p.riseTime}
+                        className="rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10"
+                      >
+                        <p className="text-sm font-semibold text-white">
+                          {formatIssPassTime(p.riseTime)}
+                        </p>
+                        <p className="text-xs text-white/55">
+                          {formatIssDuration(p.durationSeconds)} ·{" "}
+                          {p.maxElevationNote}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
     </GlassCard>
   );
 }
@@ -951,23 +977,25 @@ export default function SkySpaceSection({
       />
 
       <div className="relative p-5 text-white sm:p-7">
-        <div className="flex items-start gap-4">
-          <Image
-            src="/images/Astronaught_002.png"
-            alt="Quail astronaut mascot"
-            width={120}
-            height={120}
-            className="hidden h-24 w-24 shrink-0 object-contain drop-shadow-[0_0_22px_rgba(125,211,252,0.35)] sm:block"
-          />
-          <div className="max-w-xl">
-            <h2 className="text-xl font-bold tracking-tight">Look up — sky &amp; space</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-white/70">
-              From the park you can sometimes catch rockets climbing out of
-              Vandenberg (about 100 miles west) and the International Space
-              Station gliding silently overhead. Here&apos;s what&apos;s next and
-              when to look.
-            </p>
+        <div>
+          <div className="flex items-center gap-4 sm:gap-5">
+            <Image
+              src="/images/Astronaught_002.png"
+              alt="Quail astronaut mascot"
+              width={180}
+              height={180}
+              className="h-28 w-28 shrink-0 object-contain drop-shadow-[0_0_22px_rgba(125,211,252,0.35)] sm:h-40 sm:w-40"
+            />
+            <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+              Look up — sky &amp; space
+            </h2>
           </div>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/70">
+            From the park you can sometimes catch rockets climbing out of
+            Vandenberg (about 100 miles west) and the International Space
+            Station gliding silently overhead. Here&apos;s what&apos;s next and
+            when to look.
+          </p>
         </div>
 
         {nightSky ? (

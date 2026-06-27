@@ -50,13 +50,10 @@ function RegionalAreaSection({
         aria-hidden
       />
       <div className="relative space-y-4 p-4 pt-3 sm:p-5 sm:pt-4">
-        <div className="flex items-end gap-3 sm:gap-5">
-          <div className="min-w-0 flex-1 space-y-3">
-            <h2 className="text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
-              {title}
-            </h2>
-            {topContent}
-          </div>
+        <div className="flex items-end justify-between gap-3 sm:gap-5">
+          <h2 className="min-w-0 flex-1 text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
+            {title}
+          </h2>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/mascot/ranger.png"
@@ -64,9 +61,10 @@ function RegionalAreaSection({
             aria-hidden
             width={176}
             height={176}
-            className="-mb-4 -mr-1 h-28 w-28 shrink-0 object-contain object-bottom drop-shadow-md sm:-mb-5 sm:h-40 sm:w-40"
+            className="-mb-4 -mr-1 h-24 w-24 shrink-0 object-contain object-bottom drop-shadow-md sm:-mb-5 sm:h-40 sm:w-40"
           />
         </div>
+        {topContent}
         {children}
       </div>
     </section>
@@ -196,9 +194,9 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/50 dark:bg-white/20"
           aria-hidden
         />
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
+        <div className="relative flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
           <SkyPageMascotHeader />
-          <div className="min-w-0 flex-1">
+          <div className="w-full min-w-0 flex-1">
             <div className="flex items-start justify-between gap-4">
               <h1
                 className={`text-xl font-bold leading-tight tracking-tight sm:text-2xl ${hero.titleClass}`}
@@ -211,8 +209,8 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
               />
             </div>
 
-            <div className="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-              <div className="min-w-[8.5rem]">
+            <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 sm:mt-6 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-6">
+              <div className="col-span-2 sm:col-span-1">
                 <div className="flex items-center gap-2">
                   <WeatherConditionIcon
                     code={current.weatherCode}

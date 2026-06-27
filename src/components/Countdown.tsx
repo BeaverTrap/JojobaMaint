@@ -85,23 +85,28 @@ export default function Countdown({
   ];
 
   return (
-    <div className="flex items-end gap-1.5" aria-label="Time until next event">
+    <div
+      className="flex w-full items-end justify-between gap-1 sm:w-auto sm:justify-start sm:gap-1.5"
+      aria-label="Time until next event"
+    >
       {segments.map((seg, i) => (
-        <div key={seg.label} className="flex items-end gap-1.5">
+        <div key={seg.label} className="flex items-end gap-1 sm:gap-1.5">
           <div className="flex flex-col items-center">
             <span
-              className={`min-w-[2.4ch] rounded-md px-1.5 py-1 text-center text-2xl font-bold tabular-nums ${segBg}`}
+              className={`min-w-[2.35ch] rounded-md px-1 py-1 text-center text-xl font-bold tabular-nums sm:px-1.5 sm:text-2xl ${segBg}`}
             >
               {seg.value}
             </span>
             <span
-              className={`mt-1 text-[10px] font-semibold uppercase tracking-wider ${labelColor}`}
+              className={`mt-1 text-[9px] font-semibold uppercase tracking-wider sm:text-[10px] ${labelColor}`}
             >
               {seg.label}
             </span>
           </div>
           {i < segments.length - 1 ? (
-            <span className={`pb-5 text-xl font-bold ${sepColor}`}>:</span>
+            <span className={`hidden pb-5 text-xl font-bold sm:inline ${sepColor}`}>
+              :
+            </span>
           ) : null}
         </div>
       ))}

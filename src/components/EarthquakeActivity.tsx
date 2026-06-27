@@ -123,7 +123,7 @@ function StatTile({
         {label}
       </p>
       <p
-        className="mt-0.5 text-xl font-bold tabular-nums leading-none text-ink"
+        className="mt-0.5 text-lg font-bold tabular-nums leading-none text-ink sm:text-xl"
         style={accent ? { color: accent } : undefined}
       >
         {value}
@@ -340,7 +340,7 @@ export default function EarthquakeActivity({
   return (
     <div className="space-y-3">
       {stats ? (
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2">
           <StatTile
             label="Largest"
             value={`M${stats.largest.magnitude.toFixed(1)}`}
