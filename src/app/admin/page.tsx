@@ -10,6 +10,7 @@ import { fetchContentTags } from "@/lib/content-tags";
 import { fetchTreeAssessmentConcerns } from "@/lib/tree-assessments";
 import ComposeArea from "@/components/ComposeArea";
 import AdminHubSections from "@/components/AdminHubSections";
+import RecentPostsCard from "@/components/RecentPostsCard";
 import type { ComposeFormat } from "@/components/ComposeFormatToggle";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function AdminDashboardPage({
   const format: ComposeFormat =
     formatParam === "structured" ? "structured" : "quick";
 
-  const { staffRole } = await getCurrentUser();
+  const { staffRole, profile } = await getCurrentUser();
   const role = staffRole ?? "staff";
 
   const supabase = await createClient();
@@ -71,7 +72,11 @@ export default async function AdminDashboardPage({
 
   return (
     <div className="space-y-6">
-      <AdminHubSections staffRole={role} activeArea={activeArea} />
+      <AdminHubSections
+        staffRole={role}
+        displayName={profile?.display_name ?? undefined}
+        activeArea={activeArea}
+      />
 
       {activeArea && (
         <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
@@ -95,6 +100,8 @@ export default async function AdminDashboardPage({
           </Suspense>
         </section>
       )}
+
+      {!activeArea && <RecentPostsCard posts={recentPosts.slice(0, 8)} />}
     </div>
   );
 }

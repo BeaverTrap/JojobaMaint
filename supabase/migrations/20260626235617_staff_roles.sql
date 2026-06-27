@@ -2,7 +2,13 @@
 -- Roles are set from authorized_emails.staff_role when a user is whitelisted.
 -- Clients cannot change staff_role (not in the profiles UPDATE grant).
 
-create type public.staff_role as enum ('staff', 'manager', 'admin');
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'staff_role') then
+    create type public.staff_role as enum ('staff', 'manager', 'admin');
+  end if;
+end
+$$;
 
 alter table public.profiles
   add column if not exists staff_role public.staff_role;

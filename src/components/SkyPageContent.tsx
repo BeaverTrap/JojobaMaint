@@ -2,13 +2,12 @@ import type { ReactNode } from "react";
 import DailyOutlookList from "@/components/DailyOutlookList";
 import EarthquakeActivity from "@/components/EarthquakeActivity";
 import HourlyForecastStrip from "@/components/HourlyForecastStrip";
-import IssPassesList from "@/components/IssPassesList";
 import LunarWeekStrip from "@/components/LunarWeekStrip";
 import { MoonPhaseIconLabeled } from "@/components/MoonPhaseIcon";
 import NasaApodCard from "@/components/NasaApodCard";
 import ParkLocalClock from "@/components/ParkLocalClock";
 import SkyPageMascotHeader from "@/components/SkyPageMascotHeader";
-import VandenbergLaunchesList from "@/components/VandenbergLaunchesList";
+import SkySpaceSection from "@/components/SkySpaceSection";
 import { isGoogleMapsEnabled } from "@/lib/map-geography";
 import { formatSkyTime } from "@/lib/sky/astronomy";
 import type { SkyPageData } from "@/lib/sky/types";
@@ -246,44 +245,12 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
         </div>
       </Section>
 
-      <Section
-        title="Sky & space"
-        description="Vandenberg launches to the west and ISS flyovers — what to watch for overhead."
-      >
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-semibold text-ink">
-              Look west — next Vandenberg launch
-            </h3>
-            <p className="text-xs text-muted">
-              From Vandenberg Space Force Base (~100 mi west). Visibility depends
-              on timing, weather, and how far inland you are.
-            </p>
-            <div className="mt-2">
-              {errors.launches ? (
-                <FeedError message={errors.launches} />
-              ) : (
-                <VandenbergLaunchesList launches={data.launches} />
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-ink">ISS passes</h3>
-            <p className="text-xs text-muted">
-              When the space station may be visible looking up (next visible
-              pass).
-            </p>
-            {errors.iss ? (
-              <div className="mt-2">
-                <FeedError message={errors.iss} />
-              </div>
-            ) : (
-              <IssPassesList passes={data.issPasses} />
-            )}
-          </div>
-        </div>
-      </Section>
+      <SkySpaceSection
+        launches={data.launches}
+        issPasses={data.issPasses}
+        launchesError={errors.launches}
+        issError={errors.iss}
+      />
 
       {data.apod ? (
         <Section

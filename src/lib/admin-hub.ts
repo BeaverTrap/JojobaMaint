@@ -6,6 +6,8 @@ export type AdminHubLink = {
   title: string;
   description: string;
   minimumRole: StaffRole;
+  /** Opens in a new tab — used for public-facing pages reached from the hub. */
+  newTab?: boolean;
 };
 
 export const ADMIN_CREATE_LINKS: AdminHubLink[] = [
@@ -20,6 +22,24 @@ export const ADMIN_CREATE_LINKS: AdminHubLink[] = [
     title: "Maintenance post",
     description: "Quick or structured post for maintenance work.",
     minimumRole: "staff",
+  },
+  {
+    href: "/admin/articles/new",
+    title: "New article",
+    description: "Write a knowledge-base article or how-to.",
+    minimumRole: "manager",
+  },
+  {
+    href: "/admin/tree-assessments/new",
+    title: "New tree assessment",
+    description: "Log a new tree assessment record.",
+    minimumRole: "manager",
+  },
+  {
+    href: "/admin/maintenance-assessments/new",
+    title: "New maintenance assessment",
+    description: "Log a new maintenance assessment record.",
+    minimumRole: "manager",
   },
 ];
 
@@ -48,17 +68,22 @@ export const ADMIN_MANAGE_LINKS: AdminHubLink[] = [
     description: "Green waste banner text and summer schedule toggle.",
     minimumRole: "manager",
   },
+];
+
+export const ADMIN_PUBLIC_LINKS: AdminHubLink[] = [
   {
     href: "/map",
     title: "Park map",
     description: "Edit lot positions, places, and map layers.",
     minimumRole: "manager",
+    newTab: true,
   },
   {
     href: "/water",
     title: "Water usage",
     description: "Sync monthly water reports from the spreadsheet.",
     minimumRole: "manager",
+    newTab: true,
   },
 ];
 
@@ -68,6 +93,7 @@ export const ADMIN_TOOLS_LINKS: AdminHubLink[] = [
     title: "Weather mascot layout",
     description: "Tune the layered weather mascot used on the weather page.",
     minimumRole: "admin",
+    newTab: true,
   },
 ];
 
