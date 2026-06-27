@@ -12,6 +12,7 @@
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "@vis.gl/react-google-maps": "^1.8.3",
+    "astronomy-engine": "^2.1.19",
     "browser-image-compression": "^2.0.2",
     "date-fns": "^4.4.0",
     "googleapis": "^173.0.0",

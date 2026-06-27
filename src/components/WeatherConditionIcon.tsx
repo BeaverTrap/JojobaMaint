@@ -1,15 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
-  MdAcUnit,
-  MdCloudQueue,
-  MdFoggy,
-  MdGrain,
-  MdNightlight,
-  MdThunderstorm,
-  MdWaterDrop,
-  MdWbCloudy,
-  MdWbSunny,
-} from "react-icons/md";
-import { weatherCodeToMapVariant } from "@/lib/weather-mascot-layers";
+  weatherConditionIconKey,
+  weatherConditionIconSrc,
+} from "@/lib/weather-condition-icons";
 
 type WeatherConditionIconProps = {
   code: number;
@@ -18,96 +13,55 @@ type WeatherConditionIconProps = {
   className?: string;
 };
 
+function FallbackGlyph({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0 opacity-70"
+      aria-hidden
+    >
+      <path d="M6.5 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.4A3.5 3.5 0 0 1 17.5 18z" />
+    </svg>
+  );
+}
+
 export default function WeatherConditionIcon({
   code,
   isDay = true,
-  size = 20,
-  className = "",
+  size = 24,
+  className,
 }: WeatherConditionIconProps) {
-  const variant = weatherCodeToMapVariant(code);
-  const style = { width: size, height: size };
-  const base = `shrink-0 ${className}`.trim();
+  const key = weatherConditionIconKey(code, isDay);
+  const src = weatherConditionIconSrc(key);
+  const [failed, setFailed] = useState(false);
 
-  if (variant === "clear") {
-    if (!isDay) {
-      return (
-        <MdNightlight
-          className={`text-indigo-400 ${base}`}
-          style={style}
-          aria-hidden
-        />
-      );
-    }
-    return (
-      <MdWbSunny
-        className={`text-amber-500 ${base}`}
-        style={style}
-        aria-hidden
-      />
-    );
-  }
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
 
-  if (variant === "cloudy") {
-    if (code === 2) {
-      return (
-        <MdWbCloudy
-          className={`${isDay ? "text-sky-500" : "text-indigo-300"} ${base}`}
-          style={style}
-          aria-hidden
-        />
-      );
-    }
-    if (code === 3) {
-      return (
-        <MdCloudQueue
-          className={`text-slate-500 ${base}`}
-          style={style}
-          aria-hidden
-        />
-      );
-    }
-    return (
-      <MdWbCloudy
-        className={`text-slate-500 ${base}`}
-        style={style}
-        aria-hidden
-      />
-    );
-  }
-
-  if (variant === "fog") {
-    return (
-      <MdFoggy className={`text-slate-400 ${base}`} style={style} aria-hidden />
-    );
-  }
-
-  if (variant === "snow") {
-    return (
-      <MdAcUnit className={`text-sky-400 ${base}`} style={style} aria-hidden />
-    );
-  }
-
-  if (variant === "storm") {
-    return (
-      <MdThunderstorm
-        className={`text-violet-600 ${base}`}
-        style={style}
-        aria-hidden
-      />
-    );
-  }
-
-  if (code >= 80 && code <= 82) {
-    return (
-      <MdGrain className={`text-sky-600 ${base}`} style={style} aria-hidden />
-    );
+  if (failed) {
+    return <FallbackGlyph size={size} />;
   }
 
   return (
-    <MdWaterDrop
-      className={`text-sky-600 ${base}`}
-      style={style}
-      aria-hidden
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      width={size}
+      height={size}
+      loading="lazy"
+      decoding="async"
+      className={`shrink-0 object-contain ${className ?? ""}`}
+      style={{ width: size, height: size }}
+      onError={() => setFailed(true)}
     />
   );
 }

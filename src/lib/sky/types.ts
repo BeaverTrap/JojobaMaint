@@ -72,6 +72,55 @@ export type IssPass = {
   maxElevationNote: string;
 };
 
+export type VisiblePlanet = {
+  name: string;
+  visibleNakedEye: boolean;
+  magnitude: number;
+  /** Highest altitude (degrees) reached during the night. */
+  altitudeDeg: number;
+  azimuthDeg: number;
+  /** 8-point compass abbreviation, e.g. "SE". */
+  compass: string;
+  /** Spelled-out direction, e.g. "southeast". */
+  direction: string;
+  /** When the planet is highest during the night. */
+  bestTimeIso: string;
+  riseIso: string | null;
+  setIso: string | null;
+  /** Distance from Earth tonight, in km. */
+  distanceKm: number;
+  /** Saturn ring tilt in degrees, when available. */
+  ringTiltDeg: number | null;
+};
+
+export type MoonTonight = {
+  /** Synodic phase 0–1 for icon rendering. */
+  phase: number;
+  illuminationPercent: number;
+  phaseLabel: string;
+  riseIso: string | null;
+  setIso: string | null;
+  altitudeDeg: number;
+  compass: string;
+  direction: string;
+  bestTimeIso: string;
+  /** Distance from Earth tonight, in km. */
+  distanceKm: number;
+  /** Days since the last new moon. */
+  moonAgeDays: number;
+};
+
+export type NightSkyTonight = {
+  dateLabel: string;
+  sunsetIso: string;
+  sunriseIso: string;
+  /** Astronomical dusk (Sun at -18°), when it gets truly dark. */
+  darkAfterIso: string | null;
+  moon: MoonTonight;
+  planets: VisiblePlanet[];
+  bestViewingNote: string;
+};
+
 export type NasaApod = {
   title: string;
   date: string | null;
@@ -98,6 +147,7 @@ export type SkyPageData = {
   earthquakes: RecentEarthquake[];
   launches: VandenbergLaunch[];
   issPasses: IssPass[];
+  nightSky: NightSkyTonight | null;
   apod: NasaApod | null;
   errors: Partial<Record<SkyFeedId, string>>;
 };
@@ -108,4 +158,5 @@ export type SkyFeedId =
   | "earthquakes"
   | "launches"
   | "iss"
+  | "planets"
   | "apod";

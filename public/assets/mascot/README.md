@@ -10,6 +10,7 @@ Drop transparent PNGs here with these **exact filenames** — no code changes ne
 | `water.png` | Water usage page |
 | `reading.png` | Landscaping feed filter, empty articles & tree assessments |
 | `map.png` | Map & sites page headers, empty sites |
+| `ranger.png` | Weather page "Around the area" regional alerts + earthquakes |
 | `calendar.png` | Schedule page header, empty schedule |
 | `sleep.png` | Request portal page |
 | `weather.png` | Legacy composite fallback for layered forecast quail |

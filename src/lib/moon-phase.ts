@@ -38,7 +38,7 @@ export function moonPhaseLabel(phase: number): string {
   return MOON_PHASE_LABELS[moonPhaseIndex(phase)] ?? "Moon";
 }
 
-/** Number of hand-drawn frames in /public/luner (1 = new, 15 = full). */
+/** Number of hand-drawn frames in /public/images/luner_cycle-assets (1 = new, 15 = full). */
 export const MOON_CYCLE_FRAMES = 28;
 
 /** Map a 0–1 synodic phase to a 1..28 frame number, wrapping at the new moon. */
@@ -48,5 +48,5 @@ export function moonPhaseFrame(phase: number): number {
 }
 
 export function moonPhaseFrameSrc(phase: number): string {
-  return `/luner/luner_cycle-assets/${moonPhaseFrame(phase)}.png`;
+  return `/images/luner_cycle-assets/${moonPhaseFrame(phase)}.png`;
 }

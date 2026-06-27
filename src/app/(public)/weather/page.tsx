@@ -5,7 +5,7 @@ import { fetchSkyPageData } from "@/lib/sky/fetch-sky-page";
 export const revalidate = 900;
 
 export const metadata: Metadata = {
-  title: "Weather & sky",
+  title: "Weather",
   description:
     "Current weather, forecast, air quality, Vandenberg launches, and sky watching at Jojoba Hills.",
 };

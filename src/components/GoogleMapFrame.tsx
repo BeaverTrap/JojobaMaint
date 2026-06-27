@@ -33,6 +33,7 @@ export function GoogleMapFrame({
           <div
             className="h-full w-full"
             data-map-color-scheme={isDark ? "dark" : "light"}
+            suppressHydrationWarning
           >
             {children}
           </div>

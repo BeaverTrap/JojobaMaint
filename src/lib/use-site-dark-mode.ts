@@ -9,7 +9,9 @@ function readSiteDarkMode(): boolean {
 
 /** Tracks the site `html.dark` class (ThemeToggle / ThemeInitScript). */
 export function useSiteDarkMode(): boolean {
-  const [isDark, setIsDark] = useState(() => readSiteDarkMode());
+  // Start `false` so server and first client render agree (avoids hydration
+  // mismatch); the real value is read after mount.
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     setIsDark(readSiteDarkMode());

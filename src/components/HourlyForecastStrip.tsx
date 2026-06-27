@@ -31,45 +31,41 @@ function HourlyCard({
 
   return (
     <article
-      className={`flex w-[4.75rem] shrink-0 flex-col items-center rounded-xl border bg-gradient-to-b px-1.5 py-2 text-center shadow-sm ${
+      className={`group flex w-14 shrink-0 flex-col items-center gap-2 rounded-2xl bg-gradient-to-b px-1 py-2.5 text-center transition-colors ${
         isNow
-          ? "border-brand-500 ring-2 ring-brand-500/35"
-          : "border-line/80 ring-1 ring-black/5 dark:ring-white/5"
+          ? "ring-2 ring-brand-500/60"
+          : "ring-1 ring-black/[0.04] dark:ring-white/[0.06]"
       } ${style.cardClass}`}
       aria-label={`${formatHour(hour.time)}, ${hour.temperatureF} degrees, ${hour.weatherLabel}`}
     >
-      <div className="flex w-full items-center justify-between gap-1">
-        <span className="text-[10px] font-semibold text-muted">
-          {formatHour(hour.time)}
-        </span>
-        {isNow ? (
-          <span className="rounded-full bg-brand-600 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-white">
-            Now
-          </span>
-        ) : null}
-      </div>
-
-      <div
-        className={`mt-2 flex h-11 w-11 items-center justify-center rounded-full ring-1 ${style.iconHaloClass}`}
+      <span
+        className={`text-[11px] font-semibold tabular-nums leading-none ${
+          isNow ? "text-brand-600 dark:text-brand-300" : "text-muted"
+        }`}
       >
-        <WeatherConditionIcon
-          code={hour.weatherCode}
-          isDay={hour.isDay}
-          size={28}
-        />
-      </div>
+        {isNow ? "Now" : formatHour(hour.time)}
+      </span>
 
-      <span className="mt-2 text-lg font-bold tabular-nums leading-none text-ink">
+      <WeatherConditionIcon
+        code={hour.weatherCode}
+        isDay={hour.isDay}
+        size={30}
+      />
+
+      <span className="text-base font-bold tabular-nums leading-none text-ink">
         {hour.temperatureF}°
       </span>
 
       {hour.precipChancePercent > 0 ? (
-        <span className="mt-1 inline-flex items-center gap-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
-          <MdWaterDrop className="h-3 w-3 shrink-0" aria-hidden />
+        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold leading-none text-sky-700 dark:text-sky-300">
+          <MdWaterDrop className="h-2.5 w-2.5 shrink-0" aria-hidden />
           {hour.precipChancePercent}%
         </span>
       ) : (
-        <span className="mt-1 text-[10px] text-muted">{hour.windMph} mph</span>
+        <span className="text-[10px] leading-none text-muted">
+          {hour.windMph}
+          <span className="text-[8px]"> mph</span>
+        </span>
       )}
     </article>
   );
@@ -78,14 +74,12 @@ function HourlyCard({
 function DayBreak({ label }: { label: string }) {
   return (
     <div
-      className="flex w-8 shrink-0 flex-col items-center justify-center self-stretch"
+      className="flex shrink-0 items-center self-stretch px-0.5"
       aria-hidden
     >
-      <div className="h-full w-px bg-line" />
-      <span className="my-2 -rotate-90 whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-muted">
+      <span className="rounded-full bg-line/60 px-1.5 py-2 text-[9px] font-bold uppercase tracking-widest text-muted [writing-mode:vertical-rl] rotate-180">
         {label}
       </span>
-      <div className="h-full w-px bg-line" />
     </div>
   );
 }
@@ -98,7 +92,7 @@ export default function HourlyForecastStrip({
   fetchedAt: string;
 }) {
   return (
-    <div className="-mx-1 flex gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2 pt-0.5 [scrollbar-width:thin]">
+    <div className="scroll-slim -mx-1 flex gap-1.5 overflow-x-auto overscroll-x-contain px-1 pb-2 pt-0.5">
       {hours.map((hour, index) => {
         const prevDay =
           index > 0 ? hours[index - 1].time.slice(0, 10) : null;
@@ -106,7 +100,7 @@ export default function HourlyForecastStrip({
         const showDayBreak = index > 0 && dayKey !== prevDay;
 
         return (
-          <div key={hour.time} className="flex shrink-0 items-stretch gap-2">
+          <div key={hour.time} className="flex shrink-0 items-stretch gap-1.5">
             {showDayBreak ? <DayBreak label={formatDayShort(hour.time)} /> : null}
             <HourlyCard
               hour={hour}

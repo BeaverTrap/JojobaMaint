@@ -296,6 +296,30 @@ body:has(.map-edit-shell) main {
   }
 }
 
+/* ── Slim, modern horizontal scrollbar (forecast strip, etc.) ── */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-muted) 35%, transparent)
+    transparent;
+}
+
+.scroll-slim::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-muted) 30%, transparent);
+  border-radius: 9999px;
+}
+
+.scroll-slim:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-muted) 50%, transparent);
+}
+
 /* ── Motion (respect prefers-reduced-motion) ── */
 @keyframes motion-fade-up {
   from {

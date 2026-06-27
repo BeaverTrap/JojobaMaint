@@ -10,7 +10,9 @@ import { fetchNearbyEarthquakes } from "@/lib/sky/earthquakes";
 import { fetchIssPasses } from "@/lib/sky/iss-passes";
 import { fetchVandenbergLaunches } from "@/lib/sky/launches";
 import { fetchNwsAlerts } from "@/lib/sky/nws-alerts";
+import { computeNightSky } from "@/lib/sky/planets";
 import type {
+  NightSkyTonight,
   ParkWeatherHourly,
   SkyFeedId,
   SkyPageData,
@@ -118,6 +120,15 @@ export async function fetchSkyPageData(): Promise<SkyPageData> {
     [],
   );
 
+  // Locally computed (no network) — fast and reliable.
+  let nightSky: NightSkyTonight | null = null;
+  try {
+    nightSky = computeNightSky(lat, lng);
+  } catch (err) {
+    errors.planets =
+      err instanceof Error ? err.message : "Could not compute the night sky.";
+  }
+
   return {
     locationLabel: PARK_WEATHER_LOCATION_LABEL,
     latitude: lat,
@@ -132,6 +143,7 @@ export async function fetchSkyPageData(): Promise<SkyPageData> {
     earthquakes,
     launches,
     issPasses,
+    nightSky,
     apod,
     errors,
   };

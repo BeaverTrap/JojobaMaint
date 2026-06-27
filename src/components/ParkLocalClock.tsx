@@ -12,7 +12,13 @@ function formatParkClock(date: Date): string {
   });
 }
 
-export default function ParkLocalClock() {
+export default function ParkLocalClock({
+  labelClassName = "text-muted",
+  valueClassName = "text-ink",
+}: {
+  labelClassName?: string;
+  valueClassName?: string;
+}) {
   const [time, setTime] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,11 +30,13 @@ export default function ParkLocalClock() {
 
   return (
     <div className="shrink-0 text-right">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+      <p
+        className={`text-xs font-semibold uppercase tracking-wide ${labelClassName}`}
+      >
         Park time
       </p>
       <p
-        className="mt-1 text-lg font-semibold tabular-nums leading-none text-ink sm:text-xl"
+        className={`mt-1 text-lg font-semibold tabular-nums leading-none sm:text-xl ${valueClassName}`}
         suppressHydrationWarning
       >
         {time ?? "—"}
