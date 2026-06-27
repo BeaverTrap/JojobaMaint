@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -34,6 +35,16 @@ export default async function PickupGuidelinesPage() {
           </Link>
         )}
       </div>
+
+      <Image
+        src="/assets/mascot/wastepickup.png"
+        alt="Jojoba grounds crew loading yard waste into a pickup truck"
+        width={1024}
+        height={768}
+        priority
+        unoptimized
+        className="mx-auto h-auto w-full max-w-lg object-contain"
+      />
 
       <ArticleBody body={guidelines.body} />
     </article>
