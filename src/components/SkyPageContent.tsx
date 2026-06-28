@@ -50,21 +50,19 @@ function RegionalAreaSection({
         aria-hidden
       />
       <div className="relative space-y-4 p-4 pt-3 sm:p-5 sm:pt-4">
-        <div className="flex items-end justify-between gap-3 sm:gap-5">
-          <h2 className="min-w-0 flex-1 text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
-            {title}
-          </h2>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/mascot/ranger.png"
-            alt=""
-            aria-hidden
-            width={176}
-            height={176}
-            className="-mb-4 -mr-1 h-24 w-24 shrink-0 object-contain object-bottom drop-shadow-md sm:-mb-5 sm:h-40 sm:w-40"
-          />
-        </div>
-        {topContent}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/assets/mascot/ranger.png"
+          alt=""
+          aria-hidden
+          width={176}
+          height={176}
+          className="pointer-events-none absolute right-1 top-8 z-10 h-28 w-28 object-contain object-bottom drop-shadow-md sm:right-3 sm:top-10 sm:h-44 sm:w-44"
+        />
+        <h2 className="text-xl font-bold leading-tight tracking-tight text-ink sm:max-w-[70%] sm:text-2xl">
+          {title}
+        </h2>
+        <div className="sm:max-w-[72%]">{topContent}</div>
         {children}
       </div>
     </section>

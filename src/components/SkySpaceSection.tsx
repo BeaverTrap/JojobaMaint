@@ -189,12 +189,12 @@ function LaunchPanel({
             aria-hidden
             width={200}
             height={200}
-            className="pointer-events-none absolute -right-4 -top-3 hidden h-48 w-48 object-contain opacity-95 drop-shadow-[0_0_28px_rgba(125,211,252,0.35)] sm:block"
+            className="pointer-events-none absolute -right-6 -top-6 hidden h-48 w-48 object-contain opacity-95 drop-shadow-[0_0_28px_rgba(125,211,252,0.35)] sm:block"
           />
         </>
       }
     >
-      <div className="relative sm:ml-auto sm:max-w-[68%]">
+      <div className="relative sm:pl-32">
         <Eyebrow>Next rocket launch</Eyebrow>
         {error ? (
           <p className="mt-2 text-sm text-amber-200/90">{error}</p>
@@ -204,14 +204,14 @@ function LaunchPanel({
             appear a few days out.
           </p>
         ) : (
-          <p className="mt-1 text-lg font-bold leading-tight text-white">
+          <p className="mt-1 text-lg font-bold leading-tight text-white sm:pr-32">
             {next.name}
           </p>
         )}
 
         {next && !error ? (
           <>
-            <p className="mt-2 text-xs text-white/55">
+            <p className="mt-2 text-xs text-white/55 sm:pr-32">
               {next.provider} · {next.padName}
             </p>
             <div className="mt-3">
