@@ -1,5 +1,5 @@
 import type { ParkAstronomyToday } from "@/lib/sky/types";
-import { moonPhaseForDateIso, moonPhaseLabel } from "@/lib/moon-phase";
+import { moonPhaseForDateIso, moonPhaseLabelForDateIso } from "@/lib/sky/moon";
 
 type AstronomyResponse = {
   daily?: {
@@ -67,7 +67,7 @@ export async function fetchParkAstronomy(
     moonrise: null,
     moonset: null,
     moonPhase,
-    moonPhaseLabel: moonPhaseLabel(moonPhase),
+    moonPhaseLabel: moonPhaseLabelForDateIso(today),
     daylightHours: Math.round(daylightHours * 10) / 10,
     uvIndexMax,
   };

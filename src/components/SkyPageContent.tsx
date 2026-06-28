@@ -192,9 +192,9 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/50 dark:bg-white/20"
           aria-hidden
         />
-        <div className="relative flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
           <SkyPageMascotHeader />
-          <div className="w-full min-w-0 flex-1">
+          <div className="min-w-0 flex-1 sm:pl-4">
             <div className="flex items-start justify-between gap-4">
               <h1
                 className={`text-xl font-bold leading-tight tracking-tight sm:text-2xl ${hero.titleClass}`}
@@ -207,31 +207,31 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
               />
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 sm:mt-6 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-6">
-              <div className="col-span-2 sm:col-span-1">
-                <div className="flex items-center gap-2">
-                  <WeatherConditionIcon
-                    code={current.weatherCode}
-                    isDay={current.isDay}
-                    size={32}
-                  />
-                  <p
-                    className={`text-4xl font-bold tabular-nums leading-none ${hero.statValueClass}`}
-                  >
-                    {current.temperatureF}°F
-                  </p>
-                </div>
-                <p className={`mt-1 text-sm ${hero.statValueClass}`}>
-                  {current.weatherLabel}
-                  <span className={hero.statSubClass}>
-                    {" "}
-                    · Feels like {current.apparentTemperatureF}°F
-                  </span>
+            <div className="mt-3">
+              <div className="flex items-center gap-2">
+                <WeatherConditionIcon
+                  code={current.weatherCode}
+                  isDay={current.isDay}
+                  size={32}
+                />
+                <p
+                  className={`text-4xl font-bold tabular-nums leading-none ${hero.statValueClass}`}
+                >
+                  {current.temperatureF}°F
                 </p>
               </div>
+              <p className={`mt-1 text-sm ${hero.statValueClass}`}>
+                {current.weatherLabel}
+                <span className={hero.statSubClass}>
+                  {" "}
+                  · Feels like {current.apparentTemperatureF}°F
+                </span>
+              </p>
+            </div>
 
+            <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
               {data.airQuality ? (
-                <div className="min-w-[8rem]">
+                <div className="min-w-0">
                   <p
                     className={`text-xs font-semibold uppercase tracking-wide ${hero.statLabelClass}`}
                   >
@@ -250,7 +250,7 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
                 </div>
               ) : null}
 
-              <div className="min-w-[8rem]">
+              <div className="min-w-0">
                 <p
                   className={`text-xs font-semibold uppercase tracking-wide ${hero.statLabelClass}`}
                 >
@@ -266,7 +266,7 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
 
               {astronomy ? (
                 <>
-                  <div className="min-w-[8rem]">
+                  <div className="min-w-0">
                     <p
                       className={`text-xs font-semibold uppercase tracking-wide ${hero.statLabelClass}`}
                     >
@@ -278,7 +278,7 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
                       {formatSkyTime(astronomy.sunrise)}
                     </p>
                   </div>
-                  <div className="min-w-[8rem]">
+                  <div className="min-w-0">
                     <p
                       className={`text-xs font-semibold uppercase tracking-wide ${hero.statLabelClass}`}
                     >
@@ -290,7 +290,7 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
                       {formatSkyTime(astronomy.sunset)}
                     </p>
                   </div>
-                  <div className="min-w-[8rem]">
+                  <div className="min-w-0">
                     <p
                       className={`text-xs font-semibold uppercase tracking-wide ${hero.statLabelClass}`}
                     >
@@ -331,6 +331,7 @@ export default function SkyPageContent({ data }: { data: SkyPageData }) {
       <SkySpaceSection
         current={data.current}
         airQuality={data.airQuality}
+        hourly={data.hourly}
         launches={data.launches}
         issPasses={data.issPasses}
         nightSky={data.nightSky}

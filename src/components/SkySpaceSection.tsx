@@ -17,6 +17,7 @@ import type {
   IssPass,
   NasaApod,
   NightSkyTonight,
+  ParkWeatherHourly,
   VandenbergLaunch,
   VisiblePlanet,
 } from "@/lib/sky/types";
@@ -78,6 +79,63 @@ function formatDurationBetween(startIso: string | null, endIso: string): string 
   return `${hours.toFixed(1)}h`;
 }
 
+function forecastHoursBetween(
+  hourly: ParkWeatherHourly[],
+  startIso: string,
+  endIso: string,
+): ParkWeatherHourly[] {
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+
+  if (Number.isNaN(start) || Number.isNaN(end)) return [];
+
+  return hourly.filter((hour) => {
+    const time = new Date(hour.time).getTime();
+    return !Number.isNaN(time) && time >= start && time <= end;
+  });
+}
+
+function formatTempRange(hours: ParkWeatherHourly[]): string {
+  if (hours.length === 0) return "—";
+  const temps = hours.map((hour) => hour.temperatureF);
+  return `${Math.min(...temps)}–${Math.max(...temps)}°F`;
+}
+
+function maxWind(hours: ParkWeatherHourly[], current: ParkWeatherCurrent): number {
+  if (hours.length === 0) return current.windMph;
+  return Math.max(current.windMph, ...hours.map((hour) => hour.windMph));
+}
+
+function isOffshoreWind(direction: string): boolean {
+  return ["N", "NNE", "NE", "ENE", "E"].includes(direction.toUpperCase());
+}
+
+function parkMonth(dateIso: string): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      month: "numeric",
+      timeZone: "America/Los_Angeles",
+    }).format(new Date(dateIso)),
+  );
+}
+
+function timelinePercent(iso: string, startIso: string, endIso: string): number {
+  const time = new Date(iso).getTime();
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+
+  if (
+    Number.isNaN(time) ||
+    Number.isNaN(start) ||
+    Number.isNaN(end) ||
+    end <= start
+  ) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, ((time - start) / (end - start)) * 100));
+}
+
 function skyViewingStatus(
   current: ParkWeatherCurrent,
 ): { label: string; className: string } {
@@ -103,6 +161,268 @@ function skyViewingStatus(
   return {
     label: "Good",
     className: "bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-300/25",
+  };
+}
+
+function tonightViewingVerdict({
+  current,
+  airQuality,
+  nightSky,
+}: {
+  current: ParkWeatherCurrent;
+  airQuality: ParkWeatherAirQuality;
+  nightSky: NightSkyTonight;
+}): {
+  label: string;
+  summary: string;
+  className: string;
+  reasons: string[];
+  bestWindow: string;
+  target: string;
+} {
+  const cloudy = current.weatherCode >= 2 && current.weatherCode <= 3;
+  const obscured =
+    (current.weatherCode >= 45 && current.weatherCode <= 48) ||
+    current.weatherCode >= 51;
+  const brightMoon = nightSky.moon.illuminationPercent >= 80;
+  const hazyAir = (airQuality?.usAqi ?? 0) > 50;
+  const windy = current.windMph >= 18;
+  const darkStart = nightSky.darkAfterIso ?? nightSky.sunsetIso;
+  const nakedEyePlanets = nightSky.planets
+    .filter((planet) => planet.visibleNakedEye)
+    .slice(0, 3)
+    .map((planet) => planet.name);
+
+  const reasons = [
+    obscured
+      ? current.weatherLabel
+      : cloudy
+        ? `${current.weatherLabel} overhead`
+        : "Clear sky window",
+    brightMoon
+      ? `${nightSky.moon.illuminationPercent}% moon washes out faint stars`
+      : `${nightSky.moon.illuminationPercent}% moon keeps the sky darker`,
+    airQuality?.usAqi != null
+      ? `AQI ${airQuality.usAqi} (${airQuality.label})`
+      : "AQI unavailable",
+  ];
+
+  if (windy) {
+    reasons.push(`${current.windMph} mph wind`);
+  }
+
+  const target =
+    nakedEyePlanets.length > 0
+      ? `Moon + ${nakedEyePlanets.join(", ")}`
+      : "Moon and bright stars";
+
+  if (obscured || (hazyAir && cloudy)) {
+    return {
+      label: "Skip it",
+      summary: "Sky viewing looks rough tonight.",
+      className: "bg-amber-400/15 text-amber-100 ring-1 ring-amber-300/25",
+      reasons,
+      bestWindow: `${formatClock(darkStart)}–${formatClock(nightSky.sunriseIso)}`,
+      target,
+    };
+  }
+
+  if (cloudy || brightMoon || hazyAir || windy) {
+    return {
+      label: "Fair",
+      summary: "Good for the moon and bright planets, not faint stars.",
+      className: "bg-sky-400/15 text-sky-100 ring-1 ring-sky-300/25",
+      reasons,
+      bestWindow: `${formatClock(darkStart)}–${formatClock(nightSky.sunriseIso)}`,
+      target,
+    };
+  }
+
+  return {
+    label: "Great",
+    summary: "A solid night to step outside and look up.",
+    className: "bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-300/25",
+    reasons,
+    bestWindow: `${formatClock(darkStart)}–${formatClock(nightSky.sunriseIso)}`,
+    target,
+  };
+}
+
+function eveningComfortSummary({
+  current,
+  nightSky,
+  hourly,
+}: {
+  current: ParkWeatherCurrent;
+  nightSky: NightSkyTonight;
+  hourly: ParkWeatherHourly[];
+}): {
+  label: string;
+  summary: string;
+  detail: string;
+  className: string;
+} {
+  const eveningHours = forecastHoursBetween(
+    hourly,
+    nightSky.sunsetIso,
+    nightSky.sunriseIso,
+  );
+  const wind = maxWind(eveningHours, current);
+  const temps = eveningHours.map((hour) => hour.temperatureF);
+  const low = temps.length > 0 ? Math.min(...temps) : current.temperatureF;
+  const high = temps.length > 0 ? Math.max(...temps) : current.temperatureF;
+  const range = formatTempRange(eveningHours);
+
+  if (wind >= 22) {
+    return {
+      label: "Secure the patio",
+      summary: "Wind may make sitting outside annoying.",
+      detail: `${range} after sunset · gusty feel around ${wind} mph`,
+      className: "bg-amber-400/15 text-amber-100 ring-1 ring-amber-300/25",
+    };
+  }
+
+  if (low <= 52) {
+    return {
+      label: "Bring a layer",
+      summary: "Good evening air, but it cools off fast.",
+      detail: `${range} after sunset · light jacket weather late`,
+      className: "bg-sky-400/15 text-sky-100 ring-1 ring-sky-300/25",
+    };
+  }
+
+  if (high >= 82) {
+    return {
+      label: "Warm sit-out night",
+      summary: "Best after the heat backs off.",
+      detail: `${range} after sunset · wait for the shade to settle in`,
+      className: "bg-orange-400/15 text-orange-100 ring-1 ring-orange-300/25",
+    };
+  }
+
+  return {
+    label: "Patio friendly",
+    summary: "Comfortable enough to step outside for a while.",
+    detail: `${range} after sunset · wind near ${wind} mph`,
+    className: "bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-300/25",
+  };
+}
+
+function windHazeSummary({
+  current,
+  airQuality,
+  hourly,
+}: {
+  current: ParkWeatherCurrent;
+  airQuality: ParkWeatherAirQuality;
+  hourly: ParkWeatherHourly[];
+}): {
+  label: string;
+  summary: string;
+  detail: string;
+  className: string;
+} {
+  const next12Hours = hourly.slice(0, 12);
+  const wind = maxWind(next12Hours, current);
+  const offshore = isOffshoreWind(current.windDirection);
+  const dry = current.humidityPercent <= 30;
+  const hot = current.temperatureF >= 80;
+  const aqi = airQuality?.usAqi ?? null;
+
+  if (offshore && dry && wind >= 15) {
+    return {
+      label: "Santa Ana signal",
+      summary: "Dry offshore wind could kick up dust and haze.",
+      detail: `${current.windDirection} wind · ${current.humidityPercent}% humidity · ${wind} mph`,
+      className: "bg-orange-400/15 text-orange-100 ring-1 ring-orange-300/25",
+    };
+  }
+
+  if (wind >= 20 || (aqi != null && aqi > 75)) {
+    return {
+      label: "Dust / haze watch",
+      summary: "Visibility may look milky even if the sky is clear.",
+      detail:
+        aqi != null
+          ? `AQI ${aqi} · ${current.windDirection} wind up to ${wind} mph`
+          : `${current.windDirection} wind up to ${wind} mph`,
+      className: "bg-amber-400/15 text-amber-100 ring-1 ring-amber-300/25",
+    };
+  }
+
+  if (offshore && dry && hot) {
+    return {
+      label: "Dry offshore feel",
+      summary: "Not windy enough for a full watch, but it has that dry SoCal feel.",
+      detail: `${current.temperatureF}°F · ${current.humidityPercent}% humidity · ${current.windDirection}`,
+      className: "bg-yellow-400/15 text-yellow-100 ring-1 ring-yellow-300/25",
+    };
+  }
+
+  return {
+    label: "No wind watch",
+    summary: "No obvious Santa Ana or dust signal right now.",
+    detail:
+      aqi != null
+        ? `AQI ${aqi} · ${current.windMph} mph ${current.windDirection}`
+        : `${current.windMph} mph ${current.windDirection}`,
+    className: "bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-300/25",
+  };
+}
+
+function deepSkySeasonSummary(nightSky: NightSkyTonight): {
+  label: string;
+  summary: string;
+  detail: string;
+  className: string;
+} {
+  const month = parkMonth(nightSky.sunsetIso);
+  const moonBright = nightSky.moon.illuminationPercent >= 60;
+  const milkyWaySeason = month >= 3 && month <= 10;
+  const primeMilkyWay = month >= 6 && month <= 8;
+  const zodiacalSeason = month >= 2 && month <= 4;
+  const dawnZodiacalSeason = month >= 9 && month <= 11;
+
+  if (primeMilkyWay && !moonBright) {
+    return {
+      label: "Milky Way window",
+      summary: "The season is right and the Moon is dark enough.",
+      detail: "Look south after full dark for the bright core.",
+      className: "bg-violet-400/15 text-violet-100 ring-1 ring-violet-300/25",
+    };
+  }
+
+  if (milkyWaySeason) {
+    return {
+      label: "Milky Way season",
+      summary: moonBright
+        ? "The season is right, but moonlight will wash out the core tonight."
+        : "The core is in season; darker hours are your friend.",
+      detail: `${nightSky.moon.illuminationPercent}% moon · best near ${formatClock(nightSky.moon.bestTimeIso)}`,
+      className: moonBright
+        ? "bg-sky-400/15 text-sky-100 ring-1 ring-sky-300/25"
+        : "bg-violet-400/15 text-violet-100 ring-1 ring-violet-300/25",
+    };
+  }
+
+  if (zodiacalSeason || dawnZodiacalSeason) {
+    return {
+      label: "Zodiacal light watch",
+      summary: zodiacalSeason
+        ? "Spring evenings can show the faint cone after dusk."
+        : "Fall mornings can show the faint cone before dawn.",
+      detail: moonBright
+        ? `${nightSky.moon.illuminationPercent}% moon makes it harder`
+        : "Needs a very dark, clear horizon",
+      className: "bg-indigo-400/15 text-indigo-100 ring-1 ring-indigo-300/25",
+    };
+  }
+
+  return {
+    label: "Deep-sky off season",
+    summary: "Planets, the Moon, and satellites are the better show tonight.",
+    detail: "Milky Way core is not in a prime evening window.",
+    className: "bg-white/10 text-white/70 ring-1 ring-white/15",
   };
 }
 
@@ -404,8 +724,10 @@ function IssPanel({
 function PlanetCard({ planet }: { planet: VisiblePlanet }) {
   const color = PLANET_COLOR[planet.name] ?? "#e2e8f0";
   const imageSrc = PLANET_IMAGE_SRC[planet.name];
-  // Saturn's rings extend beyond the disc, so it needs a wider box to read well.
-  const sizeClass = planet.name === "Saturn" ? "h-10 w-10" : "h-8 w-8";
+  // Saturn's rings extend beyond the disc, so it renders larger but uses negative
+  // margins to keep the same layout footprint and optical center as the other planets.
+  const sizeClass =
+    planet.name === "Saturn" ? "h-12 w-12 -my-2 -ml-2" : "h-8 w-8";
   // Altitude as a share of the sky dome (0–90°), floored so low objects still show.
   const altPct = Math.max(6, Math.min(100, (planet.altitudeDeg / 90) * 100));
 
@@ -753,6 +1075,240 @@ function SkyConditionsCard({
   );
 }
 
+function TonightViewingCard({
+  current,
+  airQuality,
+  nightSky,
+}: {
+  current: ParkWeatherCurrent;
+  airQuality: ParkWeatherAirQuality;
+  nightSky: NightSkyTonight;
+}) {
+  const verdict = tonightViewingVerdict({ current, airQuality, nightSky });
+
+  return (
+    <div className="mt-4 overflow-hidden rounded-xl bg-gradient-to-br from-sky-400/10 via-white/[0.06] to-indigo-400/10 p-3 ring-1 ring-white/10 sm:p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-bold text-white">Tonight at Jojoba</p>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${verdict.className}`}
+            >
+              {verdict.label}
+            </span>
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-white/65">
+            {verdict.summary}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs sm:min-w-64">
+          <div className="rounded-lg bg-white/[0.05] px-2.5 py-2 ring-1 ring-white/10">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Best window
+            </p>
+            <p className="mt-0.5 font-semibold text-white">
+              {verdict.bestWindow}
+            </p>
+          </div>
+          <div className="rounded-lg bg-white/[0.05] px-2.5 py-2 ring-1 ring-white/10">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Look for
+            </p>
+            <p className="mt-0.5 font-semibold text-white">{verdict.target}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+        {verdict.reasons.map((reason) => (
+          <div
+            key={reason}
+            className="rounded-lg bg-black/10 px-2.5 py-2 text-white/65 ring-1 ring-white/10"
+          >
+            {reason}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DarkSkyTimeline({ nightSky }: { nightSky: NightSkyTonight }) {
+  const startIso = nightSky.sunsetIso;
+  const endIso = nightSky.sunriseIso;
+  const moonEvent =
+    nightSky.moon.setIso &&
+    new Date(nightSky.moon.setIso).getTime() >
+      new Date(nightSky.sunsetIso).getTime()
+      ? {
+          label: "Moonset",
+          time: nightSky.moon.setIso,
+          color: "bg-slate-200",
+        }
+      : nightSky.moon.riseIso
+        ? {
+            label: "Moonrise",
+            time: nightSky.moon.riseIso,
+            color: "bg-slate-200",
+          }
+        : null;
+  const events = [
+    {
+      label: "Sunset",
+      time: nightSky.sunsetIso,
+      color: "bg-amber-300",
+    },
+    nightSky.darkAfterIso
+      ? {
+          label: "Full dark",
+          time: nightSky.darkAfterIso,
+          color: "bg-sky-300",
+        }
+      : null,
+    moonEvent,
+    {
+      label: "Sunrise",
+      time: nightSky.sunriseIso,
+      color: "bg-orange-200",
+    },
+  ].filter((event): event is { label: string; time: string; color: string } =>
+    Boolean(event),
+  );
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-xl bg-slate-950/25 p-3 ring-1 ring-white/10 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-300/80">
+          Dark-sky timeline
+        </p>
+        <span className="text-[11px] font-semibold text-white/50">
+          {formatDurationBetween(nightSky.darkAfterIso ?? startIso, endIso)} of
+          usable darkness
+        </span>
+      </div>
+
+      <div className="relative mt-5 h-6">
+        <div className="absolute left-0 right-0 top-4 h-2 overflow-hidden rounded-full bg-gradient-to-r from-amber-200/50 via-slate-950 to-orange-200/50 ring-1 ring-white/10">
+          {nightSky.darkAfterIso ? (
+            <div
+              className="absolute bottom-0 top-0 rounded-r-full bg-sky-400/20"
+              style={{
+                left: `${timelinePercent(nightSky.darkAfterIso, startIso, endIso)}%`,
+                right: 0,
+              }}
+            />
+          ) : null}
+        </div>
+
+        {events.map((event, index) => {
+          const alignClass =
+            index === 0
+              ? "translate-x-0"
+              : index === events.length - 1
+                ? "-translate-x-full"
+                : "-translate-x-1/2";
+
+          return (
+            <div
+              key={`${event.label}-${event.time}`}
+              className={`absolute top-0 ${alignClass}`}
+              style={{
+                left: `${timelinePercent(event.time, startIso, endIso)}%`,
+              }}
+            >
+              <div
+                className={`h-3 w-3 rounded-full ${event.color} shadow-[0_0_16px_rgba(255,255,255,0.25)] ring-2 ring-slate-950 ${
+                  index === 0
+                    ? ""
+                    : index === events.length - 1
+                      ? "ml-auto"
+                      : "mx-auto"
+                }`}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {events.map((event) => (
+          <div
+            key={`${event.label}-${event.time}-label`}
+            className="flex items-center gap-2 rounded-lg bg-white/[0.045] px-2.5 py-2 ring-1 ring-white/10"
+          >
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${event.color}`} />
+            <span className="min-w-0">
+              <span className="block truncate text-[10px] font-bold uppercase tracking-wide text-white/45">
+                {event.label}
+              </span>
+              <span className="block text-xs font-semibold text-white">
+                {formatClock(event.time)}
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DesertNightGuide({
+  current,
+  airQuality,
+  nightSky,
+  hourly,
+}: {
+  current: ParkWeatherCurrent;
+  airQuality: ParkWeatherAirQuality;
+  nightSky: NightSkyTonight;
+  hourly: ParkWeatherHourly[];
+}) {
+  const cards = [
+    {
+      title: "Evening comfort",
+      ...eveningComfortSummary({ current, nightSky, hourly }),
+    },
+    {
+      title: "Wind & haze",
+      ...windHazeSummary({ current, airQuality, hourly }),
+    },
+    {
+      title: "Deep sky season",
+      ...deepSkySeasonSummary(nightSky),
+    },
+  ];
+
+  return (
+    <div className="mt-3 grid gap-2.5 md:grid-cols-3">
+      {cards.map((card) => (
+        <div
+          key={card.title}
+          className="rounded-xl bg-white/[0.045] p-3 ring-1 ring-white/10"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/45">
+              {card.title}
+            </p>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${card.className}`}
+            >
+              {card.label}
+            </span>
+          </div>
+          <p className="mt-2 text-xs font-semibold leading-relaxed text-white">
+            {card.summary}
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-white/50">
+            {card.detail}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function LunarStrip({ days }: { days: ParkWeatherDaily[] }) {
   if (days.length === 0) return null;
   return (
@@ -781,16 +1337,247 @@ function LunarStrip({ days }: { days: ParkWeatherDaily[] }) {
   );
 }
 
+function skyDomePosition(azimuthDeg: number, altitudeDeg: number) {
+  const azimuthRad = (azimuthDeg * Math.PI) / 180;
+  const altitude = Math.max(0, Math.min(90, altitudeDeg));
+  const radius = ((90 - altitude) / 90) * 43;
+
+  return {
+    left: 50 + Math.sin(azimuthRad) * radius,
+    top: 50 - Math.cos(azimuthRad) * radius,
+  };
+}
+
+function planetMarkerSize(magnitude: number): number {
+  return Math.max(7, Math.min(16, 12 - magnitude * 1.25));
+}
+
+function SkyDomeCard({ nightSky }: { nightSky: NightSkyTonight }) {
+  const moonPos = skyDomePosition(
+    nightSky.moon.azimuthDeg,
+    nightSky.moon.altitudeDeg,
+  );
+  const planets = nightSky.planets
+    .filter((planet) => planet.altitudeDeg > 0)
+    .sort((a, b) => b.altitudeDeg - a.altitudeDeg);
+
+  return (
+    <div className="relative col-span-full overflow-hidden rounded-xl bg-slate-950/45 p-4 ring-1 ring-white/10">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-sky-300/10 blur-3xl"
+      />
+      <div className="relative flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold leading-tight text-white">
+            Jojoba&apos;s Sky Dome Tonight
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-white/55">
+            Center is overhead. Outer ring is the horizon. Use the compass
+            labels to face the right direction from the park.
+          </p>
+        </div>
+        <span className="rounded-full bg-sky-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-100 ring-1 ring-sky-200/15">
+          Best around {formatClock(nightSky.moon.bestTimeIso)}
+        </span>
+      </div>
+
+      <div className="relative mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-center">
+        <div className="relative mx-auto aspect-square w-full max-w-[28rem]">
+          <svg
+            viewBox="0 0 100 100"
+            role="img"
+            aria-label="Sky dome showing visible planet and moon positions"
+            className="h-full w-full overflow-visible"
+          >
+            <defs>
+              <radialGradient id="sky-dome-fill" cx="50%" cy="44%" r="58%">
+                <stop offset="0%" stopColor="rgba(56, 189, 248, 0.18)" />
+                <stop offset="58%" stopColor="rgba(99, 102, 241, 0.1)" />
+                <stop offset="100%" stopColor="rgba(15, 23, 42, 0.72)" />
+              </radialGradient>
+            </defs>
+            <circle
+              cx="50"
+              cy="50"
+              r="44"
+              fill="url(#sky-dome-fill)"
+              stroke="rgba(255,255,255,0.18)"
+              strokeWidth="0.7"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="29"
+              fill="none"
+              stroke="rgba(255,255,255,0.1)"
+              strokeDasharray="1.5 2.4"
+              strokeWidth="0.45"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="14"
+              fill="none"
+              stroke="rgba(255,255,255,0.09)"
+              strokeDasharray="1.2 2"
+              strokeWidth="0.4"
+            />
+            <path
+              d="M50 6 V94 M6 50 H94"
+              stroke="rgba(255,255,255,0.08)"
+              strokeWidth="0.45"
+            />
+            {["N", "E", "S", "W"].map((label) => {
+              const coords =
+                label === "N"
+                  ? { x: 50, y: 2.7 }
+                  : label === "E"
+                    ? { x: 97, y: 52 }
+                    : label === "S"
+                      ? { x: 50, y: 99 }
+                      : { x: 3, y: 52 };
+
+              return (
+                <text
+                  key={label}
+                  x={coords.x}
+                  y={coords.y}
+                  textAnchor="middle"
+                  className="fill-white/45 text-[4px] font-bold"
+                >
+                  {label}
+                </text>
+              );
+            })}
+            <text
+              x="50"
+              y="51.3"
+              textAnchor="middle"
+              className="fill-white/35 text-[3.5px] font-semibold"
+            >
+              overhead
+            </text>
+          </svg>
+
+          <div
+            className="pointer-events-none absolute z-20"
+            suppressHydrationWarning
+            style={{
+              left: `${moonPos.left}%`,
+              top: `${moonPos.top}%`,
+              transform: "translate(-50%, -50%)",
+            }}
+            title={`Moon · ${nightSky.moon.compass} ${nightSky.moon.direction} · ${nightSky.moon.altitudeDeg}° high`}
+          >
+            <div className="absolute inset-0 scale-150 rounded-full bg-sky-100/20 blur-xl" />
+            <MoonPhaseIcon
+              phase={nightSky.moon.phase}
+              size={36}
+              className="relative h-8 w-8 drop-shadow-[0_0_18px_rgba(226,232,240,0.55)] sm:h-9 sm:w-9"
+            />
+          </div>
+
+          {planets.map((planet) => {
+            const pos = skyDomePosition(planet.azimuthDeg, planet.altitudeDeg);
+            const color = PLANET_COLOR[planet.name] ?? "#bae6fd";
+            const size = planetMarkerSize(planet.magnitude);
+
+            return (
+              <div
+                key={planet.name}
+                className="pointer-events-none absolute z-10 flex items-center gap-1.5"
+                suppressHydrationWarning
+                style={{
+                  left: `${pos.left}%`,
+                  top: `${pos.top}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+                title={`${planet.name} · ${planet.compass} ${planet.direction} · ${planet.altitudeDeg}° high`}
+              >
+                <span
+                  className="rounded-full ring-1 ring-white/40"
+                  style={{
+                    width: size,
+                    height: size,
+                    backgroundColor: color,
+                    boxShadow: `0 0 ${size + 8}px ${color}99`,
+                  }}
+                />
+                <span className="hidden rounded-full bg-slate-950/55 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white/80 ring-1 ring-white/10 backdrop-blur-sm sm:block">
+                  {planet.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="rounded-xl bg-white/[0.045] p-3 ring-1 ring-white/10">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-300/80">
+            Visible tonight
+          </p>
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="flex min-w-0 items-center gap-2 text-white">
+                <MoonPhaseIcon
+                  phase={nightSky.moon.phase}
+                  size={18}
+                  className="h-4.5 w-4.5"
+                />
+                <span className="truncate">Moon</span>
+              </span>
+              <span className="shrink-0 text-white/55">
+                {nightSky.moon.compass} · {nightSky.moon.altitudeDeg}°
+              </span>
+            </div>
+            {planets.map((planet) => {
+              const color = PLANET_COLOR[planet.name] ?? "#bae6fd";
+
+              return (
+                <div
+                  key={planet.name}
+                  className="flex items-center justify-between gap-3 text-xs"
+                >
+                  <span className="flex min-w-0 items-center gap-2 text-white">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{
+                        backgroundColor: color,
+                        boxShadow: `0 0 10px ${color}99`,
+                      }}
+                    />
+                    <span className="truncate">{planet.name}</span>
+                    {!planet.visibleNakedEye ? (
+                      <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white/45">
+                        bins
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 text-white/55">
+                    {planet.compass} · {planet.altitudeDeg}°
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlanetsPanel({
   current,
   airQuality,
   nightSky,
   lunarWeek,
+  hourly,
 }: {
   current: ParkWeatherCurrent;
   airQuality: ParkWeatherAirQuality;
   nightSky: NightSkyTonight;
   lunarWeek: ParkWeatherDaily[];
+  hourly: ParkWeatherHourly[];
 }) {
   return (
     <div className="relative mt-5 overflow-hidden rounded-2xl bg-white/[0.06] p-5 ring-1 ring-white/10 backdrop-blur-sm">
@@ -802,9 +1589,22 @@ function PlanetsPanel({
         toward the listed direction at the time shown.
       </p>
 
+      <TonightViewingCard
+        current={current}
+        airQuality={airQuality}
+        nightSky={nightSky}
+      />
+      <DarkSkyTimeline nightSky={nightSky} />
+      <DesertNightGuide
+        current={current}
+        airQuality={airQuality}
+        nightSky={nightSky}
+        hourly={hourly}
+      />
+
       <LunarStrip days={lunarWeek} />
 
-      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
         <MoonCard moon={nightSky.moon} />
         <SkyConditionsCard
           current={current}
@@ -823,12 +1623,9 @@ function PlanetsPanel({
         )}
       </div>
 
-      <p className="mt-4 flex items-start gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs leading-relaxed text-white/70 ring-1 ring-white/10">
-        <span aria-hidden className="mt-0.5">
-          ✨
-        </span>
-        <span>{nightSky.bestViewingNote}</span>
-      </p>
+      <div className="mt-4">
+        <SkyDomeCard nightSky={nightSky} />
+      </div>
     </div>
   );
 }
@@ -925,6 +1722,7 @@ function ApodPanel({ apod, error }: { apod: NasaApod | null; error?: string }) {
 export default function SkySpaceSection({
   current,
   airQuality,
+  hourly,
   launches,
   issPasses,
   nightSky,
@@ -936,6 +1734,7 @@ export default function SkySpaceSection({
 }: {
   current: ParkWeatherCurrent;
   airQuality: ParkWeatherAirQuality;
+  hourly: ParkWeatherHourly[];
   launches: VandenbergLaunch[];
   issPasses: IssPass[];
   nightSky: NightSkyTonight | null;
@@ -976,9 +1775,24 @@ export default function SkySpaceSection({
         className="absolute -left-16 -top-20 h-56 w-56 rounded-full bg-sky-500/20 blur-3xl"
       />
 
+      {/* Decorative moon — reflects tonight's real phase */}
+      {nightSky ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-6 top-4 hidden sm:right-12 sm:top-8 sm:block"
+        >
+          <div className="absolute inset-0 -z-10 scale-150 rounded-full bg-sky-200/20 blur-2xl" />
+          <MoonPhaseIcon
+            phase={nightSky.moon.phase}
+            size={120}
+            className="h-20 w-20 opacity-90 drop-shadow-[0_0_28px_rgba(191,219,254,0.45)] sm:h-28 sm:w-28"
+          />
+        </div>
+      ) : null}
+
       <div className="relative p-5 text-white sm:p-7">
         <div>
-          <div className="flex items-center gap-4 sm:gap-5">
+          <div className="flex items-end gap-4 sm:gap-5">
             <Image
               src="/images/Astronaught_002.png"
               alt="Quail astronaut mascot"
@@ -986,11 +1800,11 @@ export default function SkySpaceSection({
               height={180}
               className="h-28 w-28 shrink-0 object-contain drop-shadow-[0_0_22px_rgba(125,211,252,0.35)] sm:h-40 sm:w-40"
             />
-            <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+            <h2 className="pb-2 text-2xl font-bold leading-tight tracking-tight sm:pb-4 sm:text-3xl">
               Look up — sky &amp; space
             </h2>
           </div>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/70">
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-white/75">
             From the park you can sometimes catch rockets climbing out of
             Vandenberg (about 100 miles west) and the International Space
             Station gliding silently overhead. Here&apos;s what&apos;s next and
@@ -1004,6 +1818,7 @@ export default function SkySpaceSection({
             airQuality={airQuality}
             nightSky={nightSky}
             lunarWeek={lunarWeek}
+            hourly={hourly}
           />
         ) : null}
 

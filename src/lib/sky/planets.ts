@@ -8,7 +8,8 @@ import {
   SearchAltitude,
   SearchRiseSet,
 } from "astronomy-engine";
-import { moonPhaseForDateIso, moonPhaseLabel } from "@/lib/moon-phase";
+import { moonAgeDays, moonSynodicPhase } from "@/lib/sky/moon";
+import { moonPhaseLabel } from "@/lib/moon-phase";
 import type { NightSkyTonight, VisiblePlanet } from "@/lib/sky/types";
 
 const PARK_TZ = "America/Los_Angeles";
@@ -221,12 +222,8 @@ export function computeNightSky(
   const moonSample = moonBestTime ?? midNight;
   const moonIllum = Illumination(Body.Moon, moonSample);
   const illuminationPercent = Math.round(moonIllum.phase_fraction * 100);
-  const tonightIso = windowStart.toLocaleDateString("en-CA", {
-    timeZone: PARK_TZ,
-  });
-  const moonPhase = moonPhaseForDateIso(tonightIso);
-  const moonAgeDays =
-    Math.round(moonPhase * 29.530588853 * 10) / 10;
+  const moonPhase = moonSynodicPhase(moonSample);
+  const moonAgeDaysValue = moonAgeDays(moonSample);
   const moonrise = withinWindow(
     nextEvent(Body.Moon, 1, windowStart, observer),
     windowStart,
@@ -258,11 +255,12 @@ export function computeNightSky(
       riseIso: moonrise ? moonrise.toISOString() : null,
       setIso: moonset ? moonset.toISOString() : null,
       altitudeDeg: Math.max(0, Math.round(moonBestAlt)),
+      azimuthDeg: Math.round(moonBestAz),
       compass: compassFromAzimuth(moonBestAz),
       direction: dirlabel(moonBestAz),
       bestTimeIso: moonSample.toISOString(),
       distanceKm: Math.round(moonIllum.geo_dist * KM_PER_AU),
-      moonAgeDays,
+      moonAgeDays: moonAgeDaysValue,
     },
     planets,
     bestViewingNote,

@@ -1,5 +1,5 @@
 import { parkMapCenter } from "@/lib/map-geography";
-import { moonPhaseForDateIso } from "@/lib/moon-phase";
+import { moonPhaseForDateIso } from "@/lib/sky/moon";
 
 export type ParkWeatherCurrent = {
   temperatureF: number;

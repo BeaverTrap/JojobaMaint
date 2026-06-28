@@ -101,6 +101,7 @@ export type MoonTonight = {
   riseIso: string | null;
   setIso: string | null;
   altitudeDeg: number;
+  azimuthDeg: number;
   compass: string;
   direction: string;
   bestTimeIso: string;
