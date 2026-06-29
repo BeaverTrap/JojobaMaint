@@ -40,7 +40,7 @@ export default function Feed({
     const next = params.toString();
     const current = searchParams.toString();
     if (next === current) return;
-    router.replace(next ? `/?${next}` : "/", { scroll: false });
+    router.replace(next ? `/feed?${next}` : "/feed", { scroll: false });
   }, [activeFilter, router, searchParams]);
 
   const filtered = useMemo(

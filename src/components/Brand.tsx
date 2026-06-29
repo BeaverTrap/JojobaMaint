@@ -8,6 +8,12 @@ import {
   type MascotSceneId,
 } from "@/lib/mascot-scenes";
 
+const LOGO_MASCOT_AVATARS: Record<string, string> = {
+  hardhat: "/assets/mascot/LogoMascotAvatar_001.png",
+  hardhat_f: "/assets/mascot/LogoMascotAvatar_002.png",
+  sunhat: "/assets/mascot/LogoMascotAvatar_003.png",
+};
+
 /**
  * JojobaWorks branding.
  *
@@ -42,8 +48,8 @@ export function Logo({
 }
 
 /**
- * CSS recreation of the JojobaWorks wordmark: rounded display face with
- * "Jojoba" in ink and "Works" in brass gold, above a gold rule + subtitle.
+ * CSS recreation of the JojobaWorks wordmark: tight display face with
+ * "Jojoba" in ink and "Works" in brand green, above a green rule + subtitle.
  */
 export function Wordmark({
   className = "",
@@ -60,11 +66,14 @@ export function Wordmark({
         className="font-display font-extrabold tracking-[-0.04em] text-ink"
         style={{ fontSize: size }}
       >
-        Jojoba<span className="text-gold">Works</span>
+        Jojoba<span className="text-brand-600 dark:text-brand-400">Works</span>
       </span>
       {showSubtitle && (
         <span className="mt-1 flex items-center gap-1.5">
-          <span aria-hidden className="h-0.5 w-4 rounded-full bg-gold" />
+          <span
+            aria-hidden
+            className="h-0.5 w-4 rounded-full bg-brand-600 dark:bg-brand-400"
+          />
           <span
             className="font-display font-semibold tracking-[0.16em] text-muted"
             style={{ fontSize: Math.max(10, Math.round(size * 0.55)) }}
@@ -188,6 +197,58 @@ export function Mascot({
         setShowEmoji(true);
       }}
     />
+  );
+}
+
+/** Pre-cropped mascot avatar for compact spots (e.g. next to the navbar logo). */
+export function MascotHead({
+  scene,
+  size = 36,
+  className = "",
+}: {
+  scene: MascotSceneId;
+  size?: number;
+  className?: string;
+}) {
+  const def = MASCOT_SCENES[scene];
+  const [src, setSrc] = useState(LOGO_MASCOT_AVATARS[scene] ?? def.src);
+  const overhang = Math.round(size * 0.24);
+
+  const onError = () => {
+    const avatarSrc = LOGO_MASCOT_AVATARS[scene];
+    if (avatarSrc && src !== def.src) {
+      setSrc(def.src);
+      return;
+    }
+    if (def.fallback && src !== def.fallback) {
+      setSrc(def.fallback);
+      return;
+    }
+    if (src !== MASCOT_FALLBACK_SRC) setSrc(MASCOT_FALLBACK_SRC);
+  };
+
+  return (
+    <span
+      className={`relative inline-flex shrink-0 items-end ${className}`.trim()}
+      style={{ width: size, height: size + overhang }}
+      aria-hidden
+    >
+      {/* Green circle behind the mascot, anchored to the bottom so the
+          feather still hangs out the top. */}
+      <span
+        className="absolute inset-x-0 bottom-0 rounded-full bg-brand-600 ring-1 ring-brand-700/40 dark:bg-brand-500 dark:ring-brand-400/30"
+        style={{ height: size }}
+      />
+      <Image
+        src={src}
+        alt=""
+        width={Math.round(size * 2)}
+        height={Math.round((size + overhang) * 2)}
+        unoptimized
+        className="relative h-full w-full object-contain drop-shadow-sm"
+        onError={onError}
+      />
+    </span>
   );
 }
 

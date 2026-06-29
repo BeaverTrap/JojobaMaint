@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Geist, Geist_Mono } from "next/font/google";
+import { Barlow_Semi_Condensed, Geist, Geist_Mono } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ThemeInitScript from "@/components/ThemeInitScript";
 import "./globals.css";
@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Rounded display face used for the JojobaWorks wordmark lockup.
-const balooDisplay = Baloo_2({
-  variable: "--font-baloo-display",
+// Tight, sturdy utility display face for the JojobaWorks wordmark + headings.
+const displayFace = Barlow_Semi_Condensed({
+  variable: "--font-display-face",
   subsets: ["latin"],
   weight: ["600", "700", "800"],
 });
@@ -52,7 +52,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${balooDisplay.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${displayFace.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeInitScript />

@@ -2,11 +2,14 @@
 // Intentionally does NOT cache dynamic/authenticated pages, so users never
 // see stale or private content. It only serves an offline page when the
 // network is unavailable for a navigation.
-const CACHE = "jh-maint-v1";
+const CACHE = "jh-maint-v2";
 const OFFLINE_URL = "/offline.html";
+const OFFLINE_ASSETS = [OFFLINE_URL, "/assets/mascot/sleep.png"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.add(OFFLINE_URL)));
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(OFFLINE_ASSETS)),
+  );
   self.skipWaiting();
 });
 

@@ -1384,6 +1384,14 @@ function SkyDomeCard({ nightSky }: { nightSky: NightSkyTonight }) {
 
       <div className="relative mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-center">
         <div className="relative mx-auto aspect-square w-full max-w-[28rem]">
+          <Image
+            src="/assets/mascot/telescope.png"
+            alt=""
+            aria-hidden
+            width={220}
+            height={220}
+            className="pointer-events-none absolute -bottom-3 -left-6 z-30 hidden h-28 w-28 object-contain object-bottom drop-shadow-[0_0_22px_rgba(125,211,252,0.35)] lg:block xl:h-32 xl:w-32"
+          />
           <svg
             viewBox="0 0 100 100"
             role="img"

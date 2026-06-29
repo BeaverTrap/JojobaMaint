@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Logo } from "@/components/Brand";
+import { Logo, MascotHead } from "@/components/Brand";
 import ThemeToggle from "@/components/ThemeToggle";
 import ParkWeatherBarGate from "@/components/ParkWeatherBarGate";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import MobileMenu from "@/components/MobileMenu";
 import type { Profile } from "@/lib/database.types";
 import { NAV_LINKS, REQUEST_NAV } from "@/lib/nav-links";
+import { randomHeroScene } from "@/lib/mascot-scenes";
 
 export default function Navbar({
   profile,
@@ -18,6 +19,7 @@ export default function Navbar({
   isLoggedIn: boolean;
 }) {
   const displayName = profile?.display_name ?? "Member";
+  const navMascot = randomHeroScene();
   const menuLinks = [
     ...NAV_LINKS,
     REQUEST_NAV,
@@ -30,7 +32,12 @@ export default function Navbar({
     <>
       <header className="no-print sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur dark:bg-black/95">
         <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-3 sm:px-4">
-          <Link href="/" className="shrink-0" aria-label="Go to feed">
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-2"
+            aria-label="Go to home"
+          >
+            <MascotHead scene={navMascot} size={36} />
             <Logo size={36} />
           </Link>
 

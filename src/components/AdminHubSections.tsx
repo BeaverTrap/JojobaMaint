@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
   ADMIN_CREATE_LINKS,
@@ -8,6 +9,8 @@ import {
   adminHubLinksForRole,
 } from "@/lib/admin-hub";
 import type { AdminHubLink } from "@/lib/admin-hub";
+import { MascotScene } from "@/components/Brand";
+import WeatherMascotStack from "@/components/WeatherMascotStack";
 import { STAFF_ROLE_LABELS, type StaffRole } from "@/lib/staff-roles";
 
 export default function AdminHubSections({
@@ -29,14 +32,9 @@ export default function AdminHubSections({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink">
-            {firstName ? `Welcome, ${firstName}` : "Dashboard"}
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            Create feed posts, manage site content, and open edit tools.
-          </p>
-        </div>
+        <h1 className="text-xl font-bold tracking-tight text-ink">
+          {firstName ? `Welcome, ${firstName}` : "Dashboard"}
+        </h1>
         <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-brand-700 ring-1 ring-brand-200 dark:bg-brand-950 dark:text-brand-200 dark:ring-brand-800">
           {STAFF_ROLE_LABELS[staffRole]}
         </span>
@@ -70,10 +68,7 @@ export default function AdminHubSections({
       ) : null}
 
       {publicLinks.length > 0 ? (
-        <HubSection
-          title="Public pages"
-          description="Edit tools that live on the public site — these open in a new tab."
-        >
+        <HubSection title="Public pages">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {publicLinks.map((link) => (
               <HubLinkCard key={link.href} link={link} />
@@ -83,10 +78,7 @@ export default function AdminHubSections({
       ) : null}
 
       {adminLinks.length > 0 ? (
-        <HubSection
-          title="Admin"
-          description="Staff roles are set on each email in the authorized_emails whitelist (staff, manager, or admin)."
-        >
+        <HubSection title="Admin">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {adminLinks.map((link) => (
               <HubLinkCard key={link.href} link={link} />
@@ -100,23 +92,16 @@ export default function AdminHubSections({
 
 function HubSection({
   title,
-  description,
   children,
 }: {
   title: string;
-  description?: string;
   children: ReactNode;
 }) {
   return (
     <section className="space-y-3">
-      <div>
-        <h2 className="text-sm font-bold uppercase tracking-wide text-ink">
-          {title}
-        </h2>
-        {description ? (
-          <p className="mt-1 text-sm text-muted">{description}</p>
-        ) : null}
-      </div>
+      <h2 className="text-sm font-bold uppercase tracking-wide text-ink">
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -130,20 +115,50 @@ function HubLinkCard({
   active?: boolean;
 }) {
   const className = active
-    ? "block rounded-2xl border-2 border-brand-600 bg-brand-50 p-4 shadow-sm dark:bg-brand-950/40"
-    : "block rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:border-brand-300 hover:bg-hover";
+    ? "group relative flex items-center gap-3 overflow-hidden rounded-2xl border-2 border-brand-600 bg-brand-50 p-4 shadow-sm dark:bg-brand-950/40"
+    : "group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:border-brand-300 hover:bg-hover";
 
   const body = (
     <>
-      <p className="flex items-center gap-1.5 font-semibold text-ink">
-        {link.title}
-        {link.newTab ? (
-          <span aria-hidden className="text-xs text-muted">
-            ↗
-          </span>
-        ) : null}
-      </p>
-      <p className="mt-1 text-sm leading-snug text-muted">{link.description}</p>
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5 font-semibold text-ink">
+          {link.title}
+          {link.newTab ? (
+            <span aria-hidden className="text-xs text-muted">
+              ↗
+            </span>
+          ) : null}
+        </p>
+        <p className="mt-1 text-sm leading-snug text-muted">
+          {link.description}
+        </p>
+      </div>
+      {link.widget === "weather" ? (
+        <WeatherMascotStack
+          temperatureF={78}
+          weatherLabel="Sunny"
+          weatherCode={0}
+          isDay
+          width={168}
+          className="shrink-0 self-center transition-transform duration-300 ease-out group-hover:scale-105"
+        />
+      ) : link.image ? (
+        <Image
+          src={link.image}
+          alt=""
+          aria-hidden
+          width={128}
+          height={128}
+          unoptimized
+          className="h-16 w-16 shrink-0 object-contain drop-shadow-sm transition-transform duration-300 ease-out group-hover:scale-105"
+        />
+      ) : link.scene ? (
+        <MascotScene
+          scene={link.scene}
+          size={64}
+          className="shrink-0 drop-shadow-sm transition-transform duration-300 ease-out group-hover:scale-105"
+        />
+      ) : null}
     </>
   );
 

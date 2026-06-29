@@ -234,6 +234,119 @@ export interface PickupGuidelines {
   updated_at: string;
 }
 
+export type WaterSupplyMode = "gravity" | "full_pressure";
+export type WaterSystemStatusLevel =
+  | "normal"
+  | "active_shutoff"
+  | "planned_shutoff";
+
+export interface WaterSystemStatus {
+  id: string;
+  supply_mode: WaterSupplyMode;
+  status: WaterSystemStatusLevel;
+  affected_areas: string | null;
+  note: string | null;
+  expected_restore_at: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+export type PowerStatusLevel = "normal" | "outage" | "planned";
+
+export interface PowerStatus {
+  id: string;
+  status: PowerStatusLevel;
+  note: string | null;
+  expected_restore_at: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+export type ParkFacilityLocationId =
+  | "west"
+  | "east"
+  | "boondocks"
+  | "friendship_hall"
+  | "office_ranch";
+
+export interface ParkFacilityStatus {
+  id: ParkFacilityLocationId;
+  label: string;
+  sort_order: number;
+  washer_count: number;
+  dryer_count: number;
+  pet_washer_count: number;
+  water_heater_count: number;
+  kitchen_sink_count: number;
+  oven_count: number;
+  washers_out_of_order: number;
+  dryers_out_of_order: number;
+  pet_washers_out_of_order: number;
+  water_heaters_out_of_order: number;
+  kitchen_sinks_out_of_order: number;
+  ovens_out_of_order: number;
+  laundry_note: string | null;
+  pet_washer_note: string | null;
+  water_heater_note: string | null;
+  kitchen_note: string | null;
+  note: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+export interface ParkRestroomStatus {
+  id: string;
+  building_id: ParkFacilityLocationId;
+  label: string;
+  sort_order: number;
+  shower_count: number;
+  stall_count: number;
+  urinal_count: number;
+  sink_count: number;
+  showers_out_of_order: number;
+  stalls_out_of_order: number;
+  urinals_out_of_order: number;
+  sinks_out_of_order: number;
+  note: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+/** A building with its laundry plus all individual restrooms. */
+export interface ParkFacilityBuilding extends ParkFacilityStatus {
+  restrooms: ParkRestroomStatus[];
+}
+
+export type AnnouncementSeverity = "info" | "notice" | "urgent";
+
+export type ParkAlertType =
+  | "general"
+  | "water_shutoff"
+  | "water_planned"
+  | "water_gravity"
+  | "power_outage"
+  | "power_planned"
+  | "laundry";
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  severity: AnnouncementSeverity;
+  alert_type: ParkAlertType;
+  starts_at: string;
+  ends_at: string | null;
+  published: boolean;
+  position: number;
+  author_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AnnouncementWithAuthor = Announcement & {
+  author: Pick<Profile, "id" | "display_name" | "avatar_url"> | null;
+};
+
 export interface WaterUsageReading {
   id: string;
   period_month: string;

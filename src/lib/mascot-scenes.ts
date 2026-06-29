@@ -10,7 +10,13 @@ export type MascotSceneId =
   | "calendar"
   | "sleep"
   | "weather"
-  | "water";
+  | "water"
+  | "pickup"
+  | "astronaut"
+  | "telescope"
+  | "hardhat"
+  | "hardhat_f"
+  | "sunhat";
 
 export const MASCOT_DEFAULT_SRC = "/assets/mascot.png";
 export const MASCOT_FALLBACK_SRC = "/assets/maintenance_Quail_wht.png";
@@ -73,4 +79,47 @@ export const MASCOT_SCENES: Record<MascotSceneId, MascotSceneDef> = {
     alt: "Quail with water usage",
     fallback: MASCOT_DEFAULT_SRC,
   },
+  pickup: {
+    src: "/assets/mascot/pickup.png",
+    alt: "Quail clearing green waste with a pitchfork",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  astronaut: {
+    src: "/images/Astronaught_003.png",
+    alt: "Astronaut quail exploring the sky",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  telescope: {
+    src: "/assets/mascot/telescope.png",
+    alt: "Quail stargazing with a telescope",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  hardhat: {
+    src: "/assets/mascot/Hardhat.png",
+    alt: "Quail in a hard hat with a tool belt",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  hardhat_f: {
+    src: "/assets/mascot/Hardhat_F.png",
+    alt: "Quail in a hard hat facing forward with tools",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  sunhat: {
+    src: "/assets/mascot/Sunhat.png",
+    alt: "Quail in a sun hat with safety glasses",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
 };
+
+/** Rotating "crew" mascots used on the home hero + navbar logo. */
+export const HERO_MASCOT_SCENES: MascotSceneId[] = [
+  "hardhat",
+  "hardhat_f",
+  "sunhat",
+];
+
+export function randomHeroScene(): MascotSceneId {
+  return HERO_MASCOT_SCENES[
+    Math.floor(Math.random() * HERO_MASCOT_SCENES.length)
+  ];
+}

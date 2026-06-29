@@ -7,6 +7,8 @@ type PageMascotHeadingProps = {
   title: string;
   description?: string;
   children?: ReactNode;
+  /** Larger, dominant mascot + heading — used on the home dashboard. */
+  prominent?: boolean;
 };
 
 /** Page title row with the quail scene illustration — always visible, not only on empty states. */
@@ -15,24 +17,56 @@ export default function PageMascotHeading({
   title,
   description,
   children,
+  prominent = false,
 }: PageMascotHeadingProps) {
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-        <MascotScene
-          scene={scene}
-          size={80}
-          className="shrink-0 drop-shadow-sm sm:hidden"
-        />
-        <MascotScene
-          scene={scene}
-          size={96}
-          className="hidden shrink-0 drop-shadow-sm sm:block"
-        />
-        <div className="min-w-0 pt-1">
-          <h1 className="text-xl font-bold tracking-tight text-ink">{title}</h1>
+    <div className="flex items-center justify-between gap-4">
+      <div
+        className={`flex min-w-0 items-center ${
+          prominent ? "gap-4 sm:gap-6" : "items-start gap-3 sm:gap-4"
+        }`}
+      >
+        {prominent ? (
+          <>
+            <MascotScene
+              scene={scene}
+              size={132}
+              className="shrink-0 drop-shadow-md sm:hidden"
+            />
+            <MascotScene
+              scene={scene}
+              size={176}
+              className="hidden shrink-0 drop-shadow-md sm:block"
+            />
+          </>
+        ) : (
+          <>
+            <MascotScene
+              scene={scene}
+              size={80}
+              className="shrink-0 drop-shadow-sm sm:hidden"
+            />
+            <MascotScene
+              scene={scene}
+              size={96}
+              className="hidden shrink-0 drop-shadow-sm sm:block"
+            />
+          </>
+        )}
+        <div className={`min-w-0 ${prominent ? "" : "pt-1"}`}>
+          <h1
+            className={`font-bold tracking-tight text-ink ${
+              prominent ? "text-2xl sm:text-4xl" : "text-xl"
+            }`}
+          >
+            {title}
+          </h1>
           {description ? (
-            <p className="mt-1 text-sm text-muted">{description}</p>
+            <p
+              className={`text-muted ${prominent ? "mt-1.5 text-sm sm:text-base" : "mt-1 text-sm"}`}
+            >
+              {description}
+            </p>
           ) : null}
         </div>
       </div>

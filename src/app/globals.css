@@ -55,7 +55,7 @@
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-baloo-display), var(--font-geist-sans),
+  --font-display: var(--font-display-face), var(--font-geist-sans),
     ui-sans-serif, system-ui, sans-serif;
 }
 

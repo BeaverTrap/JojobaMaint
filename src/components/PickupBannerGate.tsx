@@ -6,6 +6,7 @@ import PickupBanner from "@/components/PickupBanner";
 /** Index pages that show the pickup notice below the navbar. */
 const PICKUP_BANNER_PATHS = new Set([
   "/",
+  "/feed",
   "/schedule",
   "/request",
   "/pickup-guidelines",

@@ -56,7 +56,7 @@ export default async function EditPostPage({
     <div className="space-y-6">
       <div>
         <Link
-          href="/"
+          href="/feed"
           className="text-sm font-medium text-brand-700 hover:underline"
         >
           ← Back to feed

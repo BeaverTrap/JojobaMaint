@@ -21,7 +21,7 @@ export default function MobileBottomNav() {
       <div className="mx-auto flex max-w-5xl items-stretch justify-around px-0.5">
         {[...NAV_LINKS, REQUEST_NAV].map((item) => {
           const active = matchNavPath(item.href, pathname);
-          const label = "shortLabel" in item ? item.shortLabel : item.label;
+          const label = item.shortLabel;
           const className =
             active
               ? "flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-brand-600 dark:text-brand-300"
@@ -64,6 +64,17 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
   const stroke = "currentColor";
   const className = "h-5 w-5";
   switch (name) {
+    case "Home":
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19v-8.5Z"
+            stroke={stroke}
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
     case "Feed":
       return (
         <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
