@@ -1,10 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  FacilityUnitState,
   ParkFacilityBuilding,
   ParkFacilityLocationId,
   ParkFacilityStatus,
   ParkRestroomStatus,
 } from "@/lib/database.types";
+import {
+  countOut,
+  defaultStatuses,
+  normalizeStatuses,
+  statesTone,
+} from "@/lib/facility-unit-states";
 
 export const FACILITY_LOCATION_ORDER: ParkFacilityLocationId[] = [
   "west",
@@ -15,13 +22,71 @@ export const FACILITY_LOCATION_ORDER: ParkFacilityLocationId[] = [
 ];
 
 export const FACILITY_STATUS_SELECT =
-  "id, label, sort_order, washer_count, dryer_count, pet_washer_count, water_heater_count, kitchen_sink_count, oven_count, washers_out_of_order, dryers_out_of_order, pet_washers_out_of_order, water_heaters_out_of_order, kitchen_sinks_out_of_order, ovens_out_of_order, laundry_note, pet_washer_note, water_heater_note, kitchen_note, note, updated_by, updated_at";
+  "id, label, sort_order, washer_count, dryer_count, pet_washer_count, water_heater_count, kitchen_sink_count, oven_count, washer_statuses, dryer_statuses, pet_washer_statuses, water_heater_statuses, kitchen_sink_statuses, oven_statuses, laundry_note, pet_washer_note, water_heater_note, kitchen_note, note, updated_by, updated_at";
 
 export const RESTROOM_STATUS_SELECT =
-  "id, building_id, label, sort_order, shower_count, stall_count, urinal_count, sink_count, showers_out_of_order, stalls_out_of_order, urinals_out_of_order, sinks_out_of_order, note, updated_by, updated_at";
+  "id, building_id, label, sort_order, shower_count, stall_count, urinal_count, sink_count, shower_statuses, stall_statuses, urinal_statuses, sink_statuses, closed, note, updated_by, updated_at";
 
 function epoch(): string {
   return new Date(0).toISOString();
+}
+
+function parseStatuses(raw: unknown): FacilityUnitState[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  return raw.map((value) => (value === "out" ? "out" : "ok"));
+}
+
+function normalizeBuilding(row: ParkFacilityStatus): ParkFacilityStatus {
+  return {
+    ...row,
+    washer_statuses: normalizeStatuses(
+      row.washer_count,
+      parseStatuses(row.washer_statuses),
+    ),
+    dryer_statuses: normalizeStatuses(
+      row.dryer_count,
+      parseStatuses(row.dryer_statuses),
+    ),
+    pet_washer_statuses: normalizeStatuses(
+      row.pet_washer_count,
+      parseStatuses(row.pet_washer_statuses),
+    ),
+    water_heater_statuses: normalizeStatuses(
+      row.water_heater_count,
+      parseStatuses(row.water_heater_statuses),
+    ),
+    kitchen_sink_statuses: normalizeStatuses(
+      row.kitchen_sink_count,
+      parseStatuses(row.kitchen_sink_statuses),
+    ),
+    oven_statuses: normalizeStatuses(
+      row.oven_count,
+      parseStatuses(row.oven_statuses),
+    ),
+  };
+}
+
+function normalizeRestroom(row: ParkRestroomStatus): ParkRestroomStatus {
+  return {
+    ...row,
+    closed: row.closed ?? false,
+    shower_statuses: normalizeStatuses(
+      row.shower_count,
+      parseStatuses(row.shower_statuses),
+    ),
+    stall_statuses: normalizeStatuses(
+      row.stall_count,
+      parseStatuses(row.stall_statuses),
+    ),
+    urinal_statuses: normalizeStatuses(
+      row.urinal_count,
+      parseStatuses(row.urinal_statuses),
+    ),
+    sink_statuses: normalizeStatuses(
+      row.sink_count,
+      parseStatuses(row.sink_statuses),
+    ),
+  };
 }
 
 function building(
@@ -45,12 +110,12 @@ function building(
     water_heater_count,
     kitchen_sink_count,
     oven_count,
-    washers_out_of_order: 0,
-    dryers_out_of_order: 0,
-    pet_washers_out_of_order: 0,
-    water_heaters_out_of_order: 0,
-    kitchen_sinks_out_of_order: 0,
-    ovens_out_of_order: 0,
+    washer_statuses: defaultStatuses(washer_count),
+    dryer_statuses: defaultStatuses(dryer_count),
+    pet_washer_statuses: defaultStatuses(pet_washer_count),
+    water_heater_statuses: defaultStatuses(water_heater_count),
+    kitchen_sink_statuses: defaultStatuses(kitchen_sink_count),
+    oven_statuses: defaultStatuses(oven_count),
     laundry_note: null,
     pet_washer_note: null,
     water_heater_note: null,
@@ -80,10 +145,11 @@ function restroom(
     stall_count,
     urinal_count,
     sink_count,
-    showers_out_of_order: 0,
-    stalls_out_of_order: 0,
-    urinals_out_of_order: 0,
-    sinks_out_of_order: 0,
+    shower_statuses: defaultStatuses(shower_count),
+    stall_statuses: defaultStatuses(stall_count),
+    urinal_statuses: defaultStatuses(urinal_count),
+    sink_statuses: defaultStatuses(sink_count),
+    closed: false,
     note: null,
     updated_by: null,
     updated_at: epoch(),
@@ -120,7 +186,7 @@ function assemble(
   const byBuilding = new Map<string, ParkRestroomStatus[]>();
   for (const room of restrooms) {
     const list = byBuilding.get(room.building_id) ?? [];
-    list.push(room);
+    list.push(normalizeRestroom(room));
     byBuilding.set(room.building_id, list);
   }
 
@@ -131,7 +197,7 @@ function assemble(
     const rooms = (byBuilding.get(id) ?? []).sort(
       (a, b) => a.sort_order - b.sort_order,
     );
-    return { ...base, restrooms: rooms };
+    return { ...normalizeBuilding(base), restrooms: rooms };
   });
 }
 
@@ -165,11 +231,19 @@ export async function fetchFacilities(
 }
 
 function restroomUnitsOut(room: ParkRestroomStatus): number {
+  if (room.closed) {
+    return (
+      room.shower_count +
+      room.stall_count +
+      room.urinal_count +
+      room.sink_count
+    );
+  }
   return (
-    room.showers_out_of_order +
-    room.stalls_out_of_order +
-    room.urinals_out_of_order +
-    room.sinks_out_of_order
+    countOut(room.shower_statuses) +
+    countOut(room.stall_statuses) +
+    countOut(room.urinal_statuses) +
+    countOut(room.sink_statuses)
   );
 }
 
@@ -184,12 +258,12 @@ function restroomUnitsTotal(room: ParkRestroomStatus): number {
 
 function buildingUnitsOut(location: ParkFacilityBuilding): number {
   return (
-    location.washers_out_of_order +
-    location.dryers_out_of_order +
-    location.pet_washers_out_of_order +
-    location.water_heaters_out_of_order +
-    location.kitchen_sinks_out_of_order +
-    location.ovens_out_of_order +
+    countOut(location.washer_statuses) +
+    countOut(location.dryer_statuses) +
+    countOut(location.pet_washer_statuses) +
+    countOut(location.water_heater_statuses) +
+    countOut(location.kitchen_sink_statuses) +
+    countOut(location.oven_statuses) +
     location.restrooms.reduce((sum, room) => sum + restroomUnitsOut(room), 0)
   );
 }
@@ -209,46 +283,42 @@ function buildingUnitsTotal(location: ParkFacilityBuilding): number {
 export function restroomTone(
   room: ParkRestroomStatus,
 ): "ok" | "warn" | "alert" {
-  const out = restroomUnitsOut(room);
-  if (out === 0) return "ok";
-  if (out >= restroomUnitsTotal(room)) return "alert";
-  return "warn";
+  if (room.closed) return "alert";
+  const all = [
+    ...room.shower_statuses,
+    ...room.stall_statuses,
+    ...room.urinal_statuses,
+    ...room.sink_statuses,
+  ];
+  return statesTone(all);
 }
 
 /** Tone for just the laundry portion of a building. */
 export function laundryTone(
   location: ParkFacilityBuilding,
 ): "ok" | "warn" | "alert" {
-  const total =
-    location.washer_count + location.dryer_count + location.pet_washer_count;
-  const out =
-    location.washers_out_of_order +
-    location.dryers_out_of_order +
-    location.pet_washers_out_of_order;
-  if (out === 0) return "ok";
-  if (out >= total) return "alert";
-  return "warn";
+  const all = [
+    ...location.washer_statuses,
+    ...location.dryer_statuses,
+    ...location.pet_washer_statuses,
+  ];
+  return statesTone(all);
 }
 
 export function waterHeaterTone(
   location: ParkFacilityBuilding,
 ): "ok" | "warn" | "alert" {
-  const total = location.water_heater_count;
-  const out = location.water_heaters_out_of_order;
-  if (total === 0 || out === 0) return "ok";
-  if (out >= total) return "alert";
-  return "warn";
+  return statesTone(location.water_heater_statuses);
 }
 
 export function kitchenTone(
   location: ParkFacilityBuilding,
 ): "ok" | "warn" | "alert" {
-  const total = location.kitchen_sink_count + location.oven_count;
-  const out =
-    location.kitchen_sinks_out_of_order + location.ovens_out_of_order;
-  if (total === 0 || out === 0) return "ok";
-  if (out >= total) return "alert";
-  return "warn";
+  const all = [
+    ...location.kitchen_sink_statuses,
+    ...location.oven_statuses,
+  ];
+  return statesTone(all);
 }
 
 /** Tone across all restrooms in a building (worst wins). */

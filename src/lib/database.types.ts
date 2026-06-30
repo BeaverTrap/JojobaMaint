@@ -269,6 +269,8 @@ export type ParkFacilityLocationId =
   | "friendship_hall"
   | "office_ranch";
 
+export type FacilityUnitState = "ok" | "out";
+
 export interface ParkFacilityStatus {
   id: ParkFacilityLocationId;
   label: string;
@@ -279,12 +281,12 @@ export interface ParkFacilityStatus {
   water_heater_count: number;
   kitchen_sink_count: number;
   oven_count: number;
-  washers_out_of_order: number;
-  dryers_out_of_order: number;
-  pet_washers_out_of_order: number;
-  water_heaters_out_of_order: number;
-  kitchen_sinks_out_of_order: number;
-  ovens_out_of_order: number;
+  washer_statuses: FacilityUnitState[];
+  dryer_statuses: FacilityUnitState[];
+  pet_washer_statuses: FacilityUnitState[];
+  water_heater_statuses: FacilityUnitState[];
+  kitchen_sink_statuses: FacilityUnitState[];
+  oven_statuses: FacilityUnitState[];
   laundry_note: string | null;
   pet_washer_note: string | null;
   water_heater_note: string | null;
@@ -303,10 +305,11 @@ export interface ParkRestroomStatus {
   stall_count: number;
   urinal_count: number;
   sink_count: number;
-  showers_out_of_order: number;
-  stalls_out_of_order: number;
-  urinals_out_of_order: number;
-  sinks_out_of_order: number;
+  shower_statuses: FacilityUnitState[];
+  stall_statuses: FacilityUnitState[];
+  urinal_statuses: FacilityUnitState[];
+  sink_statuses: FacilityUnitState[];
+  closed: boolean;
   note: string | null;
   updated_by: string | null;
   updated_at: string;
