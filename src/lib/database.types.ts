@@ -384,6 +384,16 @@ export interface Lot {
   updated_at: string;
 }
 
+export interface Resident {
+  id: string;
+  name: string;
+  phone_number: string;
+  tags: string[];
+  lot_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ParkMapPositions {
   id: string;
   lots: Record<string, { x: number; y: number }>;

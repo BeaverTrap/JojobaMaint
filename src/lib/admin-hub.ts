@@ -121,6 +121,13 @@ export const ADMIN_PUBLIC_LINKS: AdminHubLink[] = [
 
 export const ADMIN_TOOLS_LINKS: AdminHubLink[] = [
   {
+    href: "/admin/emergency-alerts",
+    title: "Emergency SMS alerts",
+    description: "Send mass text alerts to resident groups via Twilio.",
+    minimumRole: "admin",
+    image: "/assets/status/alert.png",
+  },
+  {
     href: "/weather/stack",
     title: "Weather mascot layout",
     description: "Tune the layered weather mascot used on the weather page.",
