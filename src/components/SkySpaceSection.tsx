@@ -11,6 +11,12 @@ import type {
   ParkWeatherCurrent,
   ParkWeatherDaily,
 } from "@/lib/park-weather";
+import {
+  formatParkDate,
+  formatParkDateTime,
+  openMeteoLocalToDate,
+  parkMonthFromDateIso,
+} from "@/lib/park-weather";
 import { formatLaunchWindow } from "@/lib/sky/launches";
 import { formatIssDuration, formatIssPassTime } from "@/lib/sky/iss-passes";
 import type {
@@ -43,10 +49,9 @@ const PLANET_IMAGE_SRC: Record<string, string> = {
 };
 
 function formatClock(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
+  return formatParkDateTime(iso, {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/Los_Angeles",
   });
 }
 
@@ -90,7 +95,7 @@ function forecastHoursBetween(
   if (Number.isNaN(start) || Number.isNaN(end)) return [];
 
   return hourly.filter((hour) => {
-    const time = new Date(hour.time).getTime();
+    const time = openMeteoLocalToDate(hour.time).getTime();
     return !Number.isNaN(time) && time >= start && time <= end;
   });
 }
@@ -111,12 +116,7 @@ function isOffshoreWind(direction: string): boolean {
 }
 
 function parkMonth(dateIso: string): number {
-  return Number(
-    new Intl.DateTimeFormat("en-US", {
-      month: "numeric",
-      timeZone: "America/Los_Angeles",
-    }).format(new Date(dateIso)),
-  );
+  return parkMonthFromDateIso(dateIso);
 }
 
 function timelinePercent(iso: string, startIso: string, endIso: string): number {
@@ -1321,14 +1321,11 @@ function LunarStrip({ days }: { days: ParkWeatherDaily[] }) {
           <div
             key={day.date}
             className="flex min-w-[3.25rem] shrink-0 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-center"
-            title={moonPhaseLabel(day.moonPhase)}
+            title={moonPhaseLabel(day.moonPhase, day.moonIlluminationPercent)}
           >
             <MoonPhaseIcon phase={day.moonPhase} size={28} />
             <span className="text-[10px] font-medium text-white/70">
-              {new Date(`${day.date}T12:00:00`).toLocaleDateString("en-US", {
-                weekday: "short",
-                timeZone: "America/Los_Angeles",
-              })}
+              {formatParkDate(day.date, { weekday: "short" })}
             </span>
           </div>
         ))}
@@ -1640,9 +1637,7 @@ function PlanetsPanel({
 
 function formatApodDate(date: string | null): string | null {
   if (!date) return null;
-  const d = new Date(`${date}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-US", {
+  return formatParkDate(date, {
     weekday: "long",
     month: "long",
     day: "numeric",

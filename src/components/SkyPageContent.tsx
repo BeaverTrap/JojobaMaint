@@ -11,6 +11,7 @@ import SkySpaceSection from "@/components/SkySpaceSection";
 import WeatherConditionIcon from "@/components/WeatherConditionIcon";
 import WeatherForecastSection from "@/components/WeatherForecastSection";
 import { isGoogleMapsEnabled } from "@/lib/map-geography";
+import { formatParkDateTime } from "@/lib/park-time";
 import { formatSkyTime } from "@/lib/sky/astronomy";
 import type { SkyPageData } from "@/lib/sky/types";
 import { heroSkyStyle } from "@/lib/weather-condition-visual";
@@ -70,12 +71,11 @@ function RegionalAreaSection({
 }
 
 function formatUpdated(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
+  return formatParkDateTime(iso, {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/Los_Angeles",
   });
 }
 

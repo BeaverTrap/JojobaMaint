@@ -4,21 +4,14 @@ import {
   hourlyConditionStyle,
   isCurrentWeatherHour,
 } from "@/lib/weather-condition-visual";
+import {
+  formatOpenMeteoLocalTime,
+  formatOpenMeteoLocalWeekday,
+} from "@/lib/park-weather";
 import type { ParkWeatherHourly } from "@/lib/sky/types";
 
-function formatHour(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    timeZone: "America/Los_Angeles",
-  });
-}
-
-function formatDayShort(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    weekday: "short",
-    timeZone: "America/Los_Angeles",
-  });
-}
+const formatHour = formatOpenMeteoLocalTime;
+const formatDayShort = formatOpenMeteoLocalWeekday;
 
 function HourlyCard({
   hour,

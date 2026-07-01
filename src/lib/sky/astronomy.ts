@@ -1,5 +1,6 @@
 import type { ParkAstronomyToday } from "@/lib/sky/types";
 import { moonPhaseForDateIso, moonPhaseLabelForDateIso } from "@/lib/sky/moon";
+import { formatParkDateTime, PARK_TIMEZONE } from "@/lib/park-time";
 
 type AstronomyResponse = {
   daily?: {
@@ -9,10 +10,11 @@ type AstronomyResponse = {
   };
 };
 
-function parseTimeToHours(iso: string): number | null {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.getHours() + d.getMinutes() / 60;
+/** Open-Meteo returns sunrise/sunset in park-local time without a UTC offset. */
+function parseOpenMeteoLocalHours(iso: string): number | null {
+  const match = iso.match(/T(\d{2}):(\d{2})/);
+  if (!match) return null;
+  return Number(match[1]) + Number(match[2]) / 60;
 }
 
 export async function fetchParkAstronomy(
@@ -23,14 +25,14 @@ export async function fetchParkAstronomy(
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lng));
   url.searchParams.set("daily", "sunrise,sunset");
-  url.searchParams.set("timezone", "America/Los_Angeles");
+  url.searchParams.set("timezone", PARK_TIMEZONE);
   url.searchParams.set("forecast_days", "1");
 
   const uvUrl = new URL("https://api.open-meteo.com/v1/forecast");
   uvUrl.searchParams.set("latitude", String(lat));
   uvUrl.searchParams.set("longitude", String(lng));
   uvUrl.searchParams.set("daily", "uv_index_max");
-  uvUrl.searchParams.set("timezone", "America/Los_Angeles");
+  uvUrl.searchParams.set("timezone", PARK_TIMEZONE);
   uvUrl.searchParams.set("forecast_days", "1");
 
   const [res, uvRes] = await Promise.all([
@@ -47,8 +49,8 @@ export async function fetchParkAstronomy(
 
   const today = json.daily?.time?.[0] ?? sunrise.slice(0, 10);
   const moonPhase = moonPhaseForDateIso(today);
-  const riseH = parseTimeToHours(sunrise);
-  const setH = parseTimeToHours(sunset);
+  const riseH = parseOpenMeteoLocalHours(sunrise);
+  const setH = parseOpenMeteoLocalHours(sunset);
   const daylightHours =
     riseH != null && setH != null && setH > riseH ? setH - riseH : 0;
 
@@ -74,10 +76,8 @@ export async function fetchParkAstronomy(
 }
 
 export function formatSkyTime(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleTimeString("en-US", {
+  return formatParkDateTime(iso, {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/Los_Angeles",
   });
 }

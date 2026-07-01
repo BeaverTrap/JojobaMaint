@@ -1,5 +1,18 @@
 import { parkMapCenter } from "@/lib/map-geography";
-import { moonPhaseForDateIso } from "@/lib/sky/moon";
+import { PARK_TIMEZONE } from "@/lib/park-time";
+import { moonPhaseForDateIso, moonIlluminationPercentForDateIso } from "@/lib/sky/moon";
+
+export { PARK_TIMEZONE } from "@/lib/park-time";
+export {
+  formatOpenMeteoLocalTime,
+  formatOpenMeteoLocalWeekday,
+  formatParkDate,
+  formatParkDateTime,
+  openMeteoLocalToDate,
+  parkCalendarNoon,
+  parkMonthFromDateIso,
+  parkTodayIso,
+} from "@/lib/park-time";
 
 export type ParkWeatherCurrent = {
   temperatureF: number;
@@ -20,8 +33,9 @@ export type ParkWeatherDaily = {
   precipChancePercent: number;
   weatherLabel: string;
   weatherCode: number;
-  /** 0 = new moon, 0.5 = full — computed locally (Open-Meteo moon_phase unavailable). */
+  /** 0 = new moon, 0.5 = full — at park-local noon. */
   moonPhase: number;
+  moonIlluminationPercent: number;
 };
 
 export type ParkWeatherAirQuality = {
@@ -42,8 +56,6 @@ export type ParkWeatherSnapshot = {
 
 export const PARK_WEATHER_LOCATION_LABEL = "Jojoba Hills SKP, Aguanga CA";
 export const PARK_WEATHER_BAR_LABEL = "Jojoba Weather";
-/** IANA timezone for park weather, forecasts, and local clock. */
-export const PARK_TIMEZONE = "America/Los_Angeles";
 
 export function getParkWeatherCoordinates(): { lat: number; lng: number } {
   return parkMapCenter();
@@ -134,7 +146,7 @@ export async function fetchParkWeatherSnapshot(): Promise<ParkWeatherSnapshot> {
   );
   forecastUrl.searchParams.set("temperature_unit", "fahrenheit");
   forecastUrl.searchParams.set("wind_speed_unit", "mph");
-  forecastUrl.searchParams.set("timezone", "America/Los_Angeles");
+  forecastUrl.searchParams.set("timezone", PARK_TIMEZONE);
 
   const airUrl = new URL("https://air-quality-api.open-meteo.com/v1/air-quality");
   airUrl.searchParams.set("latitude", String(lat));
@@ -180,6 +192,7 @@ export async function fetchParkWeatherSnapshot(): Promise<ParkWeatherSnapshot> {
         weatherLabel: weatherCodeLabel(code),
         weatherCode: code,
         moonPhase: moonPhaseForDateIso(date),
+        moonIlluminationPercent: moonIlluminationPercentForDateIso(date),
       };
     });
 

@@ -122,8 +122,9 @@ export const ADMIN_PUBLIC_LINKS: AdminHubLink[] = [
 export const ADMIN_TOOLS_LINKS: AdminHubLink[] = [
   {
     href: "/admin/emergency-alerts",
-    title: "Emergency SMS alerts",
-    description: "Send mass text alerts to resident groups via Twilio.",
+    title: "Emergency SMS Dashboard",
+    description:
+      "Templates, tier filtering, AI polish, scheduling, and audit log for mass texts.",
     minimumRole: "admin",
     image: "/assets/status/alert.png",
   },

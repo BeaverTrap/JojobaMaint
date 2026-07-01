@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { WaterUsageReading } from "@/lib/database.types";
+import { formatParkDate } from "@/lib/park-time";
 
 export const WATER_USAGE_SELECT =
   "id, period_month, gallons, oak_grove_gallons, two_tank_gallons, rigs_facilities_gallons, ponds_gallons, irrigation_leaks_gallons, sheet_row_key, created_at, updated_at";
@@ -26,13 +27,17 @@ export async function fetchWaterUsageReadings(
 }
 
 export function formatWaterMonth(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00`);
-  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  return formatParkDate(isoDate.slice(0, 10), {
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export function formatWaterMonthLong(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00`);
-  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return formatParkDate(isoDate.slice(0, 10), {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 export function periodMonthKey(isoDate: string): string {

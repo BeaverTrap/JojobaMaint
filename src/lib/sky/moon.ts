@@ -1,5 +1,6 @@
 import { Body, Illumination, MoonPhase } from "astronomy-engine";
 import { moonPhaseLabel } from "@/lib/moon-phase";
+import { parkCalendarNoon } from "@/lib/park-time";
 
 /** Synodic month length in days (astronomy-engine reference). */
 export const SYNODIC_MONTH_DAYS = 29.530588853;
@@ -22,15 +23,20 @@ export function moonIlluminationPercent(date: Date): number {
   return Math.round(Illumination(Body.Moon, date).phase_fraction * 100);
 }
 
-/** Calendar date at local noon — stable daily phase for forecast rows. */
+/** Calendar date at park-local noon — stable daily phase for forecast rows. */
 export function moonPhaseForDateIso(dateIso: string): number {
-  return moonSynodicPhase(new Date(`${dateIso}T12:00:00`));
+  return moonSynodicPhase(parkCalendarNoon(dateIso));
+}
+
+export function moonIlluminationPercentForDateIso(dateIso: string): number {
+  return moonIlluminationPercent(parkCalendarNoon(dateIso));
 }
 
 export function moonPhaseLabelForDate(date: Date): string {
-  return moonPhaseLabel(moonSynodicPhase(date));
+  return moonPhaseLabel(moonSynodicPhase(date), moonIlluminationPercent(date));
 }
 
 export function moonPhaseLabelForDateIso(dateIso: string): string {
-  return moonPhaseLabelForDate(new Date(`${dateIso}T12:00:00`));
+  const atNoon = parkCalendarNoon(dateIso);
+  return moonPhaseLabel(moonSynodicPhase(atNoon), moonIlluminationPercent(atNoon));
 }

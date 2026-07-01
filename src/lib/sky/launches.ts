@@ -1,3 +1,4 @@
+import { formatParkDateTime } from "@/lib/park-time";
 import type { VandenbergLaunch } from "@/lib/sky/types";
 
 type Ll2Launch = {
@@ -86,10 +87,9 @@ function viewingHintForLaunch(
     };
   }
 
-  const hour = start.toLocaleString("en-US", {
+  const hour = formatParkDateTime(start, {
     hour: "numeric",
     hour12: false,
-    timeZone: "America/Los_Angeles",
   });
   const hourNum = Number.parseInt(hour, 10);
   const isEvening = hourNum >= 17 || hourNum <= 5;
@@ -174,18 +174,16 @@ export function formatLaunchWindow(
 ): string {
   if (!start) return "Window TBD";
   const fmt = (iso: string) =>
-    new Date(iso).toLocaleString("en-US", {
+    formatParkDateTime(iso, {
       weekday: "short",
       month: "short",
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
-      timeZone: "America/Los_Angeles",
     });
   if (!end) return fmt(start);
-  return `${fmt(start)} – ${new Date(end).toLocaleTimeString("en-US", {
+  return `${fmt(start)} – ${formatParkDateTime(end, {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/Los_Angeles",
   })}`;
 }

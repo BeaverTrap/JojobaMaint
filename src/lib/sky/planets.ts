@@ -10,9 +10,9 @@ import {
 } from "astronomy-engine";
 import { moonAgeDays, moonSynodicPhase } from "@/lib/sky/moon";
 import { moonPhaseLabel } from "@/lib/moon-phase";
+import { formatParkDateTime } from "@/lib/park-time";
 import type { NightSkyTonight, VisiblePlanet } from "@/lib/sky/types";
 
-const PARK_TZ = "America/Los_Angeles";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Naked-eye planets vs. those that need binoculars/a scope. */
@@ -113,11 +113,10 @@ function withinWindow(d: Date | null, start: Date, end: Date): Date | null {
 }
 
 function dateLabel(d: Date): string {
-  return d.toLocaleDateString("en-US", {
+  return formatParkDateTime(d, {
     weekday: "short",
     month: "short",
     day: "numeric",
-    timeZone: PARK_TZ,
   });
 }
 
@@ -251,7 +250,7 @@ export function computeNightSky(
     moon: {
       phase: moonPhase,
       illuminationPercent,
-      phaseLabel: moonPhaseLabel(moonPhase),
+      phaseLabel: moonPhaseLabel(moonPhase, illuminationPercent),
       riseIso: moonrise ? moonrise.toISOString() : null,
       setIso: moonset ? moonset.toISOString() : null,
       altitudeDeg: Math.max(0, Math.round(moonBestAlt)),
@@ -269,10 +268,9 @@ export function computeNightSky(
 
 function fmt(d: Date | null): string | null {
   if (!d) return null;
-  return d.toLocaleTimeString("en-US", {
+  return formatParkDateTime(d, {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: PARK_TZ,
   });
 }
 

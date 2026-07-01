@@ -4,6 +4,7 @@ import {
   getParkWeatherCoordinates,
   weatherCodeLabel,
 } from "@/lib/park-weather";
+import { PARK_TIMEZONE } from "@/lib/park-time";
 import { fetchNasaApod } from "@/lib/sky/apod";
 import { fetchParkAstronomy } from "@/lib/sky/astronomy";
 import { fetchNearbyEarthquakes } from "@/lib/sky/earthquakes";
@@ -43,7 +44,7 @@ async function fetchHourlyForecast(
   );
   url.searchParams.set("temperature_unit", "fahrenheit");
   url.searchParams.set("wind_speed_unit", "mph");
-  url.searchParams.set("timezone", "America/Los_Angeles");
+  url.searchParams.set("timezone", PARK_TIMEZONE);
   url.searchParams.set("forecast_hours", "48");
 
   const res = await fetch(url.toString(), { next: { revalidate: 900 } });

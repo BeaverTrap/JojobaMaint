@@ -1,47 +1,35 @@
 import { NextResponse } from "next/server";
-import twilio from "twilio";
-import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { requireSmsAdmin } from "@/lib/sms-auth";
+import { smsCharLimit } from "@/lib/sms-composer";
 import {
-  fetchResidentsForSms,
-  uniqueNormalizedPhones,
-} from "@/lib/residents";
-import { isAdminRole } from "@/lib/staff-roles";
-
-const SMS_MAX_LENGTH = 160;
+  dispatchSmsAlert,
+  previewSmsAudience,
+} from "@/lib/sms-dispatch";
+import { parseMessageTier } from "@/lib/sms-tiers";
 
 type SmsRequestBody = {
   message?: string;
   tags?: string[];
   sendToAll?: boolean;
+  messageTier?: string;
 };
 
-function twilioConfig():
-  | { client: ReturnType<typeof twilio>; from: string }
-  | { error: string } {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
-  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
-  const from = process.env.TWILIO_PHONE_NUMBER?.trim();
-
-  if (!accountSid || !authToken || !from) {
-    return {
-      error:
-        "Twilio is not configured (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER).",
-    };
-  }
-
-  return { client: twilio(accountSid, authToken), from };
+function parseAudience(body: SmsRequestBody) {
+  return {
+    message: body.message?.trim() ?? "",
+    tags: Array.isArray(body.tags)
+      ? body.tags.filter((tag): tag is string => typeof tag === "string")
+      : [],
+    sendToAll: Boolean(body.sendToAll),
+    messageTier: parseMessageTier(body.messageTier),
+  };
 }
 
 export async function POST(request: Request) {
-  const { userId, isAuthorized, staffRole } = await getCurrentUser();
-
-  if (!userId || !isAuthorized) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!isAdminRole(staffRole)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const auth = await requireSmsAdmin();
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   let body: SmsRequestBody;
@@ -51,78 +39,60 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const message = body.message?.trim() ?? "";
-  const sendToAll = Boolean(body.sendToAll);
-  const tags = Array.isArray(body.tags)
-    ? body.tags.filter((tag): tag is string => typeof tag === "string")
-    : [];
+  const audience = parseAudience(body);
+  const limit = smsCharLimit(audience.message);
+
+  if (!audience.message) {
+    return NextResponse.json({ error: "Message is required" }, { status: 400 });
+  }
+
+  if (audience.message.length > limit) {
+    return NextResponse.json(
+      { error: `Message must be ${limit} characters or fewer` },
+      { status: 400 },
+    );
+  }
+
+  const supabase = await createClient();
+  const result = await dispatchSmsAlert(supabase, {
+    bodyTemplate: audience.message,
+    tags: audience.tags,
+    sendToAll: audience.sendToAll,
+    messageTier: audience.messageTier,
+    sentBy: auth.userId,
+  });
+
+  if ("error" in result && result.error) {
+    const status = "status" in result && result.status ? result.status : 500;
+    return NextResponse.json(result, { status });
+  }
+
+  return NextResponse.json({ ok: true, ...result });
+}
+
+export async function GET(request: Request) {
+  const auth = await requireSmsAdmin();
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const url = new URL(request.url);
+  const message = url.searchParams.get("message")?.trim() ?? "";
+  const sendToAll = url.searchParams.get("sendToAll") === "true";
+  const messageTier = parseMessageTier(url.searchParams.get("messageTier"));
+  const tags = url.searchParams.getAll("tag");
 
   if (!message) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
-  if (message.length > SMS_MAX_LENGTH) {
-    return NextResponse.json(
-      { error: `Message must be ${SMS_MAX_LENGTH} characters or fewer` },
-      { status: 400 },
-    );
-  }
-
-  if (!sendToAll && tags.length === 0) {
-    return NextResponse.json(
-      { error: "Select at least one tag or choose Send to All" },
-      { status: 400 },
-    );
-  }
-
-  const twilioResult = twilioConfig();
-  if ("error" in twilioResult) {
-    return NextResponse.json({ error: twilioResult.error }, { status: 503 });
-  }
-
   const supabase = await createClient();
-  const residents = await fetchResidentsForSms(supabase, { tags, sendToAll });
-  const phones = uniqueNormalizedPhones(residents);
-
-  if (phones.length === 0) {
-    return NextResponse.json(
-      { error: "No residents with valid phone numbers match your selection" },
-      { status: 400 },
-    );
-  }
-
-  const { client, from } = twilioResult;
-  const failures: { phone: string; error: string }[] = [];
-  let sent = 0;
-
-  for (const to of phones) {
-    try {
-      await client.messages.create({ body: message, from, to });
-      sent += 1;
-    } catch (err) {
-      failures.push({
-        phone: to,
-        error: err instanceof Error ? err.message : "Send failed",
-      });
-    }
-  }
-
-  if (sent === 0) {
-    return NextResponse.json(
-      {
-        error: "All messages failed to send",
-        failures,
-        attempted: phones.length,
-      },
-      { status: 502 },
-    );
-  }
-
-  return NextResponse.json({
-    ok: true,
-    sent,
-    attempted: phones.length,
-    failed: failures.length,
-    failures: failures.length > 0 ? failures : undefined,
+  const preview = await previewSmsAudience(supabase, {
+    bodyTemplate: message,
+    tags,
+    sendToAll,
+    messageTier,
   });
+
+  return NextResponse.json(preview);
 }

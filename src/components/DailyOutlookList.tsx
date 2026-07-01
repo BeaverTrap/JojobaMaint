@@ -1,15 +1,14 @@
 import WeatherConditionIcon from "@/components/WeatherConditionIcon";
 import MoonPhaseIcon from "@/components/MoonPhaseIcon";
 import { moonPhaseLabel } from "@/lib/moon-phase";
+import { formatParkDate } from "@/lib/park-weather";
 import type { ParkWeatherDaily } from "@/lib/park-weather";
 
 function formatDay(dateIso: string): string {
-  const date = new Date(`${dateIso}T12:00:00`);
-  return date.toLocaleDateString("en-US", {
+  return formatParkDate(dateIso, {
     weekday: "short",
     month: "short",
     day: "numeric",
-    timeZone: "America/Los_Angeles",
   });
 }
 
@@ -90,11 +89,17 @@ export default function DailyOutlookList({
           {showMoon ? (
             <span
               className="flex shrink-0 items-center justify-end gap-1"
-              title={moonPhaseLabel(day.moonPhase)}
+              title={moonPhaseLabel(
+                day.moonPhase,
+                day.moonIlluminationPercent,
+              )}
             >
               <MoonPhaseIcon phase={day.moonPhase} size={moonSize} />
               <span className="hidden text-[10px] text-muted lg:inline">
-                {moonPhaseLabel(day.moonPhase).split(" ")[0]}
+                {moonPhaseLabel(
+                  day.moonPhase,
+                  day.moonIlluminationPercent,
+                ).split(" ")[0]}
               </span>
             </span>
           ) : null}

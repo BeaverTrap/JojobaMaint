@@ -1,3 +1,4 @@
+import { formatParkDateTime } from "@/lib/park-time";
 import type { IssPass } from "@/lib/sky/types";
 
 const ISS_PASS_API = "https://iss-api.polluxlabs.io/iss-pass";
@@ -71,13 +72,12 @@ export async function fetchIssPasses(
 }
 
 export function formatIssPassTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
+  return formatParkDateTime(iso, {
     weekday: "short",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/Los_Angeles",
   });
 }
 

@@ -1,4 +1,5 @@
 import type { WaterUsageReading } from "@/lib/database.types";
+import { formatParkDate } from "@/lib/park-time";
 import {
   daysInPeriodMonth,
   formatGallons,
@@ -128,8 +129,7 @@ function periodLabel(period: string): string {
 
 /** YoY chart: month name only — each slot compares prior vs current calendar year. */
 export function yoyAxisLabel(period: string): string {
-  const d = new Date(`${period}-01T12:00:00`);
-  return d.toLocaleDateString("en-US", { month: "short" });
+  return formatParkDate(`${period}-01`, { month: "short" });
 }
 
 export function yearOverYearChartData(

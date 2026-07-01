@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MdSchedule } from "react-icons/md";
-import { PARK_TIMEZONE } from "@/lib/park-weather";
+import { PARK_TIMEZONE } from "@/lib/park-time";
 
 type ClockParts = { time: string; period: string };
 

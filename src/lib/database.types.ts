@@ -390,8 +390,61 @@ export interface Resident {
   phone_number: string;
   tags: string[];
   lot_id: string | null;
+  alert_tier: ResidentAlertTier;
   created_at: string;
   updated_at: string;
+}
+
+export type ResidentAlertTier =
+  | "critical_only"
+  | "standard"
+  | "high_communication";
+
+export type SmsMessageTier = "critical" | "standard" | "announcement";
+
+export interface SmsTemplate {
+  id: string;
+  title: string;
+  body: string;
+  message_tier: SmsMessageTier;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ScheduledMessageStatus = "pending" | "sent" | "cancelled" | "failed";
+
+export interface ScheduledMessage {
+  id: string;
+  created_by: string | null;
+  body: string;
+  tags: string[];
+  send_to_all: boolean;
+  message_tier: SmsMessageTier;
+  scheduled_at: string;
+  sync_to_calendar: boolean;
+  google_calendar_event_id: string | null;
+  status: ScheduledMessageStatus;
+  sent_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SmsHistory {
+  id: string;
+  sent_by: string | null;
+  body_template: string;
+  tags: string[];
+  send_to_all: boolean;
+  message_tier: SmsMessageTier;
+  recipient_count: number;
+  success_count: number;
+  failed_count: number;
+  voice_fallback_count: number;
+  scheduled_message_id: string | null;
+  failures: unknown;
+  created_at: string;
 }
 
 export interface ParkMapPositions {

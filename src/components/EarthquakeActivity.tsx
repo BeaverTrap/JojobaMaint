@@ -19,15 +19,15 @@ import {
   useGoogleMapColorScheme,
 } from "@/components/GoogleMapFrame";
 import { googleMapId } from "@/lib/map-geography";
+import { formatParkDateTime } from "@/lib/park-time";
 import type { RecentEarthquake } from "@/lib/sky/types";
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
+  return formatParkDateTime(iso, {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/Los_Angeles",
   });
 }
 
@@ -210,10 +210,9 @@ function QuakeChart({ quakes }: { quakes: RecentEarthquake[] }) {
             domain={["dataMin", "dataMax"]}
             tick={{ fontSize: 10, fill: "var(--color-muted)" }}
             tickFormatter={(t: number) =>
-              new Date(t).toLocaleDateString("en-US", {
+              formatParkDateTime(new Date(t), {
                 month: "numeric",
                 day: "numeric",
-                timeZone: "America/Los_Angeles",
               })
             }
           />
