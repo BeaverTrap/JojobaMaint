@@ -6,6 +6,7 @@ import {
   ADMIN_MANAGE_LINKS,
   ADMIN_PUBLIC_LINKS,
   ADMIN_TOOLS_LINKS,
+  WEBMASTER_TOOLS_LINKS,
   adminHubLinksForRole,
 } from "@/lib/admin-hub";
 import type { AdminHubLink } from "@/lib/admin-hub";
@@ -16,16 +17,18 @@ import { STAFF_ROLE_LABELS, type StaffRole } from "@/lib/staff-roles";
 export default function AdminHubSections({
   staffRole,
   displayName,
-  activeArea,
 }: {
   staffRole: StaffRole;
   displayName?: string;
-  activeArea?: "landscaping" | "maintenance";
 }) {
   const createLinks = adminHubLinksForRole(ADMIN_CREATE_LINKS, staffRole);
   const manageLinks = adminHubLinksForRole(ADMIN_MANAGE_LINKS, staffRole);
   const publicLinks = adminHubLinksForRole(ADMIN_PUBLIC_LINKS, staffRole);
   const adminLinks = adminHubLinksForRole(ADMIN_TOOLS_LINKS, staffRole);
+  const webmasterLinks = adminHubLinksForRole(
+    WEBMASTER_TOOLS_LINKS,
+    staffRole,
+  );
 
   const firstName = displayName?.trim().split(/\s+/)[0];
 
@@ -44,14 +47,7 @@ export default function AdminHubSections({
         <HubSection title="Create">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {createLinks.map((link) => (
-              <HubLinkCard
-                key={link.href}
-                link={link}
-                active={
-                  link.href === `/admin?area=${activeArea}` &&
-                  activeArea !== undefined
-                }
-              />
+              <HubLinkCard key={link.href} link={link} />
             ))}
           </div>
         </HubSection>
@@ -81,6 +77,16 @@ export default function AdminHubSections({
         <HubSection title="Admin">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {adminLinks.map((link) => (
+              <HubLinkCard key={link.href} link={link} />
+            ))}
+          </div>
+        </HubSection>
+      ) : null}
+
+      {webmasterLinks.length > 0 ? (
+        <HubSection title="Webmaster">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {webmasterLinks.map((link) => (
               <HubLinkCard key={link.href} link={link} />
             ))}
           </div>

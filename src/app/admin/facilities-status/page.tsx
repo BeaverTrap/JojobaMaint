@@ -21,12 +21,11 @@ export default async function AdminFacilitiesStatusPage() {
           ← Dashboard
         </Link>
         <h1 className="mt-2 text-xl font-bold tracking-tight text-ink">
-          Laundry &amp; restrooms
+          Facilities
         </h1>
         <p className="text-sm text-muted">
           West Laundry, East Laundry, Boondocks, Friendship Hall, and Office
-          &amp; Ranch House — mark washers, dryers, Ranch House kitchen, showers,
-          toilets, urinals, and sinks out of order.
+          &amp; Ranch House — mark units working or down, or close an entire building.
         </p>
       </div>
 

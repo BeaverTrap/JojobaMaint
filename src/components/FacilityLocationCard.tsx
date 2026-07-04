@@ -99,7 +99,8 @@ export default function FacilityLocationCard({
   location: ParkFacilityBuilding;
   closedByWater?: boolean;
 }) {
-  const tone = closedByWater ? "alert" : facilityLocationTone(location);
+  const buildingClosed = location.closed || closedByWater;
+  const tone = buildingClosed ? "alert" : facilityLocationTone(location);
   const hasLaundry =
     location.washer_count > 0 ||
     location.dryer_count > 0 ||
@@ -108,7 +109,7 @@ export default function FacilityLocationCard({
     location.kitchen_sink_count > 0 || location.oven_count > 0;
   const hasHotWater = location.water_heater_count > 0;
 
-  const pillText = closedByWater ? "Closed" : facilityIssueSummary(location);
+  const pillText = buildingClosed ? "Closed" : facilityIssueSummary(location);
 
   const laundryHasIssue =
     countOut(location.washer_statuses) > 0 ||
@@ -127,9 +128,11 @@ export default function FacilityLocationCard({
         </span>
       </div>
 
-      {closedByWater ? (
+      {buildingClosed ? (
         <p className="mt-1.5 text-[11px] text-muted">
-          Laundry, restrooms, and hot water — no water
+          {closedByWater
+            ? "Laundry, restrooms, and hot water — no water"
+            : "All laundry, restrooms, and amenities closed"}
         </p>
       ) : (
         <div className="mt-2 space-y-1">
@@ -213,7 +216,7 @@ export default function FacilityLocationCard({
         </div>
       )}
 
-      {!closedByWater && location.note ? (
+      {!buildingClosed && location.note ? (
         <DetailNote text={location.note} />
       ) : null}
     </div>

@@ -1,53 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  createScheduledSmsCalendarEvent,
-  isSmsCalendarConfigured,
-} from "@/lib/sms-calendar";
 import { dispatchSmsAlert, type SmsAudienceParams } from "@/lib/sms-dispatch";
 import type { SmsMessageTier } from "@/lib/sms-tiers";
 
 export type ScheduleParams = SmsAudienceParams & {
   bodyTemplate: string;
   scheduledAt: string;
-  syncToCalendar: boolean;
   createdBy: string;
 };
 
 export async function scheduleSmsMessage(
   supabase: SupabaseClient,
   params: ScheduleParams,
-): Promise<{ id: string; calendarEventId?: string } | { error: string }> {
+): Promise<{ id: string } | { error: string }> {
   const scheduledAt = new Date(params.scheduledAt);
   if (Number.isNaN(scheduledAt.getTime())) {
     return { error: "Invalid schedule time" };
   }
   if (scheduledAt.getTime() <= Date.now()) {
     return { error: "Schedule time must be in the future" };
-  }
-
-  let googleCalendarEventId: string | null = null;
-
-  if (params.syncToCalendar) {
-    if (!isSmsCalendarConfigured()) {
-      return { error: "Google Calendar is not configured for SMS sync" };
-    }
-    try {
-      googleCalendarEventId = await createScheduledSmsCalendarEvent({
-        scheduledAt,
-        bodyPreview: params.bodyTemplate,
-        recipientSummary: params.sendToAll
-          ? "All residents"
-          : params.tags.join(", "),
-      });
-    } catch (err) {
-      return {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Could not create calendar event",
-      };
-    }
   }
 
   const { data, error } = await supabase
@@ -59,8 +30,6 @@ export async function scheduleSmsMessage(
       send_to_all: params.sendToAll,
       message_tier: params.messageTier,
       scheduled_at: scheduledAt.toISOString(),
-      sync_to_calendar: params.syncToCalendar,
-      google_calendar_event_id: googleCalendarEventId,
       status: "pending",
     })
     .select("id")
@@ -70,10 +39,7 @@ export async function scheduleSmsMessage(
     return { error: error?.message ?? "Could not save scheduled message" };
   }
 
-  return {
-    id: data.id,
-    calendarEventId: googleCalendarEventId ?? undefined,
-  };
+  return { id: data.id };
 }
 
 export async function processDueScheduledMessages(): Promise<{

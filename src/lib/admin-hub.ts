@@ -1,5 +1,5 @@
 import type { StaffRole } from "@/lib/staff-roles";
-import { hasMinimumStaffRole, isAdminRole } from "@/lib/staff-roles";
+import { hasMinimumStaffRole, isWebmasterRole } from "@/lib/staff-roles";
 import type { MascotSceneId } from "@/lib/mascot-scenes";
 
 export type AdminHubLink = {
@@ -19,18 +19,18 @@ export type AdminHubLink = {
 
 export const ADMIN_CREATE_LINKS: AdminHubLink[] = [
   {
-    href: "/admin?area=landscaping",
+    href: "/admin/compose?area=landscaping",
     title: "Landscaping post",
     description: "Quick or structured post for landscaping work.",
     minimumRole: "staff",
-    image: "/assets/mascot/LogoMascotAvatar_003.png",
+    image: "/assets/Mascot_Sunhat_Avatar.png",
   },
   {
-    href: "/admin?area=maintenance",
+    href: "/admin/compose?area=maintenance",
     title: "Maintenance post",
     description: "Quick or structured post for maintenance work.",
     minimumRole: "staff",
-    image: "/assets/mascot/LogoMascotAvatar_001.png",
+    image: "/assets/Mascot_Hardhat_Avatar.png",
   },
   {
     href: "/admin/articles/new",
@@ -65,7 +65,7 @@ export const ADMIN_MANAGE_LINKS: AdminHubLink[] = [
   },
   {
     href: "/admin/facilities-status",
-    title: "Laundry & restrooms",
+    title: "Facilities",
     description: "Washers, dryers, showers, toilets, urinals, and sinks.",
     minimumRole: "manager",
     image: "/assets/status/laundry-ok.png",
@@ -124,15 +124,32 @@ export const ADMIN_TOOLS_LINKS: AdminHubLink[] = [
     href: "/admin/emergency-alerts",
     title: "Emergency SMS Dashboard",
     description:
-      "Templates, tier filtering, AI polish, scheduling, and audit log for mass texts.",
+      "Mass-text alerts with templates, message types, Gemini rewrite, and audit log.",
     minimumRole: "admin",
     image: "/assets/status/alert.png",
+  },
+  {
+    href: "/admin/staff-access",
+    title: "Staff access",
+    description: "Whitelist Google emails and assign staff, manager, or admin roles.",
+    minimumRole: "admin",
+    scene: "tools",
+  },
+];
+
+export const WEBMASTER_TOOLS_LINKS: AdminHubLink[] = [
+  {
+    href: "/admin/mascot-editor",
+    title: "Mascot & branding",
+    description: "Upload, position, and preview mascot avatars across the site.",
+    minimumRole: "webmaster",
+    image: "/assets/Mascot_Hardhat_Avatar.png",
   },
   {
     href: "/weather/stack",
     title: "Weather mascot layout",
     description: "Tune the layered weather mascot used on the weather page.",
-    minimumRole: "admin",
+    minimumRole: "webmaster",
     widget: "weather",
     newTab: true,
   },
@@ -146,5 +163,11 @@ export function adminHubLinksForRole(
 }
 
 export function showAdminToolsSection(role: StaffRole | null | undefined): boolean {
-  return isAdminRole(role);
+  return hasMinimumStaffRole(role, "admin");
+}
+
+export function showWebmasterToolsSection(
+  role: StaffRole | null | undefined,
+): boolean {
+  return isWebmasterRole(role);
 }

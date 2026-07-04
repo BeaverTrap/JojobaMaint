@@ -67,7 +67,7 @@ export default function HomeFacilitiesStatus({
               id="home-facilities-heading"
               className="text-base font-bold leading-tight text-ink"
             >
-              Laundry &amp; restrooms
+              Facilities
             </h2>
             <p className="mt-0.5 text-xs text-muted">{summary}</p>
             {ends ? (

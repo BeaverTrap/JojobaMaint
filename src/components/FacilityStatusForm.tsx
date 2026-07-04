@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { FacilityUnitState, ParkFacilityBuilding } from "@/lib/database.types";
-import { UnitStatusPicker } from "@/components/FacilityUnitGrid";
 import { countOut } from "@/lib/facility-unit-states";
+import { toggleUnitAt, setAllUnits } from "@/lib/facility-unit-states";
 
 type BuildingDraft = {
+  closed: boolean;
   washer_statuses: FacilityUnitState[];
   dryer_statuses: FacilityUnitState[];
   pet_washer_statuses: FacilityUnitState[];
@@ -31,97 +32,137 @@ type RestroomDraft = {
   note: string;
 };
 
-function NoteField({
+function StatusRow({
   label,
-  value,
+  statuses,
+  disabled,
   onChange,
-  placeholder,
 }: {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
+  statuses: FacilityUnitState[];
+  disabled?: boolean;
+  onChange: (next: FacilityUnitState[]) => void;
 }) {
+  if (statuses.length === 0) return null;
+  const down = countOut(statuses);
+
   return (
-    <label className="block text-sm">
-      <span className="font-medium text-ink">{label}</span>
-      <textarea
-        rows={2}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink"
-      />
-    </label>
+    <tr className="group/row border-b border-line/50 last:border-0">
+      <td className="w-24 py-2 pr-3 align-middle text-xs font-medium text-muted">{label}</td>
+      <td className="py-2 align-middle">
+        <div className="flex flex-wrap items-center gap-[5px]">
+          {statuses.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(toggleUnitAt(statuses, i))}
+              className={`relative inline-flex h-6 min-w-[24px] items-center justify-center rounded-[5px] text-[10px] font-semibold tabular-nums transition-colors duration-100 active:scale-[0.92] disabled:cursor-not-allowed disabled:opacity-30 ${
+                s === "ok"
+                  ? "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:bg-emerald-400/15 dark:text-emerald-300 dark:hover:bg-emerald-400/25"
+                  : "bg-red-500/15 text-red-700 hover:bg-red-500/25 dark:bg-red-400/15 dark:text-red-300 dark:hover:bg-red-400/25"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      </td>
+      <td className="w-16 py-2 pl-2 text-right align-middle">
+        {statuses.length > 1 ? (
+          <div className="flex items-center justify-end gap-1">
+            <button type="button" disabled={disabled} onClick={() => onChange(setAllUnits(statuses, "ok"))} className="rounded px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-500/10 disabled:opacity-30 dark:text-emerald-400">✓</button>
+            <button type="button" disabled={disabled} onClick={() => onChange(setAllUnits(statuses, "out"))} className="rounded px-1.5 py-0.5 text-[10px] font-medium text-red-700 hover:bg-red-500/10 disabled:opacity-30 dark:text-red-400">✕</button>
+          </div>
+        ) : null}
+      </td>
+      <td className="w-14 py-2 pl-2 text-right align-middle">
+        {down > 0 ? (
+          <span className="text-[10px] font-semibold text-red-600 dark:text-red-400">{down} down</span>
+        ) : (
+          <span className="text-[10px] text-muted/60">—</span>
+        )}
+      </td>
+    </tr>
   );
 }
 
-function UnitPickerSection({
-  title,
-  singular,
-  statuses,
-  onChange,
-  disabled,
-}: {
-  title: string;
-  singular: string;
-  statuses: FacilityUnitState[];
-  onChange: (next: FacilityUnitState[]) => void;
-  disabled?: boolean;
-}) {
-  if (statuses.length === 0) return null;
+function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-[18px] w-[30px] shrink-0 items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
+        checked ? "bg-red-500" : "bg-gray-300 dark:bg-white/20"
+      }`}
+    >
+      <span className={`inline-block h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+    </button>
+  );
+}
+
+function timeAgo(isoDate: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function Toast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 3500);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium text-ink">{title}</p>
-      <UnitStatusPicker
-        singular={singular}
-        statuses={statuses}
-        onChange={onChange}
-        disabled={disabled}
-      />
+    <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 animate-[slideUp_0.3s_ease-out] rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-surface shadow-lg">
+      {message}
     </div>
   );
 }
 
-export default function FacilityStatusForm({
-  initial,
-}: {
-  initial: ParkFacilityBuilding[];
-}) {
+export default function FacilityStatusForm({ initial }: { initial: ParkFacilityBuilding[] }) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [buildings, setBuildings] = useState<Record<string, BuildingDraft>>(() =>
     Object.fromEntries(
-      initial.map((building) => [
-        building.id,
+      initial.map((b) => [
+        b.id,
         {
-          washer_statuses: [...building.washer_statuses],
-          dryer_statuses: [...building.dryer_statuses],
-          pet_washer_statuses: [...building.pet_washer_statuses],
-          water_heater_statuses: [...building.water_heater_statuses],
-          kitchen_sink_statuses: [...building.kitchen_sink_statuses],
-          oven_statuses: [...building.oven_statuses],
-          laundry_note: building.laundry_note ?? "",
-          pet_washer_note: building.pet_washer_note ?? "",
-          water_heater_note: building.water_heater_note ?? "",
-          kitchen_note: building.kitchen_note ?? "",
-          note: building.note ?? "",
+          closed: b.closed,
+          washer_statuses: [...b.washer_statuses],
+          dryer_statuses: [...b.dryer_statuses],
+          pet_washer_statuses: [...b.pet_washer_statuses],
+          water_heater_statuses: [...b.water_heater_statuses],
+          kitchen_sink_statuses: [...b.kitchen_sink_statuses],
+          oven_statuses: [...b.oven_statuses],
+          laundry_note: b.laundry_note ?? "",
+          pet_washer_note: b.pet_washer_note ?? "",
+          water_heater_note: b.water_heater_note ?? "",
+          kitchen_note: b.kitchen_note ?? "",
+          note: b.note ?? "",
         },
       ]),
     ),
   );
   const [restrooms, setRestrooms] = useState<Record<string, RestroomDraft>>(() =>
     Object.fromEntries(
-      initial.flatMap((building) =>
-        building.restrooms.map((room) => [
-          room.id,
+      initial.flatMap((b) =>
+        b.restrooms.map((r) => [
+          r.id,
           {
-            shower_statuses: [...room.shower_statuses],
-            stall_statuses: [...room.stall_statuses],
-            urinal_statuses: [...room.urinal_statuses],
-            sink_statuses: [...room.sink_statuses],
-            closed: room.closed,
-            note: room.note ?? "",
+            shower_statuses: [...r.shower_statuses],
+            stall_statuses: [...r.stall_statuses],
+            urinal_statuses: [...r.urinal_statuses],
+            sink_statuses: [...r.sink_statuses],
+            closed: r.closed,
+            note: r.note ?? "",
           },
         ]),
       ),
@@ -129,358 +170,215 @@ export default function FacilityStatusForm({
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   function updateBuilding(id: string, patch: Partial<BuildingDraft>) {
-    setBuildings((current) => ({
-      ...current,
-      [id]: { ...current[id], ...patch },
-    }));
+    setBuildings((c) => ({ ...c, [id]: { ...c[id], ...patch } }));
+    setDirty(true);
   }
-
   function updateRestroom(id: string, patch: Partial<RestroomDraft>) {
-    setRestrooms((current) => ({
-      ...current,
-      [id]: { ...current[id], ...patch },
-    }));
+    setRestrooms((c) => ({ ...c, [id]: { ...c[id], ...patch } }));
+    setDirty(true);
   }
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setSubmitting(true);
     setError(null);
-    setSaved(false);
-
     try {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be signed in.");
 
       for (const building of initial) {
-        const draft = buildings[building.id];
-        if (!draft) continue;
-
-        const { error: updateError } = await supabase
+        const d = buildings[building.id];
+        if (!d) continue;
+        const { error: err } = await supabase
           .from("park_facility_status")
           .update({
-            washer_statuses: draft.washer_statuses,
-            dryer_statuses: draft.dryer_statuses,
-            pet_washer_statuses: draft.pet_washer_statuses,
-            water_heater_statuses: draft.water_heater_statuses,
-            kitchen_sink_statuses: draft.kitchen_sink_statuses,
-            oven_statuses: draft.oven_statuses,
-            laundry_note: draft.laundry_note.trim() || null,
-            pet_washer_note: draft.pet_washer_note.trim() || null,
-            water_heater_note: draft.water_heater_note.trim() || null,
-            kitchen_note: draft.kitchen_note.trim() || null,
-            note: draft.note.trim() || null,
+            closed: d.closed,
+            washer_statuses: d.washer_statuses,
+            dryer_statuses: d.dryer_statuses,
+            pet_washer_statuses: d.pet_washer_statuses,
+            water_heater_statuses: d.water_heater_statuses,
+            kitchen_sink_statuses: d.kitchen_sink_statuses,
+            oven_statuses: d.oven_statuses,
+            laundry_note: d.laundry_note.trim() || null,
+            pet_washer_note: d.pet_washer_note.trim() || null,
+            water_heater_note: d.water_heater_note.trim() || null,
+            kitchen_note: d.kitchen_note.trim() || null,
+            note: d.note.trim() || null,
             updated_by: user.id,
           })
           .eq("id", building.id);
-        if (updateError) throw updateError;
+        if (err) throw err;
 
         for (const room of building.restrooms) {
-          const roomDraft = restrooms[room.id];
-          if (!roomDraft) continue;
-
-          const { error: roomError } = await supabase
+          const rd = restrooms[room.id];
+          if (!rd) continue;
+          const { error: re } = await supabase
             .from("park_restroom_status")
             .update({
-              shower_statuses: roomDraft.shower_statuses,
-              stall_statuses: roomDraft.stall_statuses,
-              urinal_statuses: roomDraft.urinal_statuses,
-              sink_statuses: roomDraft.sink_statuses,
-              closed: roomDraft.closed,
-              note: roomDraft.note.trim() || null,
+              shower_statuses: rd.shower_statuses,
+              stall_statuses: rd.stall_statuses,
+              urinal_statuses: rd.urinal_statuses,
+              sink_statuses: rd.sink_statuses,
+              closed: rd.closed,
+              note: rd.note.trim() || null,
               updated_by: user.id,
             })
             .eq("id", room.id);
-          if (roomError) throw roomError;
+          if (re) throw re;
         }
       }
-
-      setSaved(true);
+      setDirty(false);
+      setToast("Saved");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Could not save facility status.",
-      );
+      setError(err instanceof Error ? err.message : "Could not save.");
     } finally {
       setSubmitting(false);
     }
   }
 
+  const allRestroomsClosed = Object.values(restrooms).every((r) => r.closed);
+  const allLaundryClosed = initial
+    .filter((b) => b.washer_count > 0 || b.dryer_count > 0 || b.pet_washer_count > 0)
+    .every((b) => buildings[b.id]?.closed);
+
+  function closeAllRestrooms(closed: boolean) {
+    setRestrooms((c) => Object.fromEntries(Object.entries(c).map(([id, r]) => [id, { ...r, closed }])));
+    setDirty(true);
+  }
+  function closeAllLaundry(closed: boolean) {
+    setBuildings((c) => {
+      const n = { ...c };
+      for (const b of initial) {
+        if (b.washer_count > 0 || b.dryer_count > 0 || b.pet_washer_count > 0) n[b.id] = { ...n[b.id], closed };
+      }
+      return n;
+    });
+    setDirty(true);
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {initial.map((building) => {
-        const draft = buildings[building.id];
-        if (!draft) return null;
+    <>
+      <form ref={formRef} onSubmit={handleSubmit} className="pb-20">
+        {/* Quick toggles */}
+        <div className="mb-6 flex items-center gap-6 text-xs">
+          <label className="flex items-center gap-2 font-medium text-ink">
+            <Switch checked={allLaundryClosed} onChange={() => closeAllLaundry(!allLaundryClosed)} />
+            Close all laundry
+          </label>
+          <label className="flex items-center gap-2 font-medium text-ink">
+            <Switch checked={allRestroomsClosed} onChange={() => closeAllRestrooms(!allRestroomsClosed)} />
+            Close all bathrooms
+          </label>
+        </div>
 
-        const hasLaundry =
-          building.washer_count > 0 ||
-          building.dryer_count > 0 ||
-          building.pet_washer_count > 0;
-        const hasKitchen =
-          building.kitchen_sink_count > 0 || building.oven_count > 0;
-        const hasHotWater = building.water_heater_count > 0;
+        {/* Buildings — flat table sections */}
+        <div className="space-y-1">
+          {initial.map((building) => {
+            const draft = buildings[building.id];
+            if (!draft) return null;
+            const hasLaundry = building.washer_count > 0 || building.dryer_count > 0 || building.pet_washer_count > 0;
+            const hasKitchen = building.kitchen_sink_count > 0 || building.oven_count > 0;
+            const hasHotWater = building.water_heater_count > 0;
 
-        const laundryHasIssue =
-          countOut(draft.washer_statuses) > 0 ||
-          countOut(draft.dryer_statuses) > 0 ||
-          countOut(draft.pet_washer_statuses) > 0;
-
-        return (
-          <fieldset
-            key={building.id}
-            className="space-y-4 rounded-2xl border border-line bg-surface p-4 shadow-sm"
-          >
-            <legend className="px-1 text-base font-semibold text-ink">
-              {building.label}
-            </legend>
-
-            {hasLaundry ? (
-              <div className="space-y-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted">
-                  Laundry
-                </p>
-                <UnitPickerSection
-                  title="Washers"
-                  singular="Washer"
-                  statuses={draft.washer_statuses}
-                  onChange={(washer_statuses) =>
-                    updateBuilding(building.id, { washer_statuses })
-                  }
-                />
-                <UnitPickerSection
-                  title="Dryers"
-                  singular="Dryer"
-                  statuses={draft.dryer_statuses}
-                  onChange={(dryer_statuses) =>
-                    updateBuilding(building.id, { dryer_statuses })
-                  }
-                />
-                <UnitPickerSection
-                  title="Outside pet washer"
-                  singular="Pet washer"
-                  statuses={draft.pet_washer_statuses}
-                  onChange={(pet_washer_statuses) =>
-                    updateBuilding(building.id, { pet_washer_statuses })
-                  }
-                />
-                {laundryHasIssue ? (
-                  <>
-                    <NoteField
-                      label="Laundry details (optional)"
-                      value={draft.laundry_note}
-                      onChange={(value) =>
-                        updateBuilding(building.id, { laundry_note: value })
-                      }
-                      placeholder="e.g. Washer 3 — coin mechanism stuck"
-                    />
-                    {building.pet_washer_count > 0 ? (
-                      <NoteField
-                        label="Pet washer details (optional)"
-                        value={draft.pet_washer_note}
-                        onChange={(value) =>
-                          updateBuilding(building.id, { pet_washer_note: value })
-                        }
-                        placeholder="e.g. Outside pet washer leaking"
-                      />
-                    ) : null}
-                  </>
-                ) : null}
-              </div>
-            ) : null}
-
-            {hasHotWater ? (
-              <div className="space-y-4 border-t border-line pt-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted">
-                  Hot water
-                </p>
-                <UnitPickerSection
-                  title="Water heater"
-                  singular="Water heater"
-                  statuses={draft.water_heater_statuses}
-                  onChange={(water_heater_statuses) =>
-                    updateBuilding(building.id, { water_heater_statuses })
-                  }
-                />
-                {countOut(draft.water_heater_statuses) > 0 ? (
-                  <NoteField
-                    label="Hot water details (optional)"
-                    value={draft.water_heater_note}
-                    onChange={(value) =>
-                      updateBuilding(building.id, { water_heater_note: value })
-                    }
-                    placeholder="e.g. No hot water in showers"
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            {hasKitchen ? (
-              <div className="space-y-4 border-t border-line pt-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted">
-                  Ranch House kitchen
-                </p>
-                <UnitPickerSection
-                  title="Kitchen sink"
-                  singular="Kitchen sink"
-                  statuses={draft.kitchen_sink_statuses}
-                  onChange={(kitchen_sink_statuses) =>
-                    updateBuilding(building.id, { kitchen_sink_statuses })
-                  }
-                />
-                <UnitPickerSection
-                  title="Oven"
-                  singular="Oven"
-                  statuses={draft.oven_statuses}
-                  onChange={(oven_statuses) =>
-                    updateBuilding(building.id, { oven_statuses })
-                  }
-                />
-                {countOut(draft.kitchen_sink_statuses) > 0 ||
-                countOut(draft.oven_statuses) > 0 ? (
-                  <NoteField
-                    label="Kitchen details (optional)"
-                    value={draft.kitchen_note}
-                    onChange={(value) =>
-                      updateBuilding(building.id, { kitchen_note: value })
-                    }
-                    placeholder="e.g. Oven not heating"
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            {building.restrooms.map((room) => {
-              const roomDraft = restrooms[room.id];
-              if (!roomDraft) return null;
-
-              const roomHasIssue =
-                roomDraft.closed ||
-                countOut(roomDraft.shower_statuses) > 0 ||
-                countOut(roomDraft.stall_statuses) > 0 ||
-                countOut(roomDraft.urinal_statuses) > 0 ||
-                countOut(roomDraft.sink_statuses) > 0;
-
-              return (
-                <div
-                  key={room.id}
-                  className="space-y-4 border-t border-line pt-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted">
-                      {room.label}
-                    </p>
-                    <label className="flex items-center gap-2 text-sm font-medium text-ink">
-                      <input
-                        type="checkbox"
-                        checked={roomDraft.closed}
-                        onChange={(event) =>
-                          updateRestroom(room.id, { closed: event.target.checked })
-                        }
-                        className="h-4 w-4 rounded border-line"
-                      />
-                      Bathroom closed
-                    </label>
+            return (
+              <section key={building.id} className="overflow-hidden rounded-lg border border-line bg-surface">
+                {/* Section header */}
+                <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-[13px] font-semibold text-ink">{building.label}</h3>
+                    <span className="text-[10px] text-muted">{timeAgo(building.updated_at)}</span>
                   </div>
-
-                  <UnitPickerSection
-                    title="Showers"
-                    singular="Shower"
-                    statuses={roomDraft.shower_statuses}
-                    disabled={roomDraft.closed}
-                    onChange={(shower_statuses) =>
-                      updateRestroom(room.id, { shower_statuses })
-                    }
-                  />
-                  <UnitPickerSection
-                    title="Toilets"
-                    singular="Toilet"
-                    statuses={roomDraft.stall_statuses}
-                    disabled={roomDraft.closed}
-                    onChange={(stall_statuses) =>
-                      updateRestroom(room.id, { stall_statuses })
-                    }
-                  />
-                  <UnitPickerSection
-                    title="Urinals"
-                    singular="Urinal"
-                    statuses={roomDraft.urinal_statuses}
-                    disabled={roomDraft.closed}
-                    onChange={(urinal_statuses) =>
-                      updateRestroom(room.id, { urinal_statuses })
-                    }
-                  />
-                  <UnitPickerSection
-                    title="Sinks"
-                    singular="Sink"
-                    statuses={roomDraft.sink_statuses}
-                    disabled={roomDraft.closed}
-                    onChange={(sink_statuses) =>
-                      updateRestroom(room.id, { sink_statuses })
-                    }
-                  />
-
-                  {roomHasIssue ? (
-                    <NoteField
-                      label="Restroom details (optional)"
-                      value={roomDraft.note}
-                      onChange={(value) =>
-                        updateRestroom(room.id, { note: value })
-                      }
-                      placeholder={
-                        roomDraft.closed
-                          ? "e.g. Bathroom closed for cleaning until 2pm"
-                          : "e.g. Toilet 2 clogged; Shower 1 no hot water"
-                      }
-                    />
-                  ) : null}
+                  <div className="flex items-center gap-3">
+                    {draft.closed ? (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-red-600 dark:text-red-400">Closed</span>
+                    ) : null}
+                    <Switch checked={draft.closed} onChange={(closed) => updateBuilding(building.id, { closed })} />
+                  </div>
                 </div>
-              );
-            })}
 
-            <div className="border-t border-line pt-4">
-              <NoteField
-                label="Building note (optional)"
-                value={draft.note}
-                onChange={(value) => updateBuilding(building.id, { note: value })}
-                placeholder="Anything else residents should know about this building"
-              />
-            </div>
-          </fieldset>
-        );
-      })}
+                {/* Body */}
+                <div className={`transition-opacity duration-150 ${draft.closed ? "opacity-20 pointer-events-none" : ""}`}>
+                  <table className="w-full">
+                    <tbody className="divide-y-0">
+                      {hasLaundry ? (
+                        <>
+                          <StatusRow label="Washers" statuses={draft.washer_statuses} disabled={draft.closed} onChange={(s) => updateBuilding(building.id, { washer_statuses: s })} />
+                          <StatusRow label="Dryers" statuses={draft.dryer_statuses} disabled={draft.closed} onChange={(s) => updateBuilding(building.id, { dryer_statuses: s })} />
+                          <StatusRow label="Pet wash" statuses={draft.pet_washer_statuses} disabled={draft.closed} onChange={(s) => updateBuilding(building.id, { pet_washer_statuses: s })} />
+                        </>
+                      ) : null}
+                      {hasHotWater ? (
+                        <StatusRow label="Hot water" statuses={draft.water_heater_statuses} disabled={draft.closed} onChange={(s) => updateBuilding(building.id, { water_heater_statuses: s })} />
+                      ) : null}
+                      {hasKitchen ? (
+                        <>
+                          <StatusRow label="Sinks" statuses={draft.kitchen_sink_statuses} disabled={draft.closed} onChange={(s) => updateBuilding(building.id, { kitchen_sink_statuses: s })} />
+                          <StatusRow label="Ovens" statuses={draft.oven_statuses} disabled={draft.closed} onChange={(s) => updateBuilding(building.id, { oven_statuses: s })} />
+                        </>
+                      ) : null}
+                    </tbody>
+                  </table>
 
-      {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
-          {error}
-        </p>
-      ) : null}
-      {saved ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">
-          Facility status saved.
-        </p>
-      ) : null}
+                  {/* Restrooms within building */}
+                  {building.restrooms.map((room) => {
+                    const rd = restrooms[room.id];
+                    if (!rd) return null;
+                    const roomOff = draft.closed || rd.closed;
+                    return (
+                      <div key={room.id} className="border-t border-line">
+                        <div className="flex items-center justify-between px-4 py-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{room.label}</span>
+                          <div className="flex items-center gap-3">
+                            {rd.closed ? <span className="text-[10px] font-semibold text-red-600 dark:text-red-400">Closed</span> : null}
+                            <Switch checked={rd.closed} onChange={(closed) => updateRestroom(room.id, { closed })} disabled={draft.closed} />
+                          </div>
+                        </div>
+                        <div className={`transition-opacity duration-150 ${roomOff ? "opacity-20 pointer-events-none" : ""}`}>
+                          <table className="w-full">
+                            <tbody>
+                              <StatusRow label="Showers" statuses={rd.shower_statuses} disabled={roomOff} onChange={(s) => updateRestroom(room.id, { shower_statuses: s })} />
+                              <StatusRow label="Toilets" statuses={rd.stall_statuses} disabled={roomOff} onChange={(s) => updateRestroom(room.id, { stall_statuses: s })} />
+                              <StatusRow label="Urinals" statuses={rd.urinal_statuses} disabled={roomOff} onChange={(s) => updateRestroom(room.id, { urinal_statuses: s })} />
+                              <StatusRow label="Sinks" statuses={rd.sink_statuses} disabled={roomOff} onChange={(s) => updateRestroom(room.id, { sink_statuses: s })} />
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </form>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-        >
-          {submitting ? "Saving…" : "Save facility status"}
-        </button>
-        <Link
-          href="/"
-          className="text-sm font-medium text-brand-700 hover:underline"
-        >
-          View home page →
-        </Link>
-      </div>
-    </form>
+      {/* Sticky save bar */}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <div className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-4 py-3 text-center backdrop-blur-sm transition-transform duration-300 ${dirty ? "translate-y-0" : "translate-y-full"}`}>
+            {error ? <p className="mb-1 text-xs font-medium text-red-600">{error}</p> : null}
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => formRef.current?.requestSubmit()}
+              className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50"
+            >
+              {submitting ? "Saving…" : "Save changes"}
+            </button>
+          </div>,
+          document.body,
+        )}
+
+      {typeof document !== "undefined" && toast
+        ? createPortal(<Toast message={toast} onDismiss={() => setToast(null)} />, document.body)
+        : null}
+    </>
   );
 }

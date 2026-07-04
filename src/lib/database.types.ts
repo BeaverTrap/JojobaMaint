@@ -10,7 +10,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type StaffRole = "staff" | "manager" | "admin";
+export type StaffRole = "staff" | "manager" | "admin" | "webmaster";
 
 export interface Profile {
   id: string;
@@ -287,6 +287,7 @@ export interface ParkFacilityStatus {
   water_heater_statuses: FacilityUnitState[];
   kitchen_sink_statuses: FacilityUnitState[];
   oven_statuses: FacilityUnitState[];
+  closed: boolean;
   laundry_note: string | null;
   pet_washer_note: string | null;
   water_heater_note: string | null;

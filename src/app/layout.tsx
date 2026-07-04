@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Semi_Condensed, Geist, Geist_Mono } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ThemeInitScript from "@/components/ThemeInitScript";
+import WebmasterToolbarGate from "@/components/WebmasterToolbarGate";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -58,6 +59,7 @@ export default function RootLayout({
         <ThemeInitScript />
         <ServiceWorkerRegister />
         {children}
+        <WebmasterToolbarGate />
       </body>
     </html>
   );

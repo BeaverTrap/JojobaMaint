@@ -56,12 +56,12 @@ export function statesSummary(
   if (count === 0) return "";
   const out = countOut(statuses);
   const pluralLabel = plural ?? `${singular}s`;
-  if (out === 0) return `All ${count} open`;
+  if (out === 0) return `All ${count} working`;
   if (out >= count) {
-    return count === 1 ? "Out of order" : `All ${count} down`;
+    return count === 1 ? "Down" : `All ${count} down`;
   }
   const unitLabel = out === 1 ? singular : pluralLabel;
-  return `${out} ${unitLabel} down · ${count - out} open`;
+  return `${out} ${unitLabel} down · ${count - out} working`;
 }
 
 export function toggleUnitAt(

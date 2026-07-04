@@ -1,19 +1,20 @@
 import Link from "next/link";
+import PageMascotHeading from "@/components/PageMascotHeading";
 import { createClient } from "@/lib/supabase/server";
 import EmergencySmsDashboard from "@/components/EmergencySmsDashboard";
 import { fetchSmsHistory } from "@/lib/sms-history";
 import { fetchSmsTemplates } from "@/lib/sms-templates";
-import { fetchResidentTags } from "@/lib/sms-dispatch";
 import { requireAdminRole } from "@/lib/require-admin-role";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminEmergencyAlertsPage() {
   await requireAdminRole();
+  const { staffRole } = await getCurrentUser();
 
   const supabase = await createClient();
-  const [availableTags, templates, history] = await Promise.all([
-    fetchResidentTags(supabase),
+  const [templates, history] = await Promise.all([
     fetchSmsTemplates(supabase),
     fetchSmsHistory(supabase),
   ]);
@@ -27,20 +28,19 @@ export default async function AdminEmergencyAlertsPage() {
         >
           ← Dashboard
         </Link>
-        <h1 className="mt-2 text-xl font-bold tracking-tight text-ink">
-          Emergency SMS Dashboard
-        </h1>
-        <p className="mt-1 max-w-3xl text-sm text-muted">
-          Enterprise mass-text alerts with templates, tier-aware audience
-          filtering, AI polish, scheduling, calendar sync, landline voice
-          fallback, and a full audit log. Admin access only.
-        </p>
+        <div className="mt-2">
+          <PageMascotHeading
+            scene="alert"
+            title="Emergency SMS Dashboard"
+            description="Mass-text park alerts — templates, audience tags, message types, scheduling, and delivery log."
+          />
+        </div>
       </div>
 
       <EmergencySmsDashboard
         templates={templates}
-        availableTags={availableTags}
         history={history}
+        viewerRole={staffRole ?? "admin"}
       />
     </div>
   );

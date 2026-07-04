@@ -82,7 +82,7 @@ const QUICK_LINKS: {
     href: REQUEST_NAV.href,
     label: "Submit request",
     description: "Maintenance & landscaping requests",
-    scene: "hardhat_f",
+    scene: "hardhat",
     mascotSide: "right",
     mascotSize: 230,
     mascotClassName: "-right-12 -bottom-20 origin-bottom-right group-hover:-rotate-2",

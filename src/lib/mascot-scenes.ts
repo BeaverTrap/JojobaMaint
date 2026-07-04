@@ -15,10 +15,10 @@ export type MascotSceneId =
   | "astronaut"
   | "telescope"
   | "hardhat"
-  | "hardhat_f"
-  | "sunhat";
+  | "sunhat"
+  | "alert";
 
-export const MASCOT_DEFAULT_SRC = "/assets/mascot.png";
+export const MASCOT_DEFAULT_SRC = "/assets/Mascot_Hardhat.png";
 export const MASCOT_FALLBACK_SRC = "/assets/maintenance_Quail_wht.png";
 
 export type MascotSceneDef = {
@@ -95,18 +95,18 @@ export const MASCOT_SCENES: Record<MascotSceneId, MascotSceneDef> = {
     fallback: MASCOT_DEFAULT_SRC,
   },
   hardhat: {
-    src: "/assets/mascot/Hardhat.png",
+    src: "/assets/Mascot_Hardhat.png",
     alt: "Quail in a hard hat with a tool belt",
     fallback: MASCOT_DEFAULT_SRC,
   },
-  hardhat_f: {
-    src: "/assets/mascot/Hardhat_F.png",
-    alt: "Quail in a hard hat facing forward with tools",
+  sunhat: {
+    src: "/assets/Mascot_Sunhat.png",
+    alt: "Quail in a sun hat with safety glasses",
     fallback: MASCOT_DEFAULT_SRC,
   },
-  sunhat: {
-    src: "/assets/mascot/Sunhat.png",
-    alt: "Quail in a sun hat with safety glasses",
+  alert: {
+    src: "/assets/status/alert.png",
+    alt: "Alarmed quail with a warning cone",
     fallback: MASCOT_DEFAULT_SRC,
   },
 };
@@ -114,7 +114,6 @@ export const MASCOT_SCENES: Record<MascotSceneId, MascotSceneDef> = {
 /** Rotating "crew" mascots used on the home hero + navbar logo. */
 export const HERO_MASCOT_SCENES: MascotSceneId[] = [
   "hardhat",
-  "hardhat_f",
   "sunhat",
 ];
 

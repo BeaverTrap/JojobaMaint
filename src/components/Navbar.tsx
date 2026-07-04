@@ -37,7 +37,7 @@ export default function Navbar({
             className="flex shrink-0 items-center gap-2"
             aria-label="Go to home"
           >
-            <MascotHead scene={navMascot} size={36} />
+            <MascotHead scene={navMascot} size={38} />
             <Logo size={36} />
           </Link>
 

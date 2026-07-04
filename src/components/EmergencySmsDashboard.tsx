@@ -6,10 +6,15 @@ import { format } from "date-fns";
 import type { SmsHistoryRow } from "@/lib/sms-history";
 import type { SmsTemplate } from "@/lib/database.types";
 import {
-  MESSAGE_TIER_OPTIONS,
+  SMS_DASHBOARD_MESSAGE_TIER_OPTIONS,
   messageTierLabel,
   type SmsMessageTier,
 } from "@/lib/sms-tiers";
+import { isWebmasterRole, type StaffRole } from "@/lib/staff-roles";
+import SmsTemplateManager from "@/components/SmsTemplateManager";
+import SmsDashboardHelp from "@/components/SmsDashboardHelp";
+import SmsSectionHeader from "@/components/SmsSectionHeader";
+import GeminiIcon from "@/components/GeminiIcon";
 import {
   containsEmoji,
   SMS_GSM_LIMIT,
@@ -20,26 +25,23 @@ import {
 type Toast = { tone: "success" | "error"; text: string };
 
 type ConfirmState = {
-  mode: "send" | "schedule";
   recipientCount: number;
   skippedByTier: number;
 };
 
 export default function EmergencySmsDashboard({
   templates,
-  availableTags,
   history,
+  viewerRole,
 }: {
   templates: SmsTemplate[];
-  availableTags: string[];
   history: SmsHistoryRow[];
+  viewerRole: StaffRole;
 }) {
-  const [sendToAll, setSendToAll] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const canConfigureGemini = isWebmasterRole(viewerRole);
+
   const [messageTier, setMessageTier] = useState<SmsMessageTier>("critical");
   const [message, setMessage] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [syncToCalendar, setSyncToCalendar] = useState(false);
   const [emojiWarning, setEmojiWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [polishing, setPolishing] = useState(false);
@@ -49,36 +51,10 @@ export default function EmergencySmsDashboard({
   const charLimit = smsCharLimit(message);
   const charCount = message.length;
   const overLimit = charCount > charLimit;
-  const scheduleMode = scheduledAt.trim().length > 0;
-
-  const audienceReady = sendToAll || selectedTags.size > 0;
 
   const canProceed = useMemo(() => {
-    if (!message.trim() || overLimit || submitting || !audienceReady) {
-      return false;
-    }
-    if (scheduleMode) {
-      const when = new Date(scheduledAt);
-      return !Number.isNaN(when.getTime()) && when.getTime() > Date.now();
-    }
-    return true;
-  }, [
-    message,
-    overLimit,
-    submitting,
-    audienceReady,
-    scheduleMode,
-    scheduledAt,
-  ]);
-
-  function toggleTag(tag: string) {
-    setSelectedTags((current) => {
-      const next = new Set(current);
-      if (next.has(tag)) next.delete(tag);
-      else next.add(tag);
-      return next;
-    });
-  }
+    return Boolean(message.trim()) && !overLimit && !submitting;
+  }, [message, overLimit, submitting]);
 
   function applyTemplate(template: SmsTemplate) {
     setMessage(template.body);
@@ -92,15 +68,15 @@ export default function EmergencySmsDashboard({
     setEmojiWarning(hasEmoji);
   }
 
-  async function loadPreview(mode: "send" | "schedule"): Promise<ConfirmState | null> {
+  async function loadPreview(): Promise<ConfirmState | null> {
     try {
       const response = await fetch("/api/sms/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: message.trim(),
-          tags: [...selectedTags],
-          sendToAll,
+          tags: [],
+          sendToAll: true,
           messageTier,
         }),
       });
@@ -111,7 +87,6 @@ export default function EmergencySmsDashboard({
       };
       if (!response.ok) throw new Error(data.error ?? "Could not preview audience");
       return {
-        mode,
         recipientCount: data.recipientCount ?? 0,
         skippedByTier: data.skippedByTier ?? 0,
       };
@@ -124,14 +99,14 @@ export default function EmergencySmsDashboard({
     }
   }
 
-  async function handlePrimaryClick(mode: "send" | "schedule") {
+  async function handleSendClick() {
     if (!canProceed) return;
-    const preview = await loadPreview(mode);
+    const preview = await loadPreview();
     if (!preview) return;
     if (preview.recipientCount === 0) {
       setToast({
         tone: "error",
-        text: "No recipients match your selection and alert tier filter.",
+        text: "No recipients match your selection and message type filter.",
       });
       return;
     }
@@ -155,12 +130,15 @@ export default function EmergencySmsDashboard({
       if (!response.ok) throw new Error(data.error ?? "Polish failed");
       if (data.message) {
         handleMessageChange(data.message);
-        setToast({ tone: "success", text: "Message polished with AI." });
+        setToast({
+          tone: "success",
+          text: "Gemini rewrote your message — review before sending.",
+        });
       }
     } catch (err) {
       setToast({
         tone: "error",
-        text: err instanceof Error ? err.message : "Could not polish message",
+        text: err instanceof Error ? err.message : "Gemini rewrite failed",
       });
     } finally {
       setPolishing(false);
@@ -174,55 +152,33 @@ export default function EmergencySmsDashboard({
 
     const payload = {
       message: message.trim(),
-      tags: [...selectedTags],
-      sendToAll,
+      tags: [],
+      sendToAll: true,
       messageTier,
     };
 
     try {
-      if (confirm.mode === "schedule") {
-        const response = await fetch("/api/sms/schedule", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...payload,
-            scheduledAt: new Date(scheduledAt).toISOString(),
-            syncToCalendar,
-          }),
-        });
-        const data = (await response.json()) as { error?: string; id?: string };
-        if (!response.ok) throw new Error(data.error ?? "Could not schedule alert");
-        setToast({
-          tone: "success",
-          text: syncToCalendar
-            ? "Alert scheduled and synced to Google Calendar."
-            : "Alert scheduled successfully.",
-        });
-        setScheduledAt("");
-        setSyncToCalendar(false);
-      } else {
-        const response = await fetch("/api/sms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = (await response.json()) as {
-          error?: string;
-          successCount?: number;
-          failedCount?: number;
-          voiceFallbackCount?: number;
-        };
-        if (!response.ok) throw new Error(data.error ?? "Send failed");
-        const voice = data.voiceFallbackCount ?? 0;
-        setToast({
-          tone: "success",
-          text:
-            voice > 0
-              ? `Sent ${data.successCount ?? 0} alerts (${voice} via voice fallback).`
-              : `Mass alert sent to ${data.successCount ?? 0} recipient${data.successCount === 1 ? "" : "s"}.`,
-        });
-        setMessage("");
-      }
+      const response = await fetch("/api/sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        successCount?: number;
+        failedCount?: number;
+        voiceFallbackCount?: number;
+      };
+      if (!response.ok) throw new Error(data.error ?? "Send failed");
+      const voice = data.voiceFallbackCount ?? 0;
+      setToast({
+        tone: "success",
+        text:
+          voice > 0
+            ? `Sent ${data.successCount ?? 0} alerts (${voice} via voice fallback).`
+            : `Mass alert sent to ${data.successCount ?? 0} recipient${data.successCount === 1 ? "" : "s"}.`,
+      });
+      setMessage("");
       setConfirm(null);
     } catch (err) {
       setToast({
@@ -237,56 +193,29 @@ export default function EmergencySmsDashboard({
   return (
     <>
       <div className="space-y-6">
-        {templates.length > 0 ? (
-          <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-ink">Templates</h2>
-            <p className="mt-1 text-xs text-muted">
-              Quick-fill the composer. Supports {"{Name}"} and {"{Lot}"} per
-              recipient.
+        <SmsDashboardHelp viewerRole={viewerRole} />
+
+        <SmsTemplateManager templates={templates} onApply={applyTemplate} />
+
+        <section className="space-y-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
+          <SmsSectionHeader title="Who to text">
+            <p>
+              Alerts go to <strong className="text-ink">every resident</strong>{" "}
+              with a valid phone number in the list. Choose the{" "}
+              <strong className="text-ink">message type</strong> below — residents
+              who opted out of that level are skipped automatically.
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {templates.map((template) => (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => applyTemplate(template)}
-                  className="rounded-full border border-line bg-hover/40 px-3 py-1.5 text-sm font-medium text-ink hover:bg-hover"
-                >
-                  {template.title}
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <fieldset className="space-y-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
-          <legend className="px-1 text-sm font-semibold text-ink">
-            Audience
-          </legend>
-
-          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-hover/40 px-3 py-2.5">
-            <input
-              type="checkbox"
-              checked={sendToAll}
-              onChange={(event) => {
-                setSendToAll(event.target.checked);
-                if (event.target.checked) setSelectedTags(new Set());
-              }}
-              className="h-4 w-4 rounded border-line"
-            />
-            <span className="text-sm font-medium text-ink">Send to All</span>
-          </label>
+          </SmsSectionHeader>
 
           <div className="space-y-2">
             <p className="text-xs font-medium text-ink">Message type</p>
             <p className="text-xs text-muted">
               Residents choose how much they want to hear from us (
-              <strong>emergency-only</strong>, <strong>standard</strong>, or{" "}
-              <strong>frequent updates</strong>). Pick the type that matches
-              this message.
+              <strong>emergency-only</strong> or <strong>standard</strong>).
+              Pick the type that matches this message.
             </p>
             <div className="grid gap-2">
-              {MESSAGE_TIER_OPTIONS.map((option) => (
+              {SMS_DASHBOARD_MESSAGE_TIER_OPTIONS.map((option) => (
                 <label
                   key={option.value}
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 transition ${
@@ -314,65 +243,61 @@ export default function EmergencySmsDashboard({
               ))}
             </div>
           </div>
-
-          {!sendToAll ? (
-            availableTags.length === 0 ? (
-              <p className="text-sm text-muted">
-                No tags in the residents table yet — use Send to All or add
-                residents with tags.
-              </p>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {availableTags.map((tag) => {
-                  const checked = selectedTags.has(tag);
-                  return (
-                    <label
-                      key={tag}
-                      className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
-                        checked
-                          ? "border-brand-400 bg-brand-50 dark:border-brand-700 dark:bg-brand-950/30"
-                          : "border-line hover:bg-hover/50"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleTag(tag)}
-                        className="h-4 w-4 rounded border-line"
-                      />
-                      <span className="text-sm font-medium text-ink">{tag}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )
-          ) : (
-            <p className="text-sm text-muted">
-              All residents with valid numbers — message type still filters by
-              each person&apos;s contact preference.
-            </p>
-          )}
-        </fieldset>
+        </section>
 
         <section className="space-y-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-ink">Composer</h2>
+          <SmsSectionHeader title="Composer">
+            <p>
+              Write the text that goes to every resident. One message, one send
+              — keep it under the character counter.{" "}
+              <strong className="text-ink">Google Gemini</strong> rewrites
+              your draft into clear, professional alert wording. Always review
+              the result before sending.
+            </p>
+          </SmsSectionHeader>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={handlePolish}
               disabled={!message.trim() || polishing}
-              className="rounded-lg border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800 hover:bg-brand-100 disabled:opacity-50 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-200"
+              className="inline-flex items-center gap-2 rounded-lg border border-[#4285F4]/40 bg-gradient-to-r from-[#4285F4]/10 via-[#9B72CB]/10 to-[#D96570]/10 px-3 py-1.5 text-xs font-semibold text-ink hover:from-[#4285F4]/20 hover:via-[#9B72CB]/20 hover:to-[#D96570]/20 disabled:opacity-50 dark:border-[#9B72CB]/50"
             >
-              {polishing ? "Polishing…" : "✨ Magic Polish"}
+              <GeminiIcon className="h-4 w-4 shrink-0" />
+              {polishing ? "Google Gemini…" : "Google Gemini"}
             </button>
           </div>
+          <p className="text-xs leading-relaxed text-muted">
+            Optional rewrite — not required to send. Google may require billing
+            or prepaid credits on your API key (
+            <a
+              href="https://aistudio.google.com/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-brand-700 hover:underline dark:text-brand-300"
+            >
+              AI Studio
+            </a>
+            ).{" "}
+            {canConfigureGemini ? (
+              <>
+                Set{" "}
+                <code className="rounded bg-hover px-1 py-0.5 text-ink">
+                  GEMINI_API_KEY
+                </code>{" "}
+                on the server.
+              </>
+            ) : (
+              <>Contact your webmaster if rewrite is unavailable.</>
+            )}
+          </p>
 
           <textarea
             spellCheck
             rows={5}
             value={message}
             onChange={(event) => handleMessageChange(event.target.value)}
-            placeholder="Emergency alert… use {Name} and {Lot} for personalization"
+            placeholder="Write your alert message…"
             className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink"
           />
 
@@ -404,39 +329,6 @@ export default function EmergencySmsDashboard({
           </div>
         </section>
 
-        <section className="space-y-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-ink">
-            Schedule (optional)
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="font-medium text-ink">Send at</span>
-              <input
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={(event) => setScheduledAt(event.target.value)}
-                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink"
-              />
-            </label>
-            <label className="flex cursor-pointer items-center gap-3 self-end rounded-xl border border-line px-3 py-2.5">
-              <input
-                type="checkbox"
-                checked={syncToCalendar}
-                onChange={(event) => setSyncToCalendar(event.target.checked)}
-                disabled={!scheduleMode}
-                className="h-4 w-4 rounded border-line disabled:opacity-40"
-              />
-              <span className="text-sm font-medium text-ink">
-                Sync to Google Calendar
-              </span>
-            </label>
-          </div>
-          <p className="text-xs text-muted">
-            Leave blank to send immediately. Scheduled alerts dispatch via Vercel
-            Cron every minute.
-          </p>
-        </section>
-
         {toast ? (
           <p
             role="status"
@@ -450,40 +342,40 @@ export default function EmergencySmsDashboard({
           </p>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-3">
-          {scheduleMode ? (
+        <div className="space-y-2">
+          <SmsSectionHeader title="Send">
+            <p>
+              You will see a confirmation with the exact recipient count before
+              anything goes out.
+            </p>
+          </SmsSectionHeader>
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               disabled={!canProceed}
-              onClick={() => handlePrimaryClick("schedule")}
-              className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-            >
-              Schedule Alert
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={!canProceed}
-              onClick={() => handlePrimaryClick("send")}
+              onClick={handleSendClick}
               className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
             >
               Send Mass Alert
             </button>
-          )}
           <Link
             href="/admin"
             className="text-sm font-medium text-brand-700 hover:underline"
           >
             ← Dashboard
           </Link>
+          </div>
         </div>
 
         <section className="rounded-2xl border border-line bg-surface shadow-sm">
           <div className="border-b border-line px-4 py-3">
-            <h2 className="text-sm font-semibold text-ink">Audit log</h2>
-            <p className="text-xs text-muted">
-              Recent sends from sms_history (newest first).
-            </p>
+            <SmsSectionHeader title="Audit log">
+              <p>
+                History of every mass text: who sent it, audience, delivery
+                counts (including voice fallback for landlines), and the message
+                text. Newest first.
+              </p>
+            </SmsSectionHeader>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
@@ -560,11 +452,10 @@ export default function EmergencySmsDashboard({
               id="sms-confirm-title"
               className="text-lg font-bold text-ink"
             >
-              Confirm {confirm.mode === "schedule" ? "schedule" : "send"}
+              Confirm send
             </h2>
             <p className="mt-2 text-sm text-muted">
-              You are about to{" "}
-              {confirm.mode === "schedule" ? "schedule" : "send"} this alert to{" "}
+              You are about to send this alert to{" "}
               <strong className="text-ink">
                 {confirm.recipientCount} recipient
                 {confirm.recipientCount === 1 ? "" : "s"}
@@ -582,13 +473,6 @@ export default function EmergencySmsDashboard({
             <blockquote className="mt-4 rounded-xl border border-line bg-hover/30 px-3 py-2 text-sm text-ink">
               {message.trim()}
             </blockquote>
-            {confirm.mode === "schedule" && scheduledAt ? (
-              <p className="mt-2 text-xs text-muted">
-                Scheduled for{" "}
-                {format(new Date(scheduledAt), "EEE, MMM d · h:mm a")}
-                {syncToCalendar ? " · Google Calendar sync on" : ""}
-              </p>
-            ) : null}
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
@@ -606,9 +490,7 @@ export default function EmergencySmsDashboard({
               >
                 {submitting
                   ? "Working…"
-                  : confirm.mode === "schedule"
-                    ? "Confirm schedule"
-                    : "Confirm send"}
+                  : "Confirm send"}
               </button>
             </div>
           </div>

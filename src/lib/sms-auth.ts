@@ -6,13 +6,13 @@ export type SmsAdminContext =
   | { ok: false; status: 401 | 403; error: string };
 
 export async function requireSmsAdmin(): Promise<SmsAdminContext> {
-  const { userId, isAuthorized, staffRole } = await getCurrentUser();
+  const { userId, isAuthorized, staffRole, isWebmaster } = await getCurrentUser();
 
   if (!userId || !isAuthorized) {
     return { ok: false, status: 401, error: "Unauthorized" };
   }
 
-  if (!isAdminRole(staffRole)) {
+  if (!isWebmaster && !isAdminRole(staffRole)) {
     return { ok: false, status: 403, error: "Forbidden" };
   }
 

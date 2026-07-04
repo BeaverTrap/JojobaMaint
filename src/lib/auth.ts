@@ -1,12 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/database.types";
 import type { StaffRole } from "@/lib/staff-roles";
+import { getDebugRole } from "@/lib/debug-mode";
 
 export type CurrentUser = {
   userId: string | null;
   profile: Profile | null;
   isAuthorized: boolean;
   staffRole: StaffRole | null;
+  /** The role the webmaster is viewing-as (null = viewing as themselves). */
+  debugRole: StaffRole | null;
+  /** The effective role after debug override. Use this for UI gating. */
+  effectiveRole: StaffRole | null;
+  /** True if the real user is a webmaster (regardless of debug impersonation). */
+  isWebmaster: boolean;
 };
 
 /**
@@ -21,7 +28,7 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { userId: null, profile: null, isAuthorized: false, staffRole: null };
+    return { userId: null, profile: null, isAuthorized: false, staffRole: null, debugRole: null, effectiveRole: null, isWebmaster: false };
   }
 
   const { data: profile } = await supabase
@@ -31,10 +38,23 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     .maybeSingle();
 
   const typed = (profile as Profile) ?? null;
+  const realRole = typed?.staff_role ?? null;
+  const isWebmaster = realRole === "webmaster";
+
+  let debugRole: StaffRole | null = null;
+  if (isWebmaster) {
+    debugRole = await getDebugRole();
+  }
+
+  const effectiveRole = debugRole ?? realRole;
+
   return {
     userId: user.id,
     profile: typed,
     isAuthorized: Boolean(typed?.is_authorized),
-    staffRole: typed?.staff_role ?? null,
+    staffRole: realRole,
+    debugRole,
+    effectiveRole,
+    isWebmaster,
   };
 }

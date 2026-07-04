@@ -34,6 +34,11 @@ export const MESSAGE_TIER_OPTIONS: {
   },
 ];
 
+/** Message types shown on the SMS dashboard (announcement hidden for now). */
+export const SMS_DASHBOARD_MESSAGE_TIER_OPTIONS = MESSAGE_TIER_OPTIONS.filter(
+  (option) => option.value !== "announcement",
+);
+
 /** Whether a resident's contact preference allows this message tier. */
 export function residentReceivesMessageTier(
   residentTier: ResidentAlertTier,

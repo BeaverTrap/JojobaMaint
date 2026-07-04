@@ -11,7 +11,6 @@ type ScheduleBody = {
   sendToAll?: boolean;
   messageTier?: string;
   scheduledAt?: string;
-  syncToCalendar?: boolean;
 };
 
 export async function POST(request: Request) {
@@ -34,7 +33,6 @@ export async function POST(request: Request) {
   const sendToAll = Boolean(body.sendToAll);
   const messageTier = parseMessageTier(body.messageTier);
   const scheduledAt = body.scheduledAt?.trim() ?? "";
-  const syncToCalendar = Boolean(body.syncToCalendar);
 
   if (!message) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -69,7 +67,6 @@ export async function POST(request: Request) {
     sendToAll,
     messageTier,
     scheduledAt,
-    syncToCalendar,
     createdBy: auth.userId,
   });
 

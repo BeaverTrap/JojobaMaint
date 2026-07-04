@@ -179,8 +179,8 @@ export function FacilityUnitRow({
             const stateLabel = roomClosed
               ? "closed"
               : status === "out"
-                ? "out of order"
-                : "open";
+                ? "down"
+                : "working";
 
             return (
               <span
@@ -204,7 +204,7 @@ export function FacilityUnitRow({
   );
 }
 
-/** Admin: tap each numbered unit to toggle open / out. */
+/** Admin: tap each labeled chip to toggle working / down. */
 export function UnitStatusPicker({
   singular,
   statuses,
@@ -219,44 +219,44 @@ export function UnitStatusPicker({
   if (statuses.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-1">
+      <div className="flex flex-wrap gap-1">
         {statuses.map((status, index) => (
           <button
             key={`${singular}-${index}`}
             type="button"
             disabled={disabled}
             onClick={() => onChange(toggleUnitAt(statuses, index))}
-            className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`rounded-md px-2 py-1 text-[11px] font-semibold transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 ${
               status === "ok"
-                ? "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
-                : "border-red-300 bg-red-50 text-red-900 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+                ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-200 dark:hover:bg-emerald-800/60"
+                : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-200 dark:hover:bg-red-800/60"
             }`}
           >
-            {singular} {index + 1}: {status === "ok" ? "Open" : "Out"}
+            {singular} {index + 1}: {status === "ok" ? "Working" : "Down"}
           </button>
         ))}
+        {statuses.length > 1 ? (
+          <>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(setAllUnits(statuses, "ok"))}
+              className="ml-1 rounded-md px-2 py-1 text-[11px] font-semibold text-emerald-700 underline-offset-2 hover:underline disabled:opacity-50 dark:text-emerald-400"
+            >
+              All working
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(setAllUnits(statuses, "out"))}
+              className="rounded-md px-2 py-1 text-[11px] font-semibold text-red-700 underline-offset-2 hover:underline disabled:opacity-50 dark:text-red-400"
+            >
+              All down
+            </button>
+          </>
+        ) : null}
       </div>
-      {statuses.length > 1 ? (
-        <div className="flex flex-wrap gap-3 text-xs font-medium">
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(setAllUnits(statuses, "ok"))}
-            className="text-emerald-700 hover:underline disabled:opacity-50 dark:text-emerald-300"
-          >
-            Mark all open
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(setAllUnits(statuses, "out"))}
-            className="text-red-700 hover:underline disabled:opacity-50 dark:text-red-300"
-          >
-            Mark all out
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }

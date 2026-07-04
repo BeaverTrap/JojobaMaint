@@ -80,10 +80,11 @@ A per-migration summary is in the [Site Bible → Data model](docs/site-bible.md
 
 Access is public to read, but only **whitelisted** emails can post — controlled server-side. Add an email with a role:
 
+Roles: `staff` (post updates) · `manager` (content & status) · `admin` (SMS, whitelist) · `webmaster` (everything + site-builder tools). First webmaster must be set in SQL; after that use **Dashboard → Staff access**.
+
 ```sql
 insert into public.authorized_emails (email, staff_role, note) values
-  ('jane@gmail.com', 'manager', 'Lead maintenance'),
-  ('crew@gmail.com', 'staff',   'Grounds crew')
+  ('you@gmail.com', 'webmaster', 'Site builder')
 on conflict (email) do update set staff_role = excluded.staff_role;
 ```
 

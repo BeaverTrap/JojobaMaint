@@ -22,7 +22,7 @@ export const FACILITY_LOCATION_ORDER: ParkFacilityLocationId[] = [
 ];
 
 export const FACILITY_STATUS_SELECT =
-  "id, label, sort_order, washer_count, dryer_count, pet_washer_count, water_heater_count, kitchen_sink_count, oven_count, washer_statuses, dryer_statuses, pet_washer_statuses, water_heater_statuses, kitchen_sink_statuses, oven_statuses, laundry_note, pet_washer_note, water_heater_note, kitchen_note, note, updated_by, updated_at";
+  "id, label, sort_order, washer_count, dryer_count, pet_washer_count, water_heater_count, kitchen_sink_count, oven_count, washer_statuses, dryer_statuses, pet_washer_statuses, water_heater_statuses, kitchen_sink_statuses, oven_statuses, closed, laundry_note, pet_washer_note, water_heater_note, kitchen_note, note, updated_by, updated_at";
 
 export const RESTROOM_STATUS_SELECT =
   "id, building_id, label, sort_order, shower_count, stall_count, urinal_count, sink_count, shower_statuses, stall_statuses, urinal_statuses, sink_statuses, closed, note, updated_by, updated_at";
@@ -39,6 +39,7 @@ function parseStatuses(raw: unknown): FacilityUnitState[] | undefined {
 function normalizeBuilding(row: ParkFacilityStatus): ParkFacilityStatus {
   return {
     ...row,
+    closed: row.closed ?? false,
     washer_statuses: normalizeStatuses(
       row.washer_count,
       parseStatuses(row.washer_statuses),
@@ -116,6 +117,7 @@ function building(
     water_heater_statuses: defaultStatuses(water_heater_count),
     kitchen_sink_statuses: defaultStatuses(kitchen_sink_count),
     oven_statuses: defaultStatuses(oven_count),
+    closed: false,
     laundry_note: null,
     pet_washer_note: null,
     water_heater_note: null,
@@ -337,20 +339,22 @@ export function restroomsTone(
 export function facilityLocationTone(
   location: ParkFacilityBuilding,
 ): "ok" | "warn" | "alert" {
+  if (location.closed) return "alert";
   const out = buildingUnitsOut(location);
   if (out === 0) return "ok";
   if (out >= buildingUnitsTotal(location)) return "alert";
   return "warn";
 }
 
-/** Short label for the building header when something is out of order. */
+/** Short label for the building header when something is down. */
 export function facilityIssueSummary(location: ParkFacilityBuilding): string {
+  if (location.closed) return "Closed";
   const parts: string[] = [];
   if (laundryTone(location) !== "ok") parts.push("Laundry");
   if (waterHeaterTone(location) !== "ok") parts.push("Hot water");
   if (kitchenTone(location) !== "ok") parts.push("Kitchen");
   if (restroomsTone(location) !== "ok") parts.push("Restrooms");
-  if (parts.length === 0) return "All open";
+  if (parts.length === 0) return "All working";
   if (parts.length === 1) return `${parts[0]} issue`;
   return `${parts.join(" · ")} issues`;
 }
@@ -360,6 +364,7 @@ export function facilitiesOverallTone(
 ): "ok" | "warn" | "alert" {
   let tone: "ok" | "warn" | "alert" = "ok";
   for (const location of locations) {
+    if (location.closed) return "alert";
     const locationTone = facilityLocationTone(location);
     if (locationTone === "alert") return "alert";
     if (locationTone === "warn") tone = "warn";
@@ -370,15 +375,20 @@ export function facilitiesOverallTone(
 export function facilitiesOverallSummary(
   locations: ParkFacilityBuilding[],
 ): string {
+  const closedBuildings = locations.filter((l) => l.closed).length;
   const unitsDown = locations.reduce(
     (sum, location) => sum + buildingUnitsOut(location),
     0,
   );
-  if (unitsDown === 0) return "All facilities open";
+  if (closedBuildings === 0 && unitsDown === 0) return "All facilities working";
 
   const buildingsAffected = locations.filter(
-    (location) => buildingUnitsOut(location) > 0,
+    (location) => location.closed || buildingUnitsOut(location) > 0,
   ).length;
 
-  return `${unitsDown} out of order across ${buildingsAffected} building${buildingsAffected === 1 ? "" : "s"}`;
+  if (closedBuildings > 0 && unitsDown === 0) {
+    return `${closedBuildings} building${closedBuildings === 1 ? "" : "s"} closed`;
+  }
+
+  return `${unitsDown} down across ${buildingsAffected} building${buildingsAffected === 1 ? "" : "s"}`;
 }

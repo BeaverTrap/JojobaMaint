@@ -1,17 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MASCOT_FALLBACK_SRC,
   MASCOT_SCENES,
   type MascotSceneId,
 } from "@/lib/mascot-scenes";
+import { getMascotSettings } from "@/lib/mascot-avatar-settings-cache";
 
 const LOGO_MASCOT_AVATARS: Record<string, string> = {
-  hardhat: "/assets/mascot/LogoMascotAvatar_001.png",
-  hardhat_f: "/assets/mascot/LogoMascotAvatar_002.png",
-  sunhat: "/assets/mascot/LogoMascotAvatar_003.png",
+  hardhat: "/assets/Mascot_Hardhat_Avatar.png",
+  sunhat: "/assets/Mascot_Sunhat_Avatar.png",
 };
 
 /**
@@ -200,7 +200,9 @@ export function Mascot({
   );
 }
 
-/** Pre-cropped mascot avatar for compact spots (e.g. next to the navbar logo). */
+/** Pre-cropped mascot avatar for compact spots (e.g. next to the navbar logo).
+ *  The feather is designed to pop out above the circle boundary.
+ *  Positioning settings are read live from the database. */
 export function MascotHead({
   scene,
   size = 36,
@@ -212,7 +214,16 @@ export function MascotHead({
 }) {
   const def = MASCOT_SCENES[scene];
   const [src, setSrc] = useState(LOGO_MASCOT_AVATARS[scene] ?? def.src);
-  const overhang = Math.round(size * 0.24);
+  const [, forceRender] = useState(0);
+
+  useEffect(() => {
+    getMascotSettings(scene, () => forceRender((n) => n + 1));
+  }, [scene]);
+
+  const settings = getMascotSettings(scene);
+  const overhangPct = settings.overhang_pct;
+  const scalePct = settings.scale_pct;
+  const offsetY = settings.offset_y;
 
   const onError = () => {
     const avatarSrc = LOGO_MASCOT_AVATARS[scene];
@@ -227,25 +238,32 @@ export function MascotHead({
     if (src !== MASCOT_FALLBACK_SRC) setSrc(MASCOT_FALLBACK_SRC);
   };
 
+  const overhang = Math.round(size * (overhangPct / 100));
+
   return (
     <span
-      className={`relative inline-flex shrink-0 items-end ${className}`.trim()}
+      className={`relative inline-block shrink-0 ${className}`.trim()}
       style={{ width: size, height: size + overhang }}
       aria-hidden
     >
-      {/* Green circle behind the mascot, anchored to the bottom so the
-          feather still hangs out the top. */}
+      {/* Circular background ring */}
       <span
-        className="absolute inset-x-0 bottom-0 rounded-full bg-brand-600 ring-1 ring-brand-700/40 dark:bg-brand-500 dark:ring-brand-400/30"
-        style={{ height: size }}
+        className="absolute bottom-0 left-0 rounded-full bg-white ring-2 ring-brand-500/50 dark:bg-brand-950 dark:ring-brand-400/40"
+        style={{ width: size, height: size }}
       />
+      {/* Image overflows above the circle for the feather */}
       <Image
         src={src}
         alt=""
         width={Math.round(size * 2)}
-        height={Math.round((size + overhang) * 2)}
+        height={Math.round(size * 2)}
         unoptimized
-        className="relative h-full w-full object-contain drop-shadow-sm"
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 object-contain"
+        style={{
+          width: size * (scalePct / 100),
+          height: (size + overhang) * (scalePct / 100),
+          marginBottom: offsetY,
+        }}
         onError={onError}
       />
     </span>

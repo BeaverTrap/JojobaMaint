@@ -2,13 +2,17 @@
 
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { htmlToMarkdown, normalizeDocsPlainText } from "@/lib/article-format";
 import { markdownToHtml } from "@/lib/markdown-html";
+import MascotStickerPicker from "@/components/MascotStickerPicker";
+import type { Sticker } from "@/lib/mascot-stickers";
 
 export type RichTextEditorHandle = {
   insertText: (chunk: string, replaceAll?: boolean) => void;
@@ -72,6 +76,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(
     /** null until first DOM sync — avoids skipping initial hydrate when value === ref default */
     const lastEmitted = useRef<string | null>(null);
     const skipSync = useRef(false);
+    const [stickerOpen, setStickerOpen] = useState(false);
 
     useEffect(() => {
       const el = editorRef.current;
@@ -117,6 +122,13 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(
         editorRef.current?.focus();
       },
     }));
+
+    const handleStickerSelect = useCallback((sticker: Sticker) => {
+      const snippet = `\n\n![${sticker.label}](${sticker.src})\n\n`;
+      onChange(lastEmitted.current ? `${lastEmitted.current}${snippet}` : snippet);
+      setStickerOpen(false);
+      requestAnimationFrame(() => editorRef.current?.focus());
+    }, [onChange]);
 
     function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
       const html = e.clipboardData.getData("text/html");
@@ -197,6 +209,25 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(
             disabled={disabled}
             onClick={() => runCommand("insertOrderedList")}
           />
+          <span className="mx-0.5 h-5 w-px bg-line" aria-hidden />
+          <div className="relative">
+            <ToolbarButton
+              label={
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              title="Insert mascot sticker"
+              disabled={disabled}
+              onClick={() => setStickerOpen(!stickerOpen)}
+            />
+            {stickerOpen ? (
+              <MascotStickerPicker
+                onSelect={handleStickerSelect}
+                onClose={() => setStickerOpen(false)}
+              />
+            ) : null}
+          </div>
         </div>
 
         <div

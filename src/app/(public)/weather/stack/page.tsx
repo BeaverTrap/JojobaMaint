@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import WeatherStackSandbox from "@/components/WeatherStackSandbox";
-import { requireStaffRole } from "@/lib/require-staff-role";
+import { requireWebmasterRole } from "@/lib/require-webmaster-role";
 
 export const metadata: Metadata = {
   title: "Weather mascot setup",
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function WeatherStackPage() {
-  await requireStaffRole("admin");
+  await requireWebmasterRole();
 
   return <WeatherStackSandbox />;
 }
