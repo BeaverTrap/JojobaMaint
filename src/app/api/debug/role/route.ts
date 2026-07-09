@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth";
-import { DEBUG_ROLE_COOKIE } from "@/lib/debug-mode";
+import { DEBUG_ROLE_COOKIE, DEBUG_PUBLIC_VALUE } from "@/lib/debug-mode";
 import { STAFF_ROLES } from "@/lib/staff-roles";
 import type { StaffRole } from "@/lib/staff-roles";
 
@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ role: null });
   }
 
-  if (!STAFF_ROLES.includes(role as StaffRole)) {
+  const validValues = [...STAFF_ROLES, DEBUG_PUBLIC_VALUE];
+  if (!validValues.includes(role as StaffRole)) {
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
   }
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     path: "/",
     httpOnly: false,
     sameSite: "lax",
-    maxAge: 60 * 60 * 4, // 4 hours
+    maxAge: 60 * 60 * 4,
   });
 
   return NextResponse.json({ role });

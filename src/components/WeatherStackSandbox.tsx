@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import WeatherMascotStack from "@/components/WeatherMascotStack";
 import {
   clampLayerRect,
   DEFAULT_WEATHER_MASCOT_LAYOUT,
-  formatLayoutForSourceFile,
   type WeatherEditLayerId,
   type WeatherLayoutRect,
   type WeatherMascotLayoutConfig,
@@ -114,16 +113,12 @@ export default function WeatherStackSandbox() {
   const [layout, setLayout] = useState<WeatherMascotLayoutConfig>(
     DEFAULT_WEATHER_MASCOT_LAYOUT,
   );
-  const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const weatherLabel =
     WEATHER_CODES.find((w) => w.code === weatherCode)?.label ?? "Clear";
   const quailSet = resolveQuailSet(temperatureF, weatherCode);
-
-  const layoutSnippet = useMemo(
-    () => formatLayoutForSourceFile(layout),
-    [layout],
-  );
 
   const handleLayoutChange = useCallback((next: WeatherMascotLayoutConfig) => {
     setLayout(next);
@@ -133,11 +128,22 @@ export default function WeatherStackSandbox() {
     setLayout(DEFAULT_WEATHER_MASCOT_LAYOUT);
   }, []);
 
-  const copyLayout = useCallback(async () => {
-    await navigator.clipboard.writeText(layoutSnippet);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
-  }, [layoutSnippet]);
+  const saveLive = useCallback(async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/weather-layout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(layout),
+      });
+      if (res.ok) {
+        setSaved(true);
+        window.setTimeout(() => setSaved(false), 3000);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [layout]);
 
   const refreshQuail = useCallback(() => {
     setRotationSeed(new Date().toISOString());
@@ -184,10 +190,7 @@ export default function WeatherStackSandbox() {
       <div>
         <h1 className="text-xl font-bold text-ink">Weather mascot stack</h1>
         <p className="mt-1 text-sm text-muted">
-          Drag layers into place, then copy the layout snippet into{" "}
-          <code className="text-xs">src/lib/weather-mascot-layout.ts</code> and
-          save from <code className="text-xs">/weather/stack</code>.
-          deploy — everyone gets the same positions.
+          Drag layers into place, then hit <strong>Save live</strong> — the layout updates immediately for all visitors.
         </p>
       </div>
 
@@ -212,10 +215,11 @@ export default function WeatherStackSandbox() {
         </button>
         <button
           type="button"
-          onClick={copyLayout}
-          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white"
+          onClick={saveLive}
+          disabled={saving}
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-700 active:scale-95 disabled:opacity-50"
         >
-          {copied ? "Copied!" : "Copy layout for deploy"}
+          {saved ? "✓ Saved live!" : saving ? "Saving…" : "Save live"}
         </button>
         <button
           type="button"
@@ -469,14 +473,6 @@ export default function WeatherStackSandbox() {
         </div>
       </dl>
 
-      <div>
-        <p className="mb-2 text-sm font-medium text-ink">
-          Paste into <code className="text-xs">weather-mascot-layout.ts</code>
-        </p>
-        <pre className="overflow-x-auto rounded-xl border border-line bg-surface p-3 text-xs text-ink">
-          {layoutSnippet}
-        </pre>
-      </div>
     </div>
   );
 }

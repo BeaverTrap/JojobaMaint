@@ -8,6 +8,7 @@ import {
   type MascotSceneId,
 } from "@/lib/mascot-scenes";
 import { getMascotSettings } from "@/lib/mascot-avatar-settings-cache";
+import { getBranding } from "@/lib/branding-cache";
 
 const LOGO_MASCOT_AVATARS: Record<string, string> = {
   hardhat: "/assets/Mascot_Hardhat_Avatar.png",
@@ -60,19 +61,29 @@ export function Wordmark({
   showSubtitle?: boolean;
   size?: number;
 }) {
+  const [, forceRender] = useState(0);
+  useEffect(() => {
+    getBranding(() => forceRender((n) => n + 1));
+  }, []);
+
+  const branding = getBranding();
+  const primaryColor = resolveToken(branding.wordmark_primary, branding);
+  const accentColor = resolveToken(branding.wordmark_accent, branding);
+
   return (
     <span className={`flex flex-col leading-none ${className}`.trim()}>
       <span
-        className="font-display font-extrabold tracking-[-0.04em] text-ink"
-        style={{ fontSize: size }}
+        className="font-display font-extrabold tracking-[-0.04em]"
+        style={{ fontSize: size, color: primaryColor }}
       >
-        Jojoba<span className="text-brand-600 dark:text-brand-400">Works</span>
+        Jojoba<span style={{ color: accentColor }}>Works</span>
       </span>
       {showSubtitle && (
         <span className="mt-1 flex items-center gap-1.5">
           <span
             aria-hidden
-            className="h-0.5 w-4 rounded-full bg-brand-600 dark:bg-brand-400"
+            className="h-0.5 w-4 rounded-full"
+            style={{ backgroundColor: accentColor }}
           />
           <span
             className="font-display font-semibold tracking-[0.16em] text-muted"
@@ -306,4 +317,17 @@ export function MascotScene({
       }}
     />
   );
+}
+
+function resolveToken(token: string, branding: { gold: string; brand_50: string; brand_100: string; brand_200: string; brand_300: string; brand_400: string; brand_500: string; brand_600: string; brand_700: string; brand_800: string; brand_900: string; brand_950: string }): string {
+  if (token.startsWith("#")) return token;
+  if (token === "ink") return "var(--ink)";
+  if (token === "muted") return "var(--muted)";
+  if (token === "gold") return branding.gold;
+  const m = token.match(/^brand-(\d+)$/);
+  if (m) {
+    const key = `brand_${m[1]}` as keyof typeof branding;
+    if (key in branding) return branding[key];
+  }
+  return "var(--ink)";
 }

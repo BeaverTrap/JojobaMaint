@@ -53,3 +53,38 @@ export function federalHolidayDates(year: number): Set<string> {
 export function isFederalHolidayObserved(day: Date): boolean {
   return federalHolidayDates(day.getFullYear()).has(dateKey(day));
 }
+
+/** Name of the observed federal holiday on this calendar day, if any. */
+export function getFederalHolidayName(day: Date): string | null {
+  const year = day.getFullYear();
+  const key = dateKey(day);
+
+  const holidays: [string, string][] = [
+    [observeFixedHoliday(year, 1, 1), "New Year's Day"],
+    [nthMonday(year, 1, 3), "MLK Day"],
+    [nthMonday(year, 2, 3), "Presidents Day"],
+    [lastMonday(year, 5), "Memorial Day"],
+    [observeFixedHoliday(year, 6, 19), "Juneteenth"],
+    [observeFixedHoliday(year, 7, 4), "Independence Day"],
+    [nthMonday(year, 9, 1), "Labor Day"],
+    [nthMonday(year, 10, 2), "Columbus Day"],
+    [observeFixedHoliday(year, 11, 11), "Veterans Day"],
+    [observeFixedHoliday(year, 12, 25), "Christmas"],
+  ];
+
+  for (const [date, name] of holidays) {
+    if (date === key) return name;
+  }
+
+  return null;
+}
+
+/**
+ * Label for the calendar when Monday pickup is skipped (observed federal holiday).
+ * Only Mondays — avoids marking observed Friday/Saturday shifts (e.g. July 3 when the 4th is Sat).
+ */
+export function getFederalPickupHolidayLabel(day: Date): string | null {
+  if (day.getDay() !== 1) return null;
+  if (!isFederalHolidayObserved(day)) return null;
+  return getFederalHolidayName(day);
+}

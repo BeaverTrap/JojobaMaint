@@ -41,7 +41,7 @@ export default async function AdminTreeAssessmentsPage() {
           <p className="text-sm text-muted">Lot evaluations and tree work.</p>
         </div>
         <Link
-          href="/admin?area=landscaping&format=structured"
+          href="/admin/compose?area=landscaping&format=structured"
           className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
         >
           + New assessment

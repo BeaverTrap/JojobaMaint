@@ -8,6 +8,7 @@ import ScheduleCalendar from "@/components/ScheduleCalendar";
 import CalendarSyncButton from "@/components/CalendarSyncButton";
 import MascotEmptyState from "@/components/MascotEmptyState";
 import PageMascotHeading from "@/components/PageMascotHeading";
+import { getAllHolidayMascots } from "@/lib/holiday-mascots-server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +18,10 @@ export default async function SchedulePage() {
 
   const rangeStart = subMonths(new Date(), 3).toISOString();
   const rangeEnd = addMonths(new Date(), 12).toISOString();
-  const [events, guidelines] = await Promise.all([
+  const [events, guidelines, holidayMascots] = await Promise.all([
     fetchCalendarEventsForRange(supabase, rangeStart, rangeEnd),
     fetchPickupGuidelines(supabase),
+    getAllHolidayMascots(),
   ]);
   const pickupScheduleMode = pickupScheduleFromFlag(
     guidelines.is_summer_schedule,
@@ -38,6 +40,7 @@ export default async function SchedulePage() {
       <ScheduleCalendar
         events={events}
         pickupScheduleMode={pickupScheduleMode}
+        holidayMascots={holidayMascots}
       />
 
       {events.length === 0 && (

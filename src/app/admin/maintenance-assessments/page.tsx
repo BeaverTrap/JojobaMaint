@@ -43,7 +43,7 @@ export default async function AdminMaintenanceAssessmentsPage() {
           </p>
         </div>
         <Link
-          href="/admin?area=maintenance&format=structured"
+          href="/admin/compose?area=maintenance&format=structured"
           className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
         >
           + New assessment

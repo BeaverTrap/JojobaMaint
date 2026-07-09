@@ -17,7 +17,11 @@ export function parkCalendarNoon(
   dateIso: string,
   timeZone: string = PARK_TIMEZONE,
 ): Date {
-  const [year, month, day] = dateIso.split("-").map(Number);
+  const datePart = dateIso?.slice(0, 10) ?? "";
+  const [year, month, day] = datePart.split("-").map(Number);
+  if (!year || !month || !day || Number.isNaN(year)) {
+    return new Date(NaN);
+  }
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
@@ -93,11 +97,15 @@ export function parkMonthFromDateIso(
   dateIso: string,
   timeZone: string = PARK_TIMEZONE,
 ): number {
+  const noon = parkCalendarNoon(dateIso, timeZone);
+  if (Number.isNaN(noon.getTime())) {
+    return new Date().getMonth() + 1;
+  }
   return Number(
     new Intl.DateTimeFormat("en-US", {
       month: "numeric",
       timeZone,
-    }).format(parkCalendarNoon(dateIso, timeZone)),
+    }).format(noon),
   );
 }
 

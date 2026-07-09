@@ -5,6 +5,7 @@ import Feed from "@/components/Feed";
 import PageMascotHeading from "@/components/PageMascotHeading";
 import { fetchFeedItems } from "@/lib/feed";
 import { parseFeedFilter } from "@/lib/feed-section";
+import { DEFAULT_COMPOSE_HREF } from "@/lib/admin-hub";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function FeedPage({
       >
         {isAuthorized && (
           <Link
-            href="/admin"
+            href={DEFAULT_COMPOSE_HREF}
             className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
           >
             + New

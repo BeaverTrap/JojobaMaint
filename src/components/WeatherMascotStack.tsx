@@ -23,6 +23,7 @@ import {
 import {
   clampLayerRect,
   DEFAULT_WEATHER_MASCOT_LAYOUT,
+  fetchWeatherMascotLayout,
   getWeatherMascotLayout,
   rectToCss,
   type WeatherEditLayerId,
@@ -276,7 +277,7 @@ export default function WeatherMascotStack({
       setLayout(layoutProp);
       return;
     }
-    setLayout(getWeatherMascotLayout());
+    fetchWeatherMascotLayout().then(setLayout);
   }, [layoutProp]);
 
   const mapVariant = previewMapVariant ?? weatherCodeToMapVariant(weatherCode);

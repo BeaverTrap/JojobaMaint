@@ -7,6 +7,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import MobileMenu from "@/components/MobileMenu";
 import type { Profile } from "@/lib/database.types";
 import { NAV_LINKS, REQUEST_NAV } from "@/lib/nav-links";
+import { DEFAULT_COMPOSE_HREF } from "@/lib/admin-hub";
 import { randomHeroScene } from "@/lib/mascot-scenes";
 
 export default function Navbar({
@@ -102,7 +103,7 @@ export default function Navbar({
           <div className="flex shrink-0 items-center gap-2 md:hidden">
             {isAuthorized && (
               <Link
-                href="/admin"
+                href={DEFAULT_COMPOSE_HREF}
                 className="rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white"
               >
                 + New

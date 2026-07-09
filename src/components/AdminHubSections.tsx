@@ -4,15 +4,13 @@ import type { ReactNode } from "react";
 import {
   ADMIN_CREATE_LINKS,
   ADMIN_MANAGE_LINKS,
-  ADMIN_PUBLIC_LINKS,
-  ADMIN_TOOLS_LINKS,
   WEBMASTER_TOOLS_LINKS,
   adminHubLinksForRole,
 } from "@/lib/admin-hub";
 import type { AdminHubLink } from "@/lib/admin-hub";
 import { MascotScene } from "@/components/Brand";
-import WeatherMascotStack from "@/components/WeatherMascotStack";
 import { STAFF_ROLE_LABELS, type StaffRole } from "@/lib/staff-roles";
+import DebugModeCard from "@/components/DebugModeCard";
 
 export default function AdminHubSections({
   staffRole,
@@ -23,8 +21,6 @@ export default function AdminHubSections({
 }) {
   const createLinks = adminHubLinksForRole(ADMIN_CREATE_LINKS, staffRole);
   const manageLinks = adminHubLinksForRole(ADMIN_MANAGE_LINKS, staffRole);
-  const publicLinks = adminHubLinksForRole(ADMIN_PUBLIC_LINKS, staffRole);
-  const adminLinks = adminHubLinksForRole(ADMIN_TOOLS_LINKS, staffRole);
   const webmasterLinks = adminHubLinksForRole(
     WEBMASTER_TOOLS_LINKS,
     staffRole,
@@ -32,66 +28,34 @@ export default function AdminHubSections({
 
   const firstName = displayName?.trim().split(/\s+/)[0];
 
+  const allLinks = [
+    ...(createLinks.length > 0 ? [{ title: "", links: createLinks }] : []),
+    ...(manageLinks.length > 0 ? [{ title: "Admin", links: manageLinks }] : []),
+    ...(webmasterLinks.length > 0
+      ? [{ title: "Webmaster", links: webmasterLinks }]
+      : []),
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink">
+        <h1 className="text-lg font-bold tracking-tight text-ink">
           {firstName ? `Welcome, ${firstName}` : "Dashboard"}
         </h1>
-        <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-brand-700 ring-1 ring-brand-200 dark:bg-brand-950 dark:text-brand-200 dark:ring-brand-800">
+        <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700 ring-1 ring-brand-200 dark:bg-brand-950 dark:text-brand-200 dark:ring-brand-800">
           {STAFF_ROLE_LABELS[staffRole]}
         </span>
       </div>
 
-      {createLinks.length > 0 ? (
-        <HubSection title="Create">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {createLinks.map((link) => (
+      {allLinks.map((section) => (
+        <HubSection key={section.title || "_staff"} title={section.title}>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {section.links.map((link) => (
               <HubLinkCard key={link.href} link={link} />
             ))}
           </div>
         </HubSection>
-      ) : null}
-
-      {manageLinks.length > 0 ? (
-        <HubSection title="Manage">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {manageLinks.map((link) => (
-              <HubLinkCard key={link.href} link={link} />
-            ))}
-          </div>
-        </HubSection>
-      ) : null}
-
-      {publicLinks.length > 0 ? (
-        <HubSection title="Public pages">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {publicLinks.map((link) => (
-              <HubLinkCard key={link.href} link={link} />
-            ))}
-          </div>
-        </HubSection>
-      ) : null}
-
-      {adminLinks.length > 0 ? (
-        <HubSection title="Admin">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {adminLinks.map((link) => (
-              <HubLinkCard key={link.href} link={link} />
-            ))}
-          </div>
-        </HubSection>
-      ) : null}
-
-      {webmasterLinks.length > 0 ? (
-        <HubSection title="Webmaster">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {webmasterLinks.map((link) => (
-              <HubLinkCard key={link.href} link={link} />
-            ))}
-          </div>
-        </HubSection>
-      ) : null}
+      ))}
     </div>
   );
 }
@@ -104,69 +68,53 @@ function HubSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-ink">
-        {title}
-      </h2>
+    <section className="space-y-2">
+      {title ? (
+        <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted">
+          {title}
+        </h2>
+      ) : null}
       {children}
     </section>
   );
 }
 
-function HubLinkCard({
-  link,
-  active = false,
-}: {
-  link: AdminHubLink;
-  active?: boolean;
-}) {
-  const className = active
-    ? "group relative flex items-center gap-3 overflow-hidden rounded-2xl border-2 border-brand-600 bg-brand-50 p-4 shadow-sm dark:bg-brand-950/40"
-    : "group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:border-brand-300 hover:bg-hover";
+function HubLinkCard({ link }: { link: AdminHubLink }) {
+  const className =
+    "group relative flex h-[4.5rem] items-end overflow-hidden rounded-xl border border-line bg-surface shadow-sm transition hover:border-brand-300 hover:shadow-md active:scale-[0.98]";
 
   const body = (
     <>
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 font-semibold text-ink">
-          {link.title}
-          {link.newTab ? (
-            <span aria-hidden className="text-xs text-muted">
-              ↗
-            </span>
-          ) : null}
-        </p>
-        <p className="mt-1 text-sm leading-snug text-muted">
-          {link.description}
-        </p>
-      </div>
-      {link.widget === "weather" ? (
-        <WeatherMascotStack
-          temperatureF={78}
-          weatherLabel="Sunny"
-          weatherCode={0}
-          isDay
-          width={168}
-          className="shrink-0 self-center transition-transform duration-300 ease-out group-hover:scale-105"
-        />
-      ) : link.image ? (
+      {link.image ? (
         <Image
           src={link.image}
           alt=""
           aria-hidden
-          width={128}
-          height={128}
+          width={160}
+          height={160}
           unoptimized
-          className="h-16 w-16 shrink-0 object-contain drop-shadow-sm transition-transform duration-300 ease-out group-hover:scale-105"
+          className="absolute right-0 top-1/2 h-24 w-24 -translate-y-1/2 object-cover object-top transition-transform duration-300 group-hover:scale-110"
         />
       ) : link.scene ? (
         <MascotScene
           scene={link.scene}
-          size={64}
-          className="shrink-0 drop-shadow-sm transition-transform duration-300 ease-out group-hover:scale-105"
+          size={80}
+          className="absolute right-0 top-1/2 -translate-y-1/2 transition-transform duration-300 group-hover:scale-110"
         />
       ) : null}
+      <span className="absolute inset-0 bg-gradient-to-r from-surface from-40% via-surface/80 to-transparent" />
+      <span className="relative z-10 px-3 pb-2 text-[13px] font-bold leading-tight text-ink">
+        {link.title}
+        {link.newTab ? (
+          <span aria-hidden className="ml-1 text-[10px] text-muted">↗</span>
+        ) : null}
+      </span>
     </>
   );
+
+  if (link.href === "#debug") {
+    return <DebugModeCard className={className}>{body}</DebugModeCard>;
+  }
 
   if (link.newTab) {
     return (

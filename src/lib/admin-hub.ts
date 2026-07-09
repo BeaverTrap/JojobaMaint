@@ -9,13 +9,13 @@ export type AdminHubLink = {
   minimumRole: StaffRole;
   /** Mascot illustration shown on the hub card. */
   scene?: MascotSceneId;
-  /** Direct image path (status art / logo avatar). Takes priority over scene. */
+  /** Direct image path (status art / logo). Takes priority over scene. */
   image?: string;
-  /** Renders a live widget preview instead of a static image. */
-  widget?: "weather";
   /** Opens in a new tab — used for public-facing pages reached from the hub. */
   newTab?: boolean;
 };
+
+export const DEFAULT_COMPOSE_HREF = "/admin/compose?area=maintenance";
 
 export const ADMIN_CREATE_LINKS: AdminHubLink[] = [
   {
@@ -23,33 +23,40 @@ export const ADMIN_CREATE_LINKS: AdminHubLink[] = [
     title: "Landscaping post",
     description: "Quick or structured post for landscaping work.",
     minimumRole: "staff",
-    image: "/assets/Mascot_Sunhat_Avatar.png",
+    image: "/assets/Mascot_Sunhat.png",
   },
   {
     href: "/admin/compose?area=maintenance",
     title: "Maintenance post",
     description: "Quick or structured post for maintenance work.",
     minimumRole: "staff",
-    image: "/assets/Mascot_Hardhat_Avatar.png",
+    image: "/assets/Mascot_Hardhat.png",
   },
   {
-    href: "/admin/articles/new",
-    title: "New article",
-    description: "Write a knowledge-base article or how-to.",
+    href: "/admin/facilities-status",
+    title: "Facilities",
+    description: "Washers, dryers, showers, toilets, urinals, and sinks.",
+    minimumRole: "staff",
+    image: "/assets/status/laundry-ok.png",
+  },
+  {
+    href: "/admin/articles",
+    title: "Articles",
+    description: "Knowledge-base guides and how-tos.",
     minimumRole: "manager",
     scene: "reading",
   },
   {
-    href: "/admin/tree-assessments/new",
-    title: "New tree assessment",
-    description: "Log a new tree assessment record.",
+    href: "/admin/tree-assessments",
+    title: "Landscaping assessments",
+    description: "Review and edit tree and lot evaluations.",
     minimumRole: "manager",
     scene: "search",
   },
   {
-    href: "/admin/maintenance-assessments/new",
-    title: "New maintenance assessment",
-    description: "Log a new maintenance assessment record.",
+    href: "/admin/maintenance-assessments",
+    title: "Maintenance assessments",
+    description: "Review ponds, halls, and site project records.",
     minimumRole: "manager",
     scene: "tools",
   },
@@ -60,52 +67,21 @@ export const ADMIN_MANAGE_LINKS: AdminHubLink[] = [
     href: "/admin/announcements",
     title: "Park alerts",
     description: "Make any alert here — water, power, or park-wide notices.",
-    minimumRole: "manager",
+    minimumRole: "admin",
     image: "/assets/status/alert.png",
-  },
-  {
-    href: "/admin/facilities-status",
-    title: "Facilities",
-    description: "Washers, dryers, showers, toilets, urinals, and sinks.",
-    minimumRole: "manager",
-    image: "/assets/status/laundry-ok.png",
-  },
-  {
-    href: "/admin/articles",
-    title: "Articles",
-    description: "Knowledge-base articles and how-tos.",
-    minimumRole: "manager",
-    scene: "reading",
-  },
-  {
-    href: "/admin/tree-assessments",
-    title: "Tree assessments",
-    description: "Review and edit tree assessment records.",
-    minimumRole: "manager",
-    scene: "search",
-  },
-  {
-    href: "/admin/maintenance-assessments",
-    title: "Maintenance assessments",
-    description: "Review and edit maintenance assessment records.",
-    minimumRole: "manager",
-    scene: "tools",
   },
   {
     href: "/admin/pickup-guidelines",
     title: "Pickup guidelines",
     description: "Green waste banner text and summer schedule toggle.",
-    minimumRole: "manager",
+    minimumRole: "admin",
     scene: "pickup",
   },
-];
-
-export const ADMIN_PUBLIC_LINKS: AdminHubLink[] = [
   {
     href: "/map",
     title: "Park map",
     description: "Edit lot positions, places, and map layers.",
-    minimumRole: "manager",
+    minimumRole: "admin",
     scene: "map",
     newTab: true,
   },
@@ -113,45 +89,51 @@ export const ADMIN_PUBLIC_LINKS: AdminHubLink[] = [
     href: "/water",
     title: "Water usage",
     description: "Sync monthly water reports from the spreadsheet.",
-    minimumRole: "manager",
+    minimumRole: "admin",
     scene: "water",
     newTab: true,
   },
-];
-
-export const ADMIN_TOOLS_LINKS: AdminHubLink[] = [
   {
     href: "/admin/emergency-alerts",
-    title: "Emergency SMS Dashboard",
-    description:
-      "Mass-text alerts with templates, message types, Gemini rewrite, and audit log.",
+    title: "Emergency SMS",
+    description: "Mass-text alerts to all residents.",
     minimumRole: "admin",
     image: "/assets/status/alert.png",
   },
   {
     href: "/admin/staff-access",
     title: "Staff access",
-    description: "Whitelist Google emails and assign staff, manager, or admin roles.",
+    description: "Whitelist emails and assign roles.",
     minimumRole: "admin",
-    scene: "tools",
+    scene: "welcome",
   },
 ];
+
+export const ADMIN_PUBLIC_LINKS: AdminHubLink[] = [];
+
+export const ADMIN_TOOLS_LINKS: AdminHubLink[] = [];
 
 export const WEBMASTER_TOOLS_LINKS: AdminHubLink[] = [
   {
     href: "/admin/mascot-editor",
     title: "Mascot & branding",
-    description: "Upload, position, and preview mascot avatars across the site.",
+    description: "Colors, wordmark, avatars, temp mascots — all live.",
     minimumRole: "webmaster",
-    image: "/assets/Mascot_Hardhat_Avatar.png",
+    image: "/assets/Mascot_Hardhat.png",
   },
   {
-    href: "/weather/stack",
-    title: "Weather mascot layout",
-    description: "Tune the layered weather mascot used on the weather page.",
+    href: "/admin/weather-layout",
+    title: "Weather layout",
+    description: "Tune the layered weather mascot.",
     minimumRole: "webmaster",
-    widget: "weather",
-    newTab: true,
+    image: "/assets/mascot/weather/quail_001.png",
+  },
+  {
+    href: "#debug",
+    title: "Debug mode",
+    description: "View as staff, manager, or admin.",
+    minimumRole: "webmaster",
+    scene: "astronaut",
   },
 ];
 

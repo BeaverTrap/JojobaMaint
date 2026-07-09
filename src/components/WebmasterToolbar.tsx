@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import type { StaffRole } from "@/lib/staff-roles";
 import { STAFF_ROLES, STAFF_ROLE_LABELS } from "@/lib/staff-roles";
 
+type ViewAs = StaffRole | "public" | null;
+
 const ROLE_COLORS: Record<StaffRole, string> = {
   staff: "bg-gray-500",
   manager: "bg-blue-500",
@@ -17,19 +19,27 @@ export default function WebmasterToolbar({
   debugRole,
 }: {
   realRole: StaffRole;
-  debugRole: StaffRole | null;
+  debugRole: ViewAs;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(true);
   const [switching, setSwitching] = useState(false);
-  const [currentDebug, setCurrentDebug] = useState<StaffRole | null>(debugRole);
+  const [currentDebug, setCurrentDebug] = useState<ViewAs>(debugRole);
 
   useEffect(() => {
     setCurrentDebug(debugRole);
   }, [debugRole]);
 
-  async function switchRole(role: StaffRole | null) {
+  useEffect(() => {
+    function handleOpen() {
+      setCollapsed(false);
+    }
+    window.addEventListener("jw:open-debug", handleOpen);
+    return () => window.removeEventListener("jw:open-debug", handleOpen);
+  }, []);
+
+  async function switchRole(role: ViewAs) {
     setSwitching(true);
     try {
       await fetch("/api/debug/role", {
@@ -44,8 +54,11 @@ export default function WebmasterToolbar({
     }
   }
 
-  const effectiveRole = currentDebug ?? realRole;
+  const effectiveRole: StaffRole | "public" = currentDebug ?? realRole;
   const isImpersonating = currentDebug !== null;
+
+  const effectiveLabel = effectiveRole === "public" ? "Public" : STAFF_ROLE_LABELS[effectiveRole];
+  const effectiveColor = effectiveRole === "public" ? "bg-slate-400" : ROLE_COLORS[effectiveRole];
 
   if (collapsed) {
     return (
@@ -61,7 +74,7 @@ export default function WebmasterToolbar({
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
         <span className="text-[10px] font-bold uppercase tracking-wide">
-          {isImpersonating ? `As ${STAFF_ROLE_LABELS[effectiveRole]}` : "WM"}
+          {isImpersonating ? `As ${effectiveLabel}` : "WM"}
         </span>
       </button>
     );
@@ -95,8 +108,8 @@ export default function WebmasterToolbar({
         <div className="flex items-center justify-between text-[11px]">
           <span className="text-muted">Viewing as</span>
           <span className={`flex items-center gap-1.5 font-semibold ${isImpersonating ? "text-amber-600 dark:text-amber-400" : "text-ink"}`}>
-            <span className={`inline-block h-2 w-2 rounded-full ${ROLE_COLORS[effectiveRole]}`} />
-            {STAFF_ROLE_LABELS[effectiveRole]}
+            <span className={`inline-block h-2 w-2 rounded-full ${effectiveColor}`} />
+            {effectiveLabel}
             {isImpersonating ? " ⚠" : ""}
           </span>
         </div>
@@ -124,6 +137,17 @@ export default function WebmasterToolbar({
               </button>
             );
           })}
+          <button
+            disabled={switching}
+            onClick={() => switchRole("public")}
+            className={`col-span-2 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-all active:scale-95 disabled:opacity-40 ${
+              effectiveRole === "public"
+                ? "bg-ink text-surface"
+                : "bg-gray-100 text-ink hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200 dark:hover:bg-white/15"
+            }`}
+          >
+            Public (logged out)
+          </button>
         </div>
       </div>
 

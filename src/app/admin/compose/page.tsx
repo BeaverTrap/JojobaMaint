@@ -27,10 +27,14 @@ export default async function ComposePage({
   const { area: areaParam, format: formatParam } = await searchParams;
 
   const activeArea: ComposeAreaKey =
-    areaParam === "landscaping" ? "landscaping" : areaParam === "maintenance" ? "maintenance" : "maintenance";
+    areaParam === "landscaping"
+      ? "landscaping"
+      : areaParam === "maintenance"
+        ? "maintenance"
+        : "maintenance";
 
   if (areaParam !== "landscaping" && areaParam !== "maintenance") {
-    redirect("/admin");
+    redirect("/admin/compose?area=maintenance");
   }
 
   const format: ComposeFormat =

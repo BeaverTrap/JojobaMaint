@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LogoLockup } from "@/components/Brand";
+import { Wordmark } from "@/components/Brand";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default async function LoginPage({
@@ -14,22 +14,16 @@ export default async function LoginPage({
     <main className="flex min-h-dvh items-center justify-center bg-canvas px-4 py-12">
       <div className="w-full max-w-md">
         {/* Branding block — mascot + logo lockup above the auth button. */}
-        <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-8 flex flex-col items-center">
           <Image
             src="/assets/Mascot_Hardhat.png"
             alt="JojobaWorks quail mascot"
             width={120}
             height={120}
             priority
-            className="mb-4"
+            className="-mb-2 drop-shadow-md"
           />
-          <LogoLockup width={300} />
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">
-            Staff sign in
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            Digital logbook &amp; maintenance feed
-          </p>
+          <Wordmark size={28} />
         </div>
 
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
@@ -52,7 +46,7 @@ export default async function LoginPage({
 
         <p className="mt-6 text-center text-xs text-muted">
           <Link href="/" className="font-medium text-brand-700 hover:underline">
-            ← Back to the feed
+            ← Back to home
           </Link>
         </p>
       </div>

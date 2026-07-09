@@ -3,6 +3,7 @@ import { Barlow_Semi_Condensed, Geist, Geist_Mono } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ThemeInitScript from "@/components/ThemeInitScript";
 import WebmasterToolbarGate from "@/components/WebmasterToolbarGate";
+import LiveBrandingStyle from "@/components/LiveBrandingStyle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,6 +58,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeInitScript />
+        <LiveBrandingStyle />
         <ServiceWorkerRegister />
         {children}
         <WebmasterToolbarGate />

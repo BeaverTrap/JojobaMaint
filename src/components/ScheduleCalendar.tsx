@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import {
   addMonths,
   eachDayOfInterval,
@@ -23,6 +24,11 @@ import {
   wastePickupDayNote,
   type PickupScheduleMode,
 } from "@/lib/pickup-schedule";
+import {
+  buildCalendarHolidayLookup,
+  getCalendarDayHoliday,
+  type CalendarHolidayMascotInput,
+} from "@/lib/calendar-holiday-display";
 import AnimateIn from "@/components/AnimateIn";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -37,14 +43,8 @@ function eventOccursOnDay(event: CalendarEvent, day: Date): boolean {
   return start <= dayEnd && end > dayStart;
 }
 
-function visibleDayEvents(
-  dayEvents: CalendarEvent[],
-  day: Date,
-  mode: PickupScheduleMode,
-): CalendarEvent[] {
-  if (!isWastePickupDay(day, mode)) {
-    return dayEvents;
-  }
+function visibleDayEvents(dayEvents: CalendarEvent[]): CalendarEvent[] {
+  // Pickup is computed in-app; synced Google entries always duplicate it.
   return dayEvents.filter((event) => !isGreenWastePickupCalendarEvent(event));
 }
 
@@ -80,12 +80,19 @@ function GreenWastePickupDetail({
 export default function ScheduleCalendar({
   events,
   pickupScheduleMode,
+  holidayMascots = [],
 }: {
   events: CalendarEvent[];
   pickupScheduleMode: PickupScheduleMode;
+  holidayMascots?: CalendarHolidayMascotInput[];
 }) {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+
+  const holidayLookup = useMemo(
+    () => buildCalendarHolidayLookup(holidayMascots, month.getFullYear()),
+    [holidayMascots, month],
+  );
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(month);
@@ -112,11 +119,7 @@ export default function ScheduleCalendar({
   const selectedEventsVisible = useMemo(() => {
     if (!selectedDay) return [];
     const key = format(selectedDay, "yyyy-MM-dd");
-    return visibleDayEvents(
-      eventsByDay.get(key) ?? [],
-      selectedDay,
-      pickupScheduleMode,
-    );
+    return visibleDayEvents(eventsByDay.get(key) ?? []);
   }, [selectedDay, eventsByDay, pickupScheduleMode]);
 
   const upcoming = useMemo(() => {
@@ -178,16 +181,24 @@ export default function ScheduleCalendar({
         <div className="grid grid-cols-7">
           {calendarDays.map((day) => {
             const key = format(day, "yyyy-MM-dd");
-            const dayEvents = visibleDayEvents(
-              eventsByDay.get(key) ?? [],
-              day,
-              pickupScheduleMode,
-            );
             const inMonth = isSameMonth(day, month);
+            const dayEvents = inMonth
+              ? visibleDayEvents(eventsByDay.get(key) ?? [])
+              : [];
             const today = isToday(day);
             const selected = selectedDay ? isSameDay(day, selectedDay) : false;
             const wastePickup =
               inMonth && isWastePickupDay(day, pickupScheduleMode);
+            const holiday = inMonth
+              ? getCalendarDayHoliday(
+                  holidayLookup,
+                  day.getFullYear(),
+                  day.getMonth() + 1,
+                  day.getDate(),
+                )
+              : null;
+            const hasMascot = Boolean(holiday?.mascotSrc);
+            const label = holiday?.label;
 
             return (
               <button
@@ -196,47 +207,83 @@ export default function ScheduleCalendar({
                 onClick={() => setSelectedDay(day)}
                 className={
                   selected
-                    ? "relative min-h-[4.5rem] border-b border-r border-line bg-brand-50 p-1.5 text-left transition sm:min-h-[5.5rem] dark:bg-brand-950/40"
+                    ? `relative min-h-[4.5rem] overflow-hidden border-b border-r border-line ring-2 ring-inset ring-brand-600 p-0 text-left transition sm:min-h-[5.5rem] ${holiday?.tintClass ?? "bg-brand-50 dark:bg-brand-950/40"}`
                     : inMonth
-                      ? "relative min-h-[4.5rem] border-b border-r border-line p-1.5 text-left transition hover:bg-hover sm:min-h-[5.5rem]"
-                      : "relative min-h-[4.5rem] border-b border-r border-line bg-canvas/50 p-1.5 text-left sm:min-h-[5.5rem]"
+                      ? `relative min-h-[4.5rem] overflow-hidden border-b border-r border-line p-0 text-left transition hover:brightness-[0.98] sm:min-h-[5.5rem] ${holiday?.tintClass ?? "hover:bg-hover"}`
+                      : "relative min-h-[4.5rem] overflow-hidden border-b border-r border-line bg-canvas/50 p-0 text-left sm:min-h-[5.5rem]"
                 }
               >
-                <span
-                  className={
-                    today
-                      ? "inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white"
-                      : inMonth
-                        ? "text-xs font-semibold text-ink"
-                        : "text-xs font-medium text-muted"
-                  }
+                {hasMascot && holiday?.mascotSrc ? (
+                  <>
+                    <Image
+                      src={holiday.mascotSrc}
+                      alt={holiday.mascotAlt ?? ""}
+                      width={140}
+                      height={140}
+                      unoptimized
+                      className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top"
+                    />
+                    <span className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-9 bg-gradient-to-b from-white/95 via-white/60 to-transparent dark:from-zinc-900/95 dark:via-zinc-900/50" />
+                  </>
+                ) : null}
+
+                <div
+                  className={`relative z-10 flex min-h-[4.5rem] flex-col p-1.5 sm:min-h-[5.5rem] ${hasMascot && label ? "pb-7" : ""}`}
                 >
-                  {format(day, "d")}
-                </span>
-                <div className="mt-1 space-y-0.5">
-                  {wastePickup ? (
-                    <p
-                      className="truncate rounded-md bg-emerald-600/15 px-1 py-0.5 text-[10px] font-semibold leading-tight text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100"
-                      title={wastePickupDayNote(day, pickupScheduleMode) ?? GREEN_WASTE_PICKUP_LABEL}
-                    >
-                      {GREEN_WASTE_PICKUP_LABEL}
-                    </p>
+                  <span
+                    className={
+                      today
+                        ? "inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white shadow-sm"
+                        : inMonth
+                          ? "text-xs font-semibold text-ink drop-shadow-sm"
+                          : "text-xs font-medium text-muted"
+                    }
+                  >
+                    {format(day, "d")}
+                  </span>
+
+                  {!hasMascot && label ? (
+                    <span className="mt-1 truncate text-[9px] font-bold leading-tight text-ink sm:text-[10px]">
+                      {label}
+                    </span>
                   ) : null}
-                  {dayEvents.slice(0, wastePickup ? 1 : 2).map((event) => (
-                    <p
-                      key={event.id}
-                      className="truncate rounded-md bg-brand-600/10 px-1 py-0.5 text-[10px] font-semibold leading-tight text-brand-800 dark:bg-brand-900/50 dark:text-brand-200"
-                      title={event.title}
-                    >
-                      {event.title}
-                    </p>
-                  ))}
-                  {dayEvents.length > (wastePickup ? 1 : 2) && (
-                    <p className="px-1 text-[10px] font-medium text-muted">
-                      +{dayEvents.length - (wastePickup ? 1 : 2)} more
-                    </p>
-                  )}
+
+                  <div className="mt-auto space-y-0.5">
+                    {wastePickup ? (
+                      <p
+                        className="truncate rounded-md bg-emerald-600/20 px-1 py-0.5 text-[10px] font-semibold leading-tight text-emerald-950 dark:bg-emerald-900/50 dark:text-emerald-100"
+                        title={
+                          wastePickupDayNote(day, pickupScheduleMode) ??
+                          GREEN_WASTE_PICKUP_LABEL
+                        }
+                      >
+                        {GREEN_WASTE_PICKUP_LABEL}
+                      </p>
+                    ) : null}
+                    {!hasMascot &&
+                      dayEvents.slice(0, wastePickup ? 1 : 2).map((event) => (
+                        <p
+                          key={event.id}
+                          className="truncate rounded-md bg-brand-600/10 px-1 py-0.5 text-[10px] font-semibold leading-tight text-brand-800 dark:bg-brand-900/50 dark:text-brand-200"
+                          title={event.title}
+                        >
+                          {event.title}
+                        </p>
+                      ))}
+                    {!hasMascot &&
+                      dayEvents.length > (wastePickup ? 1 : 2) && (
+                        <p className="px-1 text-[10px] font-medium text-muted">
+                          +{dayEvents.length - (wastePickup ? 1 : 2)} more
+                        </p>
+                      )}
+                  </div>
                 </div>
+
+                {hasMascot && label ? (
+                  <span className="absolute bottom-1 left-1 right-1 z-20 truncate rounded-md bg-white px-1.5 py-0.5 text-[9px] font-bold leading-tight text-ink shadow-md sm:text-[10px] dark:bg-zinc-900 dark:text-white">
+                    {label}
+                  </span>
+                ) : null}
               </button>
             );
           })}

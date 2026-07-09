@@ -1,5 +1,6 @@
 import { addDays, startOfDay } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 import { MascotScene } from "@/components/Brand";
 import AnnouncementBoard from "@/components/AnnouncementBoard";
 import QuickLinkGrid from "@/components/QuickLinkGrid";
@@ -19,6 +20,7 @@ import {
 import { fetchPowerStatus } from "@/lib/power-status";
 import { fetchFacilities } from "@/lib/facility-status";
 import { randomHeroScene } from "@/lib/mascot-scenes";
+import { getServerHolidayMascot } from "@/lib/holiday-mascots-server";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,7 @@ export default async function HomePage() {
   const pickupMode = pickupScheduleFromFlag(guidelines.is_summer_schedule);
   const shutoffs = upcomingWaterShutoffs(events);
   const heroScene = randomHeroScene();
+  const holidayMascot = await getServerHolidayMascot();
   const parkAlerts = resolveParkAlerts(announcements);
   const waterClosure = resolveWaterFacilityClosure(
     waterStatus,
@@ -50,16 +53,39 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       <div className="flex items-start gap-4 sm:gap-6">
-        <MascotScene
-          scene={heroScene}
-          size={132}
-          className="shrink-0 drop-shadow-md sm:hidden"
-        />
-        <MascotScene
-          scene={heroScene}
-          size={188}
-          className="hidden shrink-0 drop-shadow-md sm:block"
-        />
+        {holidayMascot ? (
+          <>
+            <Image
+              src={holidayMascot.src}
+              alt={holidayMascot.label}
+              width={132}
+              height={132}
+              unoptimized
+              className="h-[132px] w-[132px] shrink-0 object-contain drop-shadow-md sm:hidden"
+            />
+            <Image
+              src={holidayMascot.src}
+              alt={holidayMascot.label}
+              width={188}
+              height={188}
+              unoptimized
+              className="hidden h-[188px] w-[188px] shrink-0 object-contain drop-shadow-md sm:block"
+            />
+          </>
+        ) : (
+          <>
+            <MascotScene
+              scene={heroScene}
+              size={132}
+              className="shrink-0 drop-shadow-md sm:hidden"
+            />
+            <MascotScene
+              scene={heroScene}
+              size={188}
+              className="hidden shrink-0 drop-shadow-md sm:block"
+            />
+          </>
+        )}
         <div className="min-w-0 flex-1 space-y-4">
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
             Jojoba<span className="text-brand-600 dark:text-brand-400">Works</span>

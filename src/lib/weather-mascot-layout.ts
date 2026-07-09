@@ -54,8 +54,36 @@ export const DEFAULT_WEATHER_MASCOT_LAYOUT: WeatherMascotLayoutConfig = {
   },
 };
 
-export function getWeatherMascotLayout(): WeatherMascotLayoutConfig {
+let cachedLayout: WeatherMascotLayoutConfig | null = null;
+let cacheExpiry = 0;
+
+/**
+ * Returns the live layout from the DB (cached for 60s on client).
+ * Falls back to DEFAULT_WEATHER_MASCOT_LAYOUT if fetch fails.
+ */
+export async function fetchWeatherMascotLayout(): Promise<WeatherMascotLayoutConfig> {
+  const now = Date.now();
+  if (cachedLayout && now < cacheExpiry) return cachedLayout;
+
+  try {
+    const baseUrl = typeof window !== "undefined"
+      ? ""
+      : (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000");
+    const res = await fetch(`${baseUrl}/api/weather-layout`, { next: { revalidate: 60 } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.map) {
+        cachedLayout = data;
+        cacheExpiry = now + 60_000;
+        return data;
+      }
+    }
+  } catch { /* fall through */ }
   return DEFAULT_WEATHER_MASCOT_LAYOUT;
+}
+
+export function getWeatherMascotLayout(): WeatherMascotLayoutConfig {
+  return cachedLayout ?? DEFAULT_WEATHER_MASCOT_LAYOUT;
 }
 
 export function rectToCss(rect: WeatherLayoutRect): {
