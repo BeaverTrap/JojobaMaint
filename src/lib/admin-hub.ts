@@ -98,7 +98,7 @@ export const ADMIN_MANAGE_LINKS: AdminHubLink[] = [
     title: "Emergency SMS",
     description: "Mass-text alerts to all residents.",
     minimumRole: "admin",
-    image: "/assets/status/alert.png",
+    scene: "alertSms",
   },
   {
     href: "/admin/staff-access",

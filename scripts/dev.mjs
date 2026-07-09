@@ -12,6 +12,7 @@ import { execSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { printStartupBanner } from "./startup-banner.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const clean = process.argv.includes("--clean");
@@ -62,6 +63,8 @@ function freePort(port) {
 }
 
 const port = loadPort();
+
+printStartupBanner({ clean });
 
 if (clean) {
   freePort(port);
