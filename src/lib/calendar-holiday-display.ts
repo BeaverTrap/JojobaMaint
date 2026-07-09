@@ -33,6 +33,8 @@ const TINT = {
   default: "bg-brand-100/80 dark:bg-brand-950/45",
 } as const;
 
+type TintClass = (typeof TINT)[keyof typeof TINT];
+
 const TEXT_HOLIDAYS: Record<string, { label: string; tint: string }> = {
   "2-14": { label: "Valentine's Day", tint: TINT.default },
   "3-17": { label: "St. Patrick's Day", tint: TINT.default },
@@ -169,7 +171,7 @@ function isChristmasEveDaySpan(m: CalendarHolidayMascotInput): boolean {
 function spanTint(
   label: string,
   m: CalendarHolidayMascotInput,
-): (typeof TINT)[keyof typeof TINT] {
+): TintClass {
   const lower = label.toLowerCase();
   if (lower.includes("hanukkah")) return TINT.hanukkah;
   if (lower.includes("pride")) return TINT.pride;
@@ -337,7 +339,7 @@ export function buildCalendarHolidayLookup(
         }
       }
     } else {
-      let tint = TINT.default;
+      let tint: TintClass = TINT.default;
       if (m.calendar_month === 7 && m.calendar_day === 4) tint = TINT.patriotic;
       else if (m.calendar_month === 10 && m.calendar_day === 31)
         tint = TINT.default;

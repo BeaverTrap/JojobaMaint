@@ -192,7 +192,7 @@ export default function MascotEditor() {
       if (res.ok) {
         const row: HolidayMascotRow = await res.json();
         setHolidayMascots((m) => [...m, row]);
-        setHolidayForm({ label: "", src: "", start_month: 1, start_day: 1, end_month: 1, end_day: 31 });
+        setHolidayForm({ label: "", src: "", start_month: 1, start_day: 1, end_month: 1, end_day: 31, calendar_month: 1, calendar_day: 1 });
         showToast("Holiday mascot added");
       }
     } finally {
