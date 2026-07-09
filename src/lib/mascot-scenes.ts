@@ -16,7 +16,9 @@ export type MascotSceneId =
   | "telescope"
   | "hardhat"
   | "sunhat"
-  | "alert";
+  | "alert"
+  | "alertSms"
+  | "alertCommunitySms";
 
 export const MASCOT_DEFAULT_SRC = "/assets/Mascot_Hardhat.png";
 export const MASCOT_FALLBACK_SRC = "/assets/maintenance_Quail_wht.png";
@@ -107,6 +109,16 @@ export const MASCOT_SCENES: Record<MascotSceneId, MascotSceneDef> = {
   alert: {
     src: "/assets/status/alert.png",
     alt: "Alarmed quail with a warning cone",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  alertSms: {
+    src: "/assets/status/alert-SMS.png",
+    alt: "Quail sending an emergency SMS alert",
+    fallback: MASCOT_DEFAULT_SRC,
+  },
+  alertCommunitySms: {
+    src: "/assets/status/alert-communitySMS.png",
+    alt: "Quail sharing a community park notice",
     fallback: MASCOT_DEFAULT_SRC,
   },
 };

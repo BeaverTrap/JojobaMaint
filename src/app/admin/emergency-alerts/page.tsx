@@ -1,5 +1,4 @@
 import Link from "next/link";
-import PageMascotHeading from "@/components/PageMascotHeading";
 import { createClient } from "@/lib/supabase/server";
 import EmergencySmsDashboard from "@/components/EmergencySmsDashboard";
 import { fetchSmsHistory } from "@/lib/sms-history";
@@ -28,13 +27,6 @@ export default async function AdminEmergencyAlertsPage() {
         >
           ← Dashboard
         </Link>
-        <div className="mt-2">
-          <PageMascotHeading
-            scene="alert"
-            title="Emergency SMS Dashboard"
-            description="Mass-text park alerts — templates, audience tags, message types, scheduling, and delivery log."
-          />
-        </div>
       </div>
 
       <EmergencySmsDashboard

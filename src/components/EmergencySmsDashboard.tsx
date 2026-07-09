@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
+import PageMascotHeading from "@/components/PageMascotHeading";
 import type { SmsHistoryRow } from "@/lib/sms-history";
 import type { SmsTemplate } from "@/lib/database.types";
+import type { MascotSceneId } from "@/lib/mascot-scenes";
 import {
   SMS_DASHBOARD_MESSAGE_TIER_OPTIONS,
   messageTierLabel,
@@ -28,6 +30,20 @@ type ConfirmState = {
   recipientCount: number;
   skippedByTier: number;
 };
+
+function smsHeadingScene(tier: SmsMessageTier): MascotSceneId {
+  switch (tier) {
+    case "critical":
+      return "alertSms";
+    case "standard":
+    case "announcement":
+      return "alertCommunitySms";
+    default: {
+      const _exhaustive: never = tier;
+      return _exhaustive;
+    }
+  }
+}
 
 export default function EmergencySmsDashboard({
   templates,
@@ -193,6 +209,12 @@ export default function EmergencySmsDashboard({
   return (
     <>
       <div className="space-y-6">
+        <PageMascotHeading
+          scene={smsHeadingScene(messageTier)}
+          title="Emergency SMS Dashboard"
+          description="Mass-text park alerts — templates, audience tags, message types, scheduling, and delivery log."
+        />
+
         <SmsDashboardHelp viewerRole={viewerRole} />
 
         <SmsTemplateManager templates={templates} onApply={applyTemplate} />
