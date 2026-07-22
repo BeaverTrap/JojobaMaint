@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaffRole } from "@/lib/require-staff-role";
+import { isAdminRole } from "@/lib/staff-roles";
 import {
   fetchArticleCategories,
   fetchArticleRelatedIds,
@@ -21,7 +22,8 @@ export default async function EditArticlePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireStaffRole("manager");
+  const role = await requireStaffRole("manager");
+  const canPublish = isAdminRole(role);
   const supabase = await createClient();
 
   const [{ data: article }, tags, initialTags, initialRelatedIds, recentArticles] =
@@ -77,6 +79,7 @@ export default async function EditArticlePage({
         initialFeedSection={a.feed_section}
         tags={tags}
         redirectTo="/admin/articles"
+        canPublish={canPublish}
       />
 
       <div className="border-t border-line pt-4">

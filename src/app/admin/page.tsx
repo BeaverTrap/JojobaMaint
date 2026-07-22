@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/staff-roles";
 import AdminHubSections from "@/components/AdminHubSections";
 import RecentPostsCard from "@/components/RecentPostsCard";
 

@@ -64,9 +64,17 @@ export default async function PostDetailPage({
 
   if (!post) notFound();
   const p = normalizePostRow(post as unknown as PostWithAuthor);
-  const children = normalizePostRows(
+
+  if (!p.published && !isAuthorized) {
+    notFound();
+  }
+
+  const allChildren = normalizePostRows(
     (childData ?? []) as unknown as PostWithAuthor[],
   );
+  const children = isAuthorized
+    ? allChildren
+    : allChildren.filter((c) => c.published);
 
   const images = postImageUrls(p);
   const dateLines = formatPostedEditedLines(p.created_at, p.updated_at);
@@ -104,6 +112,7 @@ export default async function PostDetailPage({
           avatarSize={40}
           canEdit={isAuthorized}
           editHref={`/admin/posts/${p.id}/edit`}
+          isDraft={!p.published}
         />
 
         <div className="px-4 py-3">

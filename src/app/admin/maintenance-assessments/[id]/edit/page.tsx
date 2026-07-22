@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaffRole } from "@/lib/require-staff-role";
+import { isAdminRole } from "@/lib/staff-roles";
 import {
   fetchMaintenanceAssessmentIssueTypes,
   fetchMaintenanceAssessmentWorkTypes,
@@ -23,7 +24,8 @@ export default async function EditMaintenanceAssessmentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireStaffRole("manager");
+  const role = await requireStaffRole("manager");
+  const canPublish = isAdminRole(role);
   const supabase = await createClient();
 
   const [{ data: row }, workTypes, issueTypes, contentTags, initialTags] =
@@ -88,6 +90,7 @@ export default async function EditMaintenanceAssessmentPage({
         issueTypes={issueTypes}
         contentTags={contentTags}
         redirectTo="/admin/maintenance-assessments"
+        canPublish={canPublish}
       />
 
       <div className="border-t border-line pt-4">

@@ -41,6 +41,7 @@ export interface Post {
   parent_post_id: string | null;
   site_number: string | null;
   common_area: string | null;
+  published: boolean;
   created_at: string;
   updated_at: string;
 }

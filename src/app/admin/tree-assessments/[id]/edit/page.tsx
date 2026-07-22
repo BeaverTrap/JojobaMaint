@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaffRole } from "@/lib/require-staff-role";
+import { isAdminRole } from "@/lib/staff-roles";
 import {
   fetchTreeAssessmentConcerns,
   TREE_ASSESSMENT_SELECT,
@@ -22,7 +23,8 @@ export default async function EditTreeAssessmentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireStaffRole("manager");
+  const role = await requireStaffRole("manager");
+  const canPublish = isAdminRole(role);
   const supabase = await createClient();
 
   const [{ data: row }, concerns, contentTags, initialTags] = await Promise.all([
@@ -83,6 +85,7 @@ export default async function EditTreeAssessmentPage({
         concerns={concerns}
         contentTags={contentTags}
         redirectTo="/admin/tree-assessments"
+        canPublish={canPublish}
       />
 
       <div className="border-t border-line pt-4">

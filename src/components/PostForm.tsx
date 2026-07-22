@@ -81,8 +81,10 @@ export default function PostForm({
   categories,
   contentTags,
   initialTags = [],
+  initialPublished = false,
   recentPosts,
   redirectTo,
+  canPublish = false,
 }: {
   mode: "create" | "edit";
   postId?: string;
@@ -95,10 +97,12 @@ export default function PostForm({
   initialPosterAvatar?: string;
   initialImages?: ExistingImage[];
   initialTags?: string[];
+  initialPublished?: boolean;
   categories: PostCategory[];
   contentTags: ContentTag[];
   recentPosts: RecentPost[];
   redirectTo: string;
+  canPublish?: boolean;
 }) {
   const router = useRouter();
 
@@ -109,6 +113,9 @@ export default function PostForm({
   const [parentId, setParentId] = useState<string>(initialParentId ?? "");
   const [siteNumber, setSiteNumber] = useState(initialSiteNumber);
   const [commonArea, setCommonArea] = useState(initialCommonArea);
+  const [published, setPublished] = useState(
+    canPublish ? initialPublished ?? false : false,
+  );
   const postTeam: PosterTeam | "all" =
     category === "landscaping"
       ? "landscaping"
@@ -215,6 +222,7 @@ export default function PostForm({
         parent_post_id: parentValue,
         site_number: siteNumber.trim() || null,
         common_area: commonArea.trim() || null,
+        published,
       };
 
       if (mode === "create") {
@@ -435,6 +443,20 @@ export default function PostForm({
         </div>
       </Field>
 
+      <label className="flex items-center gap-2 text-sm text-ink">
+        <input
+          type="checkbox"
+          checked={published}
+          onChange={(e) => setPublished(e.target.checked)}
+          disabled={!canPublish}
+          className="rounded border-line text-brand-600 focus:ring-brand-400 disabled:opacity-60"
+        />
+        Published (visible to residents and the public)
+        {!canPublish && (
+          <span className="text-xs text-muted">— admins only</span>
+        )}
+      </label>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="flex justify-end border-t border-line pt-4">
@@ -446,7 +468,9 @@ export default function PostForm({
           {submitting
             ? "Saving…"
             : mode === "create"
-              ? "Post to feed"
+              ? published
+                ? "Publish post"
+                : "Save draft"
               : "Save changes"}
         </button>
       </div>

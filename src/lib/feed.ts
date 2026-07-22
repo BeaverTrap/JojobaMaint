@@ -67,6 +67,7 @@ export async function fetchFeedItems(
     .select(POST_SELECT)
     .order("created_at", { ascending: false })
     .limit(200);
+  if (!includeUnpublished) postQuery.eq("published", true);
 
   const articleQuery = supabase
     .from("articles")
@@ -124,7 +125,7 @@ export async function fetchFeedItems(
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       locationLine: postLocationLabel(row),
-      isDraft: false,
+      isDraft: !row.published,
       post: row,
     });
   }

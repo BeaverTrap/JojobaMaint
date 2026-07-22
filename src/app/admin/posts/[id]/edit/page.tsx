@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchContentTags, fetchPostTagSlugs } from "@/lib/content-tags";
 import { fetchCategories, normalizePostRow, POST_SELECT } from "@/lib/posts";
+import { requireStaffRole } from "@/lib/require-staff-role";
+import { isAdminRole } from "@/lib/staff-roles";
 import PostForm from "@/components/PostForm";
 import DeletePostButton from "@/components/DeletePostButton";
 import { postImageUrls, type PostWithAuthor } from "@/lib/database.types";
@@ -15,6 +17,8 @@ export default async function EditPostPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const role = await requireStaffRole("staff");
+  const canPublish = isAdminRole(role);
   const supabase = await createClient();
 
   const [{ data: post }, categories, contentTags, initialTags, { data: recent }] =
@@ -80,11 +84,13 @@ export default async function EditPostPage({
         initialCommonArea={p.common_area ?? ""}
         initialPosterAvatar={p.poster_avatar ?? undefined}
         initialImages={existingImages}
+        initialPublished={p.published}
         categories={categories}
         contentTags={contentTags}
         initialTags={initialTags}
         recentPosts={recentPosts}
         redirectTo={`/posts/${p.id}`}
+        canPublish={canPublish}
       />
 
       <div className="border-t border-line pt-4">

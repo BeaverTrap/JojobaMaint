@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaffRole } from "@/lib/require-staff-role";
+import { isAdminRole } from "@/lib/staff-roles";
 import { fetchCategories } from "@/lib/posts";
 import {
   fetchMaintenanceAssessmentIssueTypes,
@@ -23,7 +24,8 @@ export default async function ComposePage({
 }: {
   searchParams: Promise<{ area?: string; format?: string }>;
 }) {
-  await requireStaffRole("staff");
+  const role = await requireStaffRole("staff");
+  const canPublish = isAdminRole(role);
   const { area: areaParam, format: formatParam } = await searchParams;
 
   const activeArea: ComposeAreaKey =
@@ -97,6 +99,7 @@ export default async function ComposePage({
             treeConcerns={treeConcerns}
             maintenanceWorkTypes={maintenanceWorkTypes}
             maintenanceIssueTypes={maintenanceIssueTypes}
+            canPublish={canPublish}
           />
         </Suspense>
       </section>

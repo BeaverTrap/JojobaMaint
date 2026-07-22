@@ -27,6 +27,7 @@ type Props = {
   treeConcerns: TreeAssessmentConcern[];
   maintenanceWorkTypes: MaintenanceAssessmentWorkType[];
   maintenanceIssueTypes: MaintenanceAssessmentIssueType[];
+  canPublish?: boolean;
 };
 
 export default function ComposeArea({
@@ -38,6 +39,7 @@ export default function ComposeArea({
   treeConcerns,
   maintenanceWorkTypes,
   maintenanceIssueTypes,
+  canPublish,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -77,6 +79,7 @@ export default function ComposeArea({
           recentPosts={recentPosts}
           initialCategory={postCategory}
           redirectTo="/"
+          canPublish={canPublish}
         />
       ) : area === "landscaping" ? (
         <TreeAssessmentForm
@@ -84,6 +87,7 @@ export default function ComposeArea({
           concerns={treeConcerns}
           contentTags={contentTags}
           redirectTo="/"
+          canPublish={canPublish}
         />
       ) : (
         <MaintenanceAssessmentForm
@@ -92,6 +96,7 @@ export default function ComposeArea({
           issueTypes={maintenanceIssueTypes}
           contentTags={contentTags}
           redirectTo="/"
+          canPublish={canPublish}
         />
       )}
     </div>

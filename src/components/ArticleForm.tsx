@@ -63,7 +63,9 @@ type Props = {
       initialPosterAvatar?: string;
       initialFeedSection?: string;
     }
-);
+) & {
+  canPublish?: boolean;
+};
 
 export default function ArticleForm(props: Props) {
   const router = useRouter();
@@ -88,6 +90,7 @@ export default function ArticleForm(props: Props) {
   const [commonArea, setCommonArea] = useState(
     isEdit ? props.initialCommonArea : "",
   );
+  const canPublish = props.canPublish ?? false;
   const [published, setPublished] = useState(
     isEdit ? props.initialPublished : false,
   );
@@ -452,9 +455,13 @@ export default function ArticleForm(props: Props) {
           type="checkbox"
           checked={published}
           onChange={(e) => setPublished(e.target.checked)}
-          className="rounded border-line text-brand-600 focus:ring-brand-400"
+          disabled={!canPublish}
+          className="rounded border-line text-brand-600 focus:ring-brand-400 disabled:opacity-60"
         />
         Published (visible on the public site)
+        {!canPublish && (
+          <span className="text-xs text-muted">— admins only</span>
+        )}
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

@@ -43,6 +43,7 @@ type Props =
       issueTypes: MaintenanceAssessmentIssueType[];
       contentTags: ContentTag[];
       redirectTo: string;
+      canPublish?: boolean;
     }
   | {
       mode: "edit";
@@ -68,6 +69,7 @@ type Props =
       issueTypes: MaintenanceAssessmentIssueType[];
       contentTags: ContentTag[];
       redirectTo: string;
+      canPublish?: boolean;
     };
 
 export default function MaintenanceAssessmentForm(props: Props) {
@@ -113,8 +115,9 @@ export default function MaintenanceAssessmentForm(props: Props) {
   const [resolutionNotes, setResolutionNotes] = useState(
     isEdit ? (props.initialResolutionNotes ?? "") : "",
   );
+  const canPublish = props.canPublish ?? false;
   const [published, setPublished] = useState(
-    isEdit ? props.initialPublished : true,
+    isEdit ? props.initialPublished : false,
   );
   const [selectedTags, setSelectedTags] = useState<string[]>(
     isEdit ? props.initialTags : [],
@@ -560,9 +563,13 @@ export default function MaintenanceAssessmentForm(props: Props) {
           type="checkbox"
           checked={published}
           onChange={(e) => setPublished(e.target.checked)}
-          className="rounded border-line text-brand-600 focus:ring-brand-400"
+          disabled={!canPublish}
+          className="rounded border-line text-brand-600 focus:ring-brand-400 disabled:opacity-60"
         />
         Published (visible to residents and the public)
+        {!canPublish && (
+          <span className="text-xs text-muted">— admins only</span>
+        )}
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

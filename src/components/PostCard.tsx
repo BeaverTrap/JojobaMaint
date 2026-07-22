@@ -31,6 +31,7 @@ export default function PostCard({
         updatedAt={post.updated_at}
         canEdit={canEdit}
         editHref={`/admin/posts/${post.id}/edit`}
+        isDraft={!post.published}
       />
 
       {post.parent && (
