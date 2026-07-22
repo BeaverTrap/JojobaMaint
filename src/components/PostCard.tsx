@@ -28,7 +28,6 @@ export default function PostCard({
         posterAvatar={post.poster_avatar}
         feedSection={post.category}
         createdAt={post.created_at}
-        updatedAt={post.updated_at}
         canEdit={canEdit}
         editHref={`/admin/posts/${post.id}/edit`}
         isDraft={!post.published}

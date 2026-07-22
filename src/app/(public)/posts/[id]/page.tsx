@@ -77,7 +77,7 @@ export default async function PostDetailPage({
     : allChildren.filter((c) => c.published);
 
   const images = postImageUrls(p);
-  const dateLines = formatPostedEditedLines(p.created_at, p.updated_at);
+  const dateLines = formatPostedEditedLines(p.created_at, null);
 
   return (
     <div className="print-report space-y-6">
@@ -108,7 +108,6 @@ export default async function PostDetailPage({
           posterAvatar={p.poster_avatar}
           feedSection={p.category}
           createdAt={p.created_at}
-          updatedAt={p.updated_at}
           avatarSize={40}
           canEdit={isAuthorized}
           editHref={`/admin/posts/${p.id}/edit`}
