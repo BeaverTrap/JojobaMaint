@@ -41,7 +41,7 @@ create policy "Authorized users can insert posts"
     and public.is_authorized()
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
@@ -53,7 +53,7 @@ create policy "Authorized users can update posts"
     public.is_authorized()
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
@@ -89,7 +89,7 @@ create policy "Managers can insert articles"
     and public.has_staff_role('manager'::public.staff_role)
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
@@ -101,7 +101,7 @@ create policy "Managers can update articles"
     public.has_staff_role('manager'::public.staff_role)
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
@@ -137,7 +137,7 @@ create policy "Managers can insert tree assessments"
     and public.has_staff_role('manager'::public.staff_role)
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
@@ -149,7 +149,7 @@ create policy "Managers can update tree assessments"
     public.has_staff_role('manager'::public.staff_role)
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
@@ -185,7 +185,7 @@ create policy "Managers can insert maintenance assessments"
     and public.has_staff_role('manager'::public.staff_role)
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
@@ -197,7 +197,7 @@ create policy "Managers can update maintenance assessments"
     public.has_staff_role('manager'::public.staff_role)
     and (
       public.has_staff_role('admin'::public.staff_role)
-      or new.published = false
+      or published = false
     )
   );
 
