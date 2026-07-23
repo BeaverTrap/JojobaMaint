@@ -77,7 +77,7 @@ export default async function PostDetailPage({
     : allChildren.filter((c) => c.published);
 
   const images = postImageUrls(p);
-  const dateLines = formatPostedEditedLines(p.created_at, null);
+  const dateLines = formatPostedEditedLines(p.created_at, p.updated_at);
 
   return (
     <div className="print-report space-y-6">
